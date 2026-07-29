@@ -1,0 +1,691 @@
+"""
+逆向渲染项目主程序入口
+支持训练、测试和演示模式
+
+Author: Python Engineer
+Date: 2026-01-22
+"""
+
+import argparse
+import sys
+import os
+from pathlib import Path
+from datetime import datetime
+import random
+import numpy as np
+import torch
+from typing import Optional
+from config import Config, get_default_config
+from data_loader import MultiLightingDataset, create_data_loader
+from unet_model import IntrinsicUNet
+from physics_renderer import PhysicsRenderer
+from residual_modules import HierarchicalResidual
+from loss_functions import LossCalculator
+from trainer import InverseRenderTrainer
+
+
+def set_seed(seed: int):
+    """设置随机种子"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    print(f"随机种子已设置为: {seed}")
+
+
+def setup_device(device: str) -> torch.device:
+    """设置设备 - 强制使用GPU"""
+    if device == 'cuda':
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA不可用！请确保已安装CUDA版本的PyTorch并且有可用的GPU。")
+
+        device_obj = torch.device('cuda')
+        print(f"使用设备: {device_obj}")
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"显存: {torch.cuda.get_device_properties(0).total_memory / 1024 ** 3:.2f} GB")
+        print(f"CUDA版本: {torch.version.cuda}")
+        print(f"PyTorch版本: {torch.__version__}")
+    else:
+        device_obj = torch.device('cpu')
+        print(f"使用设备: {device_obj}")
+
+    return device_obj
+
+
+def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
+    """
+    训练模式
+
+    Args:
+        config: 配置对象
+        resume_checkpoint: 恢复训练的检查点路径
+    """
+    print("\n" + "=" * 80)
+    print("训练模式")
+    print("=" * 80 + "\n")
+
+    set_seed(config.seed)
+    device = setup_device(config.device)
+
+    config.print()
+
+    print("创建数据集...")
+
+    train_dataset = MultiLightingDataset(
+        root_dir=config.data.root_dir,
+        num_lights=config.data.num_lights,
+        image_size=config.data.image_size,
+        is_training=True,
+        file_extension=config.data.file_extension,
+        max_rotation_angle=config.data.max_rotation_angle,
+        horizontal_flip_prob=config.data.horizontal_flip_prob
+    )
+
+    val_dataset = MultiLightingDataset(
+        root_dir=config.data.root_dir,
+        num_lights=config.data.num_lights,
+        image_size=config.data.image_size,
+        is_training=False,
+        file_extension=config.data.file_extension
+    )
+
+    print(f"训练集大小: {len(train_dataset)} 个场景")
+    print(f"验证集大小: {len(val_dataset)} 个场景")
+
+    train_loader = create_data_loader(
+        train_dataset,
+        batch_size=config.data.batch_size,
+        shuffle=True,
+        num_workers=config.data.num_workers,
+        pin_memory=config.data.pin_memory,
+        prefetch_factor=config.data.prefetch_factor,
+        persistent_workers=config.data.persistent_workers
+    )
+
+    val_loader = create_data_loader(
+        val_dataset,
+        batch_size=config.data.batch_size,
+        shuffle=False,
+        num_workers=config.data.num_workers,
+        pin_memory=config.data.pin_memory,
+        prefetch_factor=config.data.prefetch_factor,
+        persistent_workers=False  # 验证时不需要保持worker
+    )
+
+    print(f"训练批次数: {len(train_loader)}")
+    print(f"验证批次数: {len(val_loader)}")
+
+    print("\n创建模型...")
+
+    model = IntrinsicUNet(
+        num_images=config.model.num_images,
+        base_channels=config.model.base_channels,
+        sh_order=config.model.sh_order
+    )
+
+    renderer = PhysicsRenderer(
+        use_edge_aware=config.model.use_edge_aware,
+        use_directional_light=config.model.use_directional_light
+    )
+
+    # 🔴【关键修改】注释掉残差模块的初始化
+    # residual = HierarchicalResidual(
+    #     image_height=config.data.image_size[0],
+    #     image_width=config.data.image_size[1],
+    #     use_local_residual=config.model.use_local_residual
+    # )
+    residual = None  # 设为 None
+
+    total_params = sum(p.numel() for p in model.parameters())
+    residual_params = 0
+    print(f"模型参数量: {total_params:,}")
+    print(f"残差模块参数量: {residual_params:,}")
+    print(f"总参数量: {total_params + residual_params:,}")
+
+    print("\n创建训练器...")
+
+    trainer_config = {
+        'data_root': config.data.root_dir,
+        'train_scenes': config.data.train_scenes,
+        'val_scenes': config.data.val_scenes,
+        'num_lights': config.data.num_lights,
+        'image_size': config.data.image_size,
+        'batch_size': config.data.batch_size,
+        'total_epochs': config.train.total_epochs,
+        'learning_rate': config.train.learning_rate,
+        'weight_decay': config.train.weight_decay,
+        'stage1_epochs': config.train.stage1_epochs,
+        'stage2_epochs': config.train.stage2_epochs,
+        'base_channels': config.model.base_channels,
+        'scheduler': config.train.scheduler,
+        'step_size': config.train.step_size,
+        'gamma': config.train.gamma,
+        'log_dir': config.paths.log_dir,
+        'checkpoint_dir': config.paths.checkpoint_dir,
+        'vis_dir': config.paths.vis_dir,
+        'num_workers': config.data.num_workers,
+        'use_amp': config.train.use_amp,
+        'use_edge_aware': config.model.use_edge_aware,
+        'log_interval': config.train.log_interval,
+        'tensorboard_interval': config.train.tensorboard_interval,
+        'val_interval': config.train.val_interval,
+        'vis_interval': config.train.vis_interval,
+        'save_interval': config.train.save_interval,
+        'aggressive_albedo_smooth': getattr(config, 'aggressive_albedo_smooth', False)
+    }
+
+    trainer = InverseRenderTrainer(
+        model=model,
+        renderer=renderer,
+        residual=residual,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        config=trainer_config
+    )
+
+    if resume_checkpoint is not None:
+        print(f"\n从检查点恢复训练: {resume_checkpoint}")
+        trainer.load_checkpoint(resume_checkpoint)
+
+    print("\n开始训练...\n")
+    trainer.train()
+
+    print("\n训练完成!")
+
+
+def test_mode(config: Config, checkpoint_path: str):
+    """
+    测试模式
+
+    Args:
+        config: 配置对象
+        checkpoint_path: 模型检查点路径
+    """
+    print("\n" + "=" * 80)
+    print("测试模式")
+    print("=" * 80 + "\n")
+
+    set_seed(config.seed)
+    device = setup_device(config.device)
+
+    print("创建测试数据集...")
+
+    test_dataset = MultiLightingDataset(
+        root_dir=config.data.root_dir,
+        scene_list=config.data.test_scenes,
+        num_lights=config.data.num_lights,
+        image_size=config.data.image_size,
+        is_training=False,
+        file_extension=config.data.file_extension
+    )
+
+    print(f"测试集大小: {len(test_dataset)} 个场景")
+
+    test_loader = create_data_loader(
+        test_dataset,
+        batch_size=1,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=False
+    )
+
+    print("创建模型...")
+
+    model = IntrinsicUNet(
+        num_images=config.model.num_images,
+        base_channels=config.model.base_channels,
+        sh_order=config.model.sh_order
+    ).to(device)
+
+    renderer = PhysicsRenderer(
+        use_edge_aware=config.model.use_edge_aware,
+        use_directional_light=config.model.use_directional_light
+    ).to(device)
+
+    residual = HierarchicalResidual(
+        image_height=config.data.image_size[0],
+        image_width=config.data.image_size[1],
+        use_local_residual=config.model.use_local_residual
+    ).to(device)
+
+    print(f"加载检查点: {checkpoint_path}")
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+
+    model.load_state_dict(checkpoint['model_state_dict'])
+    renderer.load_state_dict(checkpoint['renderer_state_dict'])
+    residual.load_state_dict(checkpoint['residual_state_dict'])
+
+    model.eval()
+    renderer.eval()
+    residual.eval()
+
+    print("开始测试...\n")
+
+    loss_calculator = LossCalculator()
+
+    from PIL import Image
+    import numpy as np
+
+    output_dir = Path(config.paths.output_dir) / 'test_results'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    total_loss = 0.0
+    num_batches = 0
+
+    with torch.no_grad():
+        for batch_idx, (images, scene_names) in enumerate(test_loader):
+            images = images.to(device)
+            scene_name = scene_names[0]
+
+            print(f"处理场景 {batch_idx + 1}/{len(test_loader)}: {scene_name}")
+
+            depth, albedo, sh_coeffs, weight_map = model(images)
+            rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
+            final_render, global_residual, local_residual = residual(
+                albedo, shading, normal, sh_coeffs
+            )
+
+            total_loss_batch, loss_dict = loss_calculator(
+                pred_images=final_render,
+                target_images=images,
+                depth=depth,
+                albedo=albedo,
+                weight_map=weight_map,
+                sh_coeffs=sh_coeffs,
+                local_residual=local_residual
+            )
+
+            total_loss += total_loss_batch.item()
+            num_batches += 1
+
+            scene_dir = output_dir / scene_name
+            scene_dir.mkdir(parents=True, exist_ok=True)
+
+            def save_tensor(tensor, path, vmin=None, vmax=None):
+                if vmin is None:
+                    vmin = tensor.min()
+                if vmax is None:
+                    vmax = tensor.max()
+                tensor_norm = (tensor - vmin) / (vmax - vmin + 1e-8)
+                tensor_np = (tensor_norm * 255).clamp(0, 255).cpu().numpy()
+                img = Image.fromarray(tensor_np.astype(np.uint8))
+                img.save(path)
+
+            B, K, H, W = images.shape
+
+            for k in range(K):
+                save_tensor(images[0, k], scene_dir / f'input_{k:02d}.png')
+                save_tensor(rendered[0, k], scene_dir / f'rendered_{k:02d}.png')
+                save_tensor(final_render[0, k], scene_dir / f'final_render_{k:02d}.png')
+
+            save_tensor(depth[0, 0], scene_dir / 'depth.png')
+            save_tensor(albedo[0, 0], scene_dir / 'albedo.png')
+            save_tensor(weight_map[0, 0], scene_dir / 'weight_map.png')
+
+            normal_vis = (normal[0] + 1) / 2
+            for i, name in enumerate(['normal_x', 'normal_y', 'normal_z']):
+                save_tensor(normal_vis[i], scene_dir / f'{name}.png')
+
+            print(f"  损失: {total_loss_batch.item():.6f}")
+            print(f"  结果已保存到: {scene_dir}")
+
+    avg_loss = total_loss / num_batches
+    print(f"\n平均测试损失: {avg_loss:.6f}")
+    print(f"测试完成! 结果已保存到: {output_dir}")
+
+
+def demo_mode(config: Config, checkpoint_path: Optional[str] = None):
+    """
+    演示模式
+
+    Args:
+        config: 配置对象
+        checkpoint_path: 模型检查点路径（可选）
+    """
+    print("\n" + "=" * 80)
+    print("演示模式")
+    print("=" * 80 + "\n")
+
+    set_seed(config.seed)
+    device = setup_device(config.device)
+
+    print("创建演示数据集...")
+
+    demo_scenes = config.data.train_scenes[:1]
+
+    demo_dataset = MultiLightingDataset(
+        root_dir=config.data.root_dir,
+        scene_list=demo_scenes,
+        num_lights=config.data.num_lights,
+        image_size=config.data.image_size,
+        is_training=False,
+        file_extension=config.data.file_extension
+    )
+
+    print(f"演示场景: {demo_scenes}")
+
+    demo_loader = create_data_loader(
+        demo_dataset,
+        batch_size=1,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=False
+    )
+
+    print("创建模型...")
+
+    model = IntrinsicUNet(
+        num_images=config.model.num_images,
+        base_channels=config.model.base_channels,
+        sh_order=config.model.sh_order
+    ).to(device)
+
+    renderer = PhysicsRenderer(
+        use_edge_aware=config.model.use_edge_aware,
+        use_directional_light=config.model.use_directional_light
+    ).to(device)
+
+    residual = HierarchicalResidual(
+        image_height=config.data.image_size[0],
+        image_width=config.data.image_size[1],
+        use_local_residual=config.model.use_local_residual
+    ).to(device)
+
+    if checkpoint_path is not None and os.path.exists(checkpoint_path):
+        print(f"加载检查点: {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        renderer.load_state_dict(checkpoint['renderer_state_dict'])
+        residual.load_state_dict(checkpoint['residual_state_dict'])
+        model.eval()
+        renderer.eval()
+        residual.eval()
+    else:
+        print("使用随机初始化的模型")
+
+    print("\n运行演示...\n")
+
+    with torch.no_grad():
+        for images, scene_names in demo_loader:
+            images = images.to(device)
+            scene_name = scene_names[0]
+
+            print(f"场景: {scene_name}")
+            print(f"输入形状: {images.shape}")
+
+            depth, albedo, sh_coeffs, weight_map = model(images)
+            rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
+            final_render, global_residual, local_residual = residual(
+                albedo, shading, normal, sh_coeffs
+            )
+
+            print(f"\n预测结果:")
+            print(f"  深度图: {depth.shape}, 范围 [{depth.min():.3f}, {depth.max():.3f}]")
+            print(f"  反照率图: {albedo.shape}, 范围 [{albedo.min():.3f}, {albedo.max():.3f}]")
+            print(f"  权重图: {weight_map.shape}, 范围 [{weight_map.min():.3f}, {weight_map.max():.3f}]")
+            print(f"  球谐系数: {sh_coeffs.shape}, 范围 [{sh_coeffs.min():.3f}, {sh_coeffs.max():.3f}]")
+            print(f"  法线图: {normal.shape}, 范围 [{normal.min():.3f}, {normal.max():.3f}]")
+            print(f"  着色图: {shading.shape}, 范围 [{shading.min():.3f}, {shading.max():.3f}]")
+            print(f"  渲染图像: {rendered.shape}, 范围 [{rendered.min():.3f}, {rendered.max():.3f}]")
+            print(
+                f"  全局残差: {global_residual.shape}, 范围 [{global_residual.min():.3f}, {global_residual.max():.3f}]")
+
+            if local_residual is not None:
+                print(
+                    f"  局部残差: {local_residual.shape}, 范围 [{local_residual.min():.3f}, {local_residual.max():.3f}]")
+
+            print(f"\n最终渲染: {final_render.shape}, 范围 [{final_render.min():.3f}, {final_render.max():.3f}]")
+
+            loss_calculator = LossCalculator()
+            total_loss, loss_dict = loss_calculator(
+                pred_images=final_render,
+                target_images=images,
+                depth=depth,
+                albedo=albedo,
+                weight_map=weight_map,
+                sh_coeffs=sh_coeffs,
+                local_residual=local_residual
+            )
+
+            print(f"\n损失:")
+            for key, value in loss_dict.items():
+                print(f"  {key}: {value:.6f}")
+            print(f"  总损失: {total_loss.item():.6f}")
+
+            break
+
+    print("\n演示完成!")
+
+
+def parse_args():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(
+        description='逆向渲染项目 - 多光照图像的内在属性分解',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  训练模式:
+    python main.py --mode train --data_root ./data --train_scenes scene_001 scene_002 --val_scenes scene_003
+
+  测试模式:
+    python main.py --mode test --checkpoint ./checkpoints/best_model.pth --test_scenes scene_004
+
+  演示模式:
+    python main.py --mode demo --checkpoint ./checkpoints/best_model.pth
+
+  使用配置文件:
+    python main.py --config config.json --mode train
+        """
+    )
+
+    parser.add_argument('--mode', type=str, required=True,
+                        choices=['train', 'test', 'demo'],
+                        help='运行模式: train, test, demo')
+
+    parser.add_argument('--config', type=str, default=None,
+                        help='配置文件路径 (JSON格式)')
+
+    parser.add_argument('--checkpoint', type=str, default=None,
+                        help='模型检查点路径 (用于测试/演示/恢复训练)')
+
+    parser.add_argument('--resume', action='store_true',
+                        help='从检查点恢复训练')
+
+    parser.add_argument('--data_root', type=str, default='./data/inverse_rendering',
+                        help='数据集根目录')
+
+    parser.add_argument('--train_scenes', type=str, nargs='+', default=None,
+                        help='训练场景列表')
+
+    parser.add_argument('--val_scenes', type=str, nargs='+', default=None,
+                        help='验证场景列表')
+
+    parser.add_argument('--test_scenes', type=str, nargs='+', default=None,
+                        help='测试场景列表')
+
+    parser.add_argument('--num_lights', type=int, default=5,
+                        help='每个场景的光照数量')
+
+    parser.add_argument('--image_size', type=int, nargs=2, default=[256, 256],
+                        help='图像尺寸 [H, W]')
+
+    parser.add_argument('--batch_size', type=int, default=4,
+                        help='批次大小')
+
+    parser.add_argument('--total_epochs', type=int, default=100,
+                        help='总训练epoch数')
+
+    parser.add_argument('--learning_rate', type=float, default=1e-4,
+                        help='学习率')
+
+    parser.add_argument('--stage1_epochs', type=int, default=30,
+                        help='阶段1的epoch数')
+
+    parser.add_argument('--stage2_epochs', type=int, default=30,
+                        help='阶段2的epoch数')
+
+    parser.add_argument('--base_channels', type=int, default=32,
+                        help='U-Net基础通道数')
+
+    parser.add_argument('--scheduler', type=str, default='step',
+                        choices=['step', 'cosine', 'plateau', 'none'],
+                        help='学习率调度器')
+
+    parser.add_argument('--use_amp', action='store_true',
+                        help='使用混合精度训练')
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cuda',  # 确保默认值是 'cuda'
+        choices=['cuda', 'cpu'],
+        help='训练设备'
+    )
+
+    parser.add_argument('--seed', type=int, default=42,
+                        help='随机种子')
+
+    parser.add_argument('--verbose', action='store_true', default=True,
+                        help='详细输出')
+
+    parser.add_argument('--aggressive-albedo-smooth', action='store_true',
+                        help='启用反照率平滑激进疗法')
+
+    return parser.parse_args()
+
+
+def main():
+    # ========== 直接在代码中设置参数 ==========
+
+    # 运行模式：'train'、'test' 或 'demo'
+    mode = 'train'
+
+    # 检查点路径（用于恢复训练或测试）
+    checkpoint_path = None  # 例如：r'checkpoints\checkpoint_epoch_0050.pth'
+
+    # 是否恢复训练
+    resume = False
+
+    # 数据根目录
+    data_root = r"C:\Users\35702\Desktop\processed_data"
+
+    # 训练场景列表
+    train_scenes = []  # 留空，让数据集自动扫描
+
+    # 验证场景列表
+    val_scenes = []  # 留空，让数据集自动扫描
+
+    # 测试场景列表
+    test_scenes = []  # 留空，让数据集自动扫描
+
+    # 每个场景的光照图像数量
+    num_lights = 5
+
+    # 图像尺寸 [高度, 宽度]
+    image_size = [256, 256]
+
+    # 批次大小
+    batch_size = 8
+
+    # 总训练轮数
+    total_epochs = 100
+
+    # 学习率
+    learning_rate = 1e-4
+
+    # 阶段1训练轮数
+    stage1_epochs = 30
+
+    # 阶段2训练轮数
+    stage2_epochs = 30
+
+    # 基础通道数
+    base_channels = 32
+
+    # 学习率调度器：'step'、'cosine'、'plateau' 或 'none'
+    scheduler = 'step'
+
+    # 是否使用混合精度训练
+    use_amp = False
+
+    # 设备：'cuda' 或 'cpu'
+    device = 'cuda'
+
+    # 随机种子
+    seed = 42
+
+    # 是否显示详细信息
+    verbose = True
+
+    # 是否启用反照率平滑激进疗法
+    aggressive_albedo_smooth = False
+
+    # ========================================
+
+
+    print("=" * 80)
+    print("逆向渲染项目")
+    print("=" * 80)
+
+    print(f"\n运行模式: {mode}")
+    print(f"设备: {device}")
+    print(f"数据根目录: {data_root}")
+    print(f"光照数量: {num_lights}")
+    print(f"批次大小: {batch_size}")
+    print(f"总训练轮数: {total_epochs}")
+    print(f"学习率: {learning_rate}")
+
+    # 创建配置对象
+    config = Config()
+
+    # 更新配置
+    config.data.root_dir = data_root
+    config.data.train_scenes = train_scenes
+    config.data.val_scenes = val_scenes
+    config.data.test_scenes = test_scenes
+    config.data.num_lights = num_lights
+    config.data.image_size = tuple(image_size)
+    config.data.batch_size = batch_size
+
+    config.train.total_epochs = total_epochs
+    config.train.learning_rate = learning_rate
+    config.train.stage1_epochs = stage1_epochs
+    config.train.stage2_epochs = stage2_epochs
+    config.train.scheduler = scheduler
+    config.train.use_amp = use_amp
+
+    config.model.base_channels = base_channels
+    config.model.num_images = num_lights
+
+    config.device = device
+    config.seed = seed
+    config.verbose = verbose
+    # 添加反照率平滑激进疗法配置
+    config.aggressive_albedo_smooth = aggressive_albedo_smooth
+    if config.aggressive_albedo_smooth:
+        print("\n启用反照率平滑激进疗法!")
+        # 应用激进疗法的损失权重
+        config.loss.albedo_smooth = 2.5
+        config.loss.shading_smooth_weight = 0.2
+        config.loss.retinex_constraint_weight = 0.3
+        config.loss.reconstruction = 0.8
+        print(f"激进疗法权重:")
+        print(f"  albedo_smooth: {config.loss.albedo_smooth}")
+        print(f"  shading_smooth_weight: {config.loss.shading_smooth_weight}")
+        print(f"  retinex_constraint_weight: {config.loss.retinex_constraint_weight}")
+        print(f"  reconstruction: {config.loss.reconstruction}")
+
+    # 根据模式执行相应操作
+    if mode == 'train':
+        train_mode(config, checkpoint_path if resume else None)
+    elif mode == 'test':
+        test_mode(config, checkpoint_path)
+    elif mode == 'demo':
+        demo_mode(config, checkpoint_path)
+    else:
+        print(f"错误: 未知的模式 '{mode}'")
+        print("支持的模式: train, test, demo")
+        sys.exit(1)
+if __name__ == "__main__":
+    main()
