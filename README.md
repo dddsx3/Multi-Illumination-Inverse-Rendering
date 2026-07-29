@@ -2,6 +2,34 @@
 
 基于深度学习的逆向渲染系统，从多光照灰度图像中恢复场景的深度图、反照率图、法线图和球谐光照系数。
 
+## 效果演示
+
+以下为模型在测试场景上的推理结果。输入为同一物体在 5 种不同光照条件下的灰度图像，输出为分解后的深度、反照率、法线等内在属性。
+
+### 输入：多光照图像
+
+| Light 1 | Light 2 | Light 3 | Light 4 | Light 5 |
+|:-------:|:-------:|:-------:|:-------:|:-------:|
+| ![input_00](examples/input_00.png) | ![input_01](examples/input_01.png) | ![input_02](examples/input_02.png) | ![input_03](examples/input_03.png) | ![input_04](examples/input_04.png) |
+
+### 输出：分解结果
+
+| 深度图 | 反照率图 | 光照图 | 法线图 (X/Y/Z) |
+|:-----:|:-------:|:-----:|:-------------:|
+| ![depth](examples/depth.png) | ![albedo](examples/albedo.png) | ![shading](examples/shading.png) | ![nx](examples/normal_x.png) ![ny](examples/normal_y.png) ![nz](examples/normal_z.png) |
+
+### 输出：渲染重建
+
+| Rendered 1 | Rendered 2 | Rendered 3 | Rendered 4 | Rendered 5 |
+|:----------:|:----------:|:----------:|:----------:|:----------:|
+| ![r00](examples/rendered_00.png) | ![r01](examples/rendered_01.png) | ![r02](examples/rendered_02.png) | ![r03](examples/rendered_03.png) | ![r04](examples/rendered_04.png) |
+
+### 输出：残差修正
+
+| 全局残差 | 局部残差 | 权重图 |
+|:-------:|:-------:|:-----:|
+| ![gr](examples/global_residual.png) | ![lr](examples/local_residual.png) | ![wm](examples/weight_map.png) |
+
 ## 核心功能
 
 - 从 5 张不同光照条件下的灰度图像分解内在属性
@@ -12,34 +40,23 @@
 
 ## 项目结构
 
-```
-├── main.py                      # 主程序入口（训练/测试/演示）
-├── config.py                    # 配置管理
-├── unet_model.py                # U-Net 模型定义
-├── physics_renderer.py           # 可微分物理渲染器
-├── residual_modules.py           # 层次化残差模块
-├── loss_functions.py             # 损失函数集合
-├── trainer.py                   # 三阶段课程学习训练器
-├── data_loader.py                # 多光照数据加载器
-├── inference.py                  # 推理脚本
-├── auto_training_monitor.py      # 训练健康监控
-├── model_diagnostics.py          # 模型诊断与可视化
-├── dataset_test.py               # 数据集质量检查
-├── examples/                     # 模型推理效果示例
-│   ├── input_00~04.png           #   输入：5张多光照图像
-│   ├── depth.png                 #   输出：深度图
-│   ├── albedo.png                #   输出：反照率图
-│   ├── normal_x/y/z.png          #   输出：法线图
-│   ├── rendered_00~04.png        #   输出：物理渲染结果
-│   ├── final_render_00~04.png    #   输出：最终渲染（含残差）
-│   ├── shading.png               #   输出：光照图
-│   ├── weight_map.png            #   输出：权重图
-│   ├── global_residual.png       #   输出：全局残差
-│   ├── local_residual.png        #   输出：局部残差
-│   └── sh_coeffs.json            #   输出：球谐光照系数
-├── 逆向渲染项目操作手册.md        # 详细操作手册
-└── 项目交接文档.md                # 项目交接文档
-```
+| 文件 | 说明 |
+|------|------|
+| [main.py](main.py) | 主程序入口（训练/测试/演示） |
+| [config.py](config.py) | 配置管理 |
+| [unet_model.py](unet_model.py) | U-Net 模型定义 |
+| [physics_renderer.py](physics_renderer.py) | 可微分物理渲染器 |
+| [residual_modules.py](residual_modules.py) | 层次化残差模块 |
+| [loss_functions.py](loss_functions.py) | 损失函数集合 |
+| [trainer.py](trainer.py) | 三阶段课程学习训练器 |
+| [data_loader.py](data_loader.py) | 多光照数据加载器 |
+| [inference.py](inference.py) | 推理脚本 |
+| [auto_training_monitor.py](auto_training_monitor.py) | 训练健康监控 |
+| [model_diagnostics.py](model_diagnostics.py) | 模型诊断与可视化 |
+| [dataset_test.py](dataset_test.py) | 数据集质量检查 |
+| [examples/](examples/) | 模型推理效果示例 |
+| [逆向渲染项目操作手册.md](逆向渲染项目操作手册.md) | 详细操作手册 |
+| [项目交接文档.md](项目交接文档.md) | 项目交接文档 |
 
 ## 环境要求
 
@@ -103,6 +120,14 @@ data_root/
 | Stage 1 | 几何学习 | 深度、光照分离，Albedo 平滑 | 30 |
 | Stage 2 | 材质学习 | 反照率、权重正则化 | 30 |
 | Stage 3 | 残差学习 | 非朗伯效应建模 | 后续 |
+
+## 参考文献
+
+- **U-Net**: Ronneberger O, Fischer P, Brox T. *U-Net: Convolutional Networks for Biomedical Image Segmentation*. MICCAI 2015. [[arXiv:1505.04597](https://arxiv.org/abs/1505.04597)]
+- **球谐光照**: Ramamoorthi R, Hanrahan P. *An Efficient Representation for Irradiance Environment Maps*. SIGGRAPH 2001. [[DOI](https://doi.org/10.1145/383259.383266)]
+- **内在图像分解**: Bell S, Bala K, Snavely N. *Intrinsic Images in the Wild*. ACM TOG 2014. [[DOI](https://doi.org/10.1145/2601097.2601206)]
+- **深度引导本征分解**: Narihira T, Maire M, Yu S X. *Direct Intrinsics: Learning Albedo-Shading Decomposition by Convolutional Neural Networks*. ICCV 2015. [[arXiv:1512.02311](https://arxiv.org/abs/1512.02311)]
+- **可微分渲染**: Li T M, Aittala M, Durand F, Lehtinen J. *Differentiable Monte Carlo Ray Tracing through Edge Sampling*. ACM TOG 2018. [[DOI](https://doi.org/10.1145/3272127.3275109)]
 
 ## 更多信息
 
