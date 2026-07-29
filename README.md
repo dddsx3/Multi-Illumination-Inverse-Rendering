@@ -1,89 +1,119 @@
-# 多光照图像逆向渲染系统
+# Multi-Illumination Inverse Rendering System
 
-基于深度学习的逆向渲染系统，从多光照灰度图像中恢复场景的深度图、反照率图、法线图和球谐光照系数。
+A deep learning-based inverse rendering system that recovers depth maps, albedo maps, normal maps, and spherical harmonic lighting coefficients from multi-illumination grayscale images.
 
-## 效果演示
+## Demo
 
-以下为模型在测试场景上的推理结果。输入为同一物体在 5 种不同光照条件下的灰度图像，输出为分解后的深度、反照率、法线等内在属性。
+The following results show model inference on a test scene. The input consists of 5 grayscale images of the same object under different lighting directions. The model decomposes them into intrinsic properties and reconstructs the rendered images.
 
-### 输入：多光照图像
+### Input — 5 Multi-Illumination Images
 
-| Light 1 | Light 2 | Light 3 | Light 4 | Light 5 |
-|:-------:|:-------:|:-------:|:-------:|:-------:|
-| ![input_00](examples/input_00.png) | ![input_01](examples/input_01.png) | ![input_02](examples/input_02.png) | ![input_03](examples/input_03.png) | ![input_04](examples/input_04.png) |
+<p align="center">
+  <img src="examples/input_00.png" width="18%" alt="Light 1" />
+  <img src="examples/input_01.png" width="18%" alt="Light 2" />
+  <img src="examples/input_02.png" width="18%" alt="Light 3" />
+  <img src="examples/input_03.png" width="18%" alt="Light 4" />
+  <img src="examples/input_04.png" width="18%" alt="Light 5" />
+</p>
 
-### 输出：分解结果
+### Output — Intrinsic Decomposition
 
-| 深度图 | 反照率图 | 光照图 | 法线图 (X/Y/Z) |
-|:-----:|:-------:|:-----:|:-------------:|
-| ![depth](examples/depth.png) | ![albedo](examples/albedo.png) | ![shading](examples/shading.png) | ![nx](examples/normal_x.png) ![ny](examples/normal_y.png) ![nz](examples/normal_z.png) |
+<p align="center">
+  <img src="examples/depth.png" width="30%" alt="Depth Map" />
+  <img src="examples/albedo.png" width="30%" alt="Albedo Map" />
+  <img src="examples/shading.png" width="30%" alt="Shading Map" />
+</p>
+<p align="center">
+  <em>Left: Depth Map &nbsp;|&nbsp; Center: Albedo Map &nbsp;|&nbsp; Right: Shading Map</em>
+</p>
 
-### 输出：渲染重建
+<p align="center">
+  <img src="examples/normal_x.png" width="30%" alt="Normal X" />
+  <img src="examples/normal_y.png" width="30%" alt="Normal Y" />
+  <img src="examples/normal_z.png" width="30%" alt="Normal Z" />
+</p>
+<p align="center">
+  <em>Normal Map Components (X / Y / Z)</em>
+</p>
 
-| Rendered 1 | Rendered 2 | Rendered 3 | Rendered 4 | Rendered 5 |
-|:----------:|:----------:|:----------:|:----------:|:----------:|
-| ![r00](examples/rendered_00.png) | ![r01](examples/rendered_01.png) | ![r02](examples/rendered_02.png) | ![r03](examples/rendered_03.png) | ![r04](examples/rendered_04.png) |
+### Output — Physically-Based Reconstruction
 
-### 输出：残差修正
+<p align="center">
+  <img src="examples/rendered_00.png" width="18%" alt="Rendered 1" />
+  <img src="examples/rendered_01.png" width="18%" alt="Rendered 2" />
+  <img src="examples/rendered_02.png" width="18%" alt="Rendered 3" />
+  <img src="examples/rendered_03.png" width="18%" alt="Rendered 4" />
+  <img src="examples/rendered_04.png" width="18%" alt="Rendered 5" />
+</p>
+<p align="center">
+  <em>Physically-based rendered images from predicted depth, albedo, and SH coefficients</em>
+</p>
 
-| 全局残差 | 局部残差 | 权重图 |
-|:-------:|:-------:|:-----:|
-| ![gr](examples/global_residual.png) | ![lr](examples/local_residual.png) | ![wm](examples/weight_map.png) |
+### Output — Residual Correction
 
-## 核心功能
+<p align="center">
+  <img src="examples/global_residual.png" width="30%" alt="Global Residual" />
+  <img src="examples/local_residual.png" width="30%" alt="Local Residual" />
+  <img src="examples/weight_map.png" width="30%" alt="Weight Map" />
+</p>
+<p align="center">
+  <em>Left: Global Residual &nbsp;|&nbsp; Center: Local Residual &nbsp;|&nbsp; Right: Adaptive Weight Map</em>
+</p>
 
-- 从 5 张不同光照条件下的灰度图像分解内在属性
-- U-Net 架构进行多输出头预测（深度、反照率、球谐系数、权重图）
-- 可微分物理渲染器（深度→法线→球谐光照→渲染图像）
-- 层次化残差模块处理非朗伯反射效应
-- 三阶段课程学习策略（几何→材质→残差）
+## Key Features
 
-## 项目结构
+- Intrinsic decomposition from 5 multi-illumination grayscale images
+- Multi-head U-Net architecture predicting depth, albedo, SH coefficients, and weight maps
+- Differentiable physics-based renderer (depth → normals → SH lighting → rendered image)
+- Hierarchical residual modules for non-Lambertian reflectance
+- Three-stage curriculum learning (geometry → material → residual)
 
-| 文件 | 说明 |
-|------|------|
-| [main.py](main.py) | 主程序入口（训练/测试/演示） |
-| [config.py](config.py) | 配置管理 |
-| [unet_model.py](unet_model.py) | U-Net 模型定义 |
-| [physics_renderer.py](physics_renderer.py) | 可微分物理渲染器 |
-| [residual_modules.py](residual_modules.py) | 层次化残差模块 |
-| [loss_functions.py](loss_functions.py) | 损失函数集合 |
-| [trainer.py](trainer.py) | 三阶段课程学习训练器 |
-| [data_loader.py](data_loader.py) | 多光照数据加载器 |
-| [inference.py](inference.py) | 推理脚本 |
-| [auto_training_monitor.py](auto_training_monitor.py) | 训练健康监控 |
-| [model_diagnostics.py](model_diagnostics.py) | 模型诊断与可视化 |
-| [dataset_test.py](dataset_test.py) | 数据集质量检查 |
-| [examples/](examples/) | 模型推理效果示例 |
-| [逆向渲染项目操作手册.md](逆向渲染项目操作手册.md) | 详细操作手册 |
-| [项目交接文档.md](项目交接文档.md) | 项目交接文档 |
+## Project Structure
 
-## 环境要求
+| File | Description |
+|------|-------------|
+| [main.py](main.py) | Entry point — training, testing, and demo modes |
+| [config.py](config.py) | Configuration management |
+| [unet_model.py](unet_model.py) | U-Net model definition |
+| [physics_renderer.py](physics_renderer.py) | Differentiable physics-based renderer |
+| [residual_modules.py](residual_modules.py) | Hierarchical residual modules |
+| [loss_functions.py](loss_functions.py) | Loss function collection |
+| [trainer.py](trainer.py) | Three-stage curriculum learning trainer |
+| [data_loader.py](data_loader.py) | Multi-illumination data loader |
+| [inference.py](inference.py) | Inference script |
+| [auto_training_monitor.py](auto_training_monitor.py) | Training health monitor |
+| [model_diagnostics.py](model_diagnostics.py) | Model diagnostics and visualization |
+| [dataset_test.py](dataset_test.py) | Dataset quality checker |
+| [examples/](examples/) | Model inference examples |
+| [逆向渲染项目操作手册.md](逆向渲染项目操作手册.md) | Operations manual (Chinese) |
+| [项目交接文档.md](项目交接文档.md) | Handover document (Chinese) |
+
+## Requirements
 
 - Python 3.8+
 - PyTorch 1.8+ (CUDA)
 - torchvision, numpy, Pillow, tqdm
-- matplotlib (可选，用于可视化)
+- matplotlib (optional, for visualization)
 
-## 快速开始
+## Quick Start
 
-### 训练
+### Training
 
 ```bash
 python main.py --mode train
 ```
 
-在 `main.py` 中修改 `data_root` 指向你的数据集路径。
+Set `data_root` in `main.py` to point to your dataset directory.
 
-### 推理
+### Inference
 
 ```bash
 python inference.py
 ```
 
-编辑 `inference.py` 中的 `checkpoint_path` 和 `image_folder` 参数。
+Edit `checkpoint_path` and `image_folder` in `inference.py`.
 
-### 数据格式
+### Data Format
 
 ```
 data_root/
@@ -97,38 +127,39 @@ data_root/
     └── ...
 ```
 
-每个场景包含 5 张灰度光照图像，分辨率 256×256。
+Each scene contains 5 grayscale illumination images at 256×256 resolution.
 
-## 模型架构
+## Model Architecture
 
 ```
-输入: 5张多光照灰度图像 [B, 5, H, W]
+Input: 5 multi-illumination grayscale images [B, 5, H, W]
   ↓
-[IntrinsicUNet] → 深度 [B,1,H,W] + 反照率 [B,1,H,W] + 球谐系数 [B,5,9] + 权重图 [B,1,H,W]
+[IntrinsicUNet] → depth [B,1,H,W] + albedo [B,1,H,W] + SH coeffs [B,5,9] + weight [B,1,H,W]
   ↓
-[PhysicsRenderer] → 深度→法线(Sobel) → 球谐光照计算 → 渲染图像
+[PhysicsRenderer] → depth→normals (Sobel) → SH lighting → rendered image
   ↓
-[HierarchicalResidual] → 非朗伯效应修正
+[HierarchicalResidual] → non-Lambertian correction
   ↓
-输出: 分解后的内在属性 + 重建图像
+Output: decomposed intrinsic properties + reconstructed images
 ```
 
-## 三阶段课程学习
+## Three-Stage Curriculum Learning
 
-| 阶段 | 名称 | 重点 | 默认轮数 |
-|------|------|------|----------|
-| Stage 1 | 几何学习 | 深度、光照分离，Albedo 平滑 | 30 |
-| Stage 2 | 材质学习 | 反照率、权重正则化 | 30 |
-| Stage 3 | 残差学习 | 非朗伯效应建模 | 后续 |
+| Stage | Name | Focus | Default Epochs |
+|-------|------|-------|----------------|
+| Stage 1 | Geometry Learning | Depth estimation, lighting separation, albedo flattening | 30 |
+| Stage 2 | Material Learning | Albedo refinement, weight regularization | 30 |
+| Stage 3 | Residual Learning | Non-Lambertian effect modeling | remaining |
 
-## 参考文献
+## References
 
 - **U-Net**: Ronneberger O, Fischer P, Brox T. *U-Net: Convolutional Networks for Biomedical Image Segmentation*. MICCAI 2015. [[arXiv:1505.04597](https://arxiv.org/abs/1505.04597)]
-- **球谐光照**: Ramamoorthi R, Hanrahan P. *An Efficient Representation for Irradiance Environment Maps*. SIGGRAPH 2001. [[DOI](https://doi.org/10.1145/383259.383266)]
-- **内在图像分解**: Bell S, Bala K, Snavely N. *Intrinsic Images in the Wild*. ACM TOG 2014. [[DOI](https://doi.org/10.1145/2601097.2601206)]
-- **深度引导本征分解**: Narihira T, Maire M, Yu S X. *Direct Intrinsics: Learning Albedo-Shading Decomposition by Convolutional Neural Networks*. ICCV 2015. [[arXiv:1512.02311](https://arxiv.org/abs/1512.02311)]
-- **可微分渲染**: Li T M, Aittala M, Durand F, Lehtinen J. *Differentiable Monte Carlo Ray Tracing through Edge Sampling*. ACM TOG 2018. [[DOI](https://doi.org/10.1145/3272127.3275109)]
+- **Spherical Harmonics Lighting**: Ramamoorthi R, Hanrahan P. *An Efficient Representation for Irradiance Environment Maps*. SIGGRAPH 2001. [[DOI](https://doi.org/10.1145/383259.383266)]
+- **Intrinsic Image Decomposition**: Bell S, Bala K, Snavely N. *Intrinsic Images in the Wild*. ACM TOG 2014. [[DOI](https://doi.org/10.1145/2601097.2601206)]
+- **Direct Intrinsics**: Narihira T, Maire M, Yu S X. *Direct Intrinsics: Learning Albedo-Shading Decomposition by CNNs*. ICCV 2015. [[arXiv:1512.02311](https://arxiv.org/abs/1512.02311)]
+- **Differentiable Rendering**: Li T M, Aittala M, Durand F, Lehtinen J. *Differentiable Monte Carlo Ray Tracing through Edge Sampling*. ACM TOG 2018. [[DOI](https://doi.org/10.1145/3272127.3275109)]
 
-## 更多信息
+## Further Reading
 
-详见 [逆向渲染项目操作手册](逆向渲染项目操作手册.md) 和 [项目交接文档](项目交接文档.md)。
+- [Operations Manual](逆向渲染项目操作手册.md) (Chinese)
+- [Handover Document](项目交接文档.md) (Chinese)
