@@ -25,6 +25,18 @@
 ├── auto_training_monitor.py      # 训练健康监控
 ├── model_diagnostics.py          # 模型诊断与可视化
 ├── dataset_test.py               # 数据集质量检查
+├── examples/                     # 模型推理效果示例
+│   ├── input_00~04.png           #   输入：5张多光照图像
+│   ├── depth.png                 #   输出：深度图
+│   ├── albedo.png                #   输出：反照率图
+│   ├── normal_x/y/z.png          #   输出：法线图
+│   ├── rendered_00~04.png        #   输出：物理渲染结果
+│   ├── final_render_00~04.png    #   输出：最终渲染（含残差）
+│   ├── shading.png               #   输出：光照图
+│   ├── weight_map.png            #   输出：权重图
+│   ├── global_residual.png       #   输出：全局残差
+│   ├── local_residual.png        #   输出：局部残差
+│   └── sh_coeffs.json            #   输出：球谐光照系数
 ├── 逆向渲染项目操作手册.md        # 详细操作手册
 └── 项目交接文档.md                # 项目交接文档
 ```
