@@ -20,7 +20,25 @@ from unet_model import IntrinsicUNet
 from loss_functions import LossCalculator
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
-from gradient_utils import  ModelInitializer
+def _initialize_weights(module, init_type='kaiming'):
+    """内置权重初始化，替代外部 gradient_utils 依赖"""
+    if isinstance(module, (torch.nn.Conv2d, torch.nn.ConvTranspose2d)):
+        if init_type == 'kaiming':
+            torch.nn.init.kaiming_uniform_(module.weight, mode='fan_in', nonlinearity='relu')
+        elif init_type == 'xavier':
+            torch.nn.init.xavier_uniform_(module.weight)
+        if module.bias is not None:
+            torch.nn.init.constant_(module.bias, 0)
+    elif isinstance(module, torch.nn.BatchNorm2d):
+        torch.nn.init.constant_(module.weight, 1)
+        torch.nn.init.constant_(module.bias, 0)
+    elif isinstance(module, torch.nn.Linear):
+        if init_type == 'kaiming':
+            torch.nn.init.kaiming_uniform_(module.weight, mode='fan_in', nonlinearity='relu')
+        elif init_type == 'xavier':
+            torch.nn.init.xavier_uniform_(module.weight)
+        if module.bias is not None:
+            torch.nn.init.constant_(module.bias, 0)
 
 
 class InverseRenderTrainer:
@@ -68,9 +86,9 @@ class InverseRenderTrainer:
 
         # 权重初始化
         init_type = self.config.get('weight_init', 'xavier')
-        ModelInitializer.initialize_weights(self.model, init_type)
+        self.model.apply(lambda m: _initialize_weights(m, init_type))
         if self.residual is not None:
-            ModelInitializer.initialize_weights(self.residual, init_type)
+            self.residual.apply(lambda m: _initialize_weights(m, init_type))
         print(f"权重初始化完成，类型: {init_type}")
 
         self.model.to(self.device)

@@ -1,75 +1,97 @@
-<header>
+# 多光照图像逆向渲染系统
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+基于深度学习的逆向渲染系统，从多光照灰度图像中恢复场景的深度图、反照率图、法线图和球谐光照系数。
 
-# Introduction to GitHub
+## 核心功能
 
-_Get started using GitHub in less than an hour._
+- 从 5 张不同光照条件下的灰度图像分解内在属性
+- U-Net 架构进行多输出头预测（深度、反照率、球谐系数、权重图）
+- 可微分物理渲染器（深度→法线→球谐光照→渲染图像）
+- 层次化残差模块处理非朗伯反射效应
+- 三阶段课程学习策略（几何→材质→残差）
 
-</header>
+## 项目结构
 
-<!--
-  <<< Author notes: Step 1 >>>
-  Choose 3-5 steps for your course.
-  The first step is always the hardest, so pick something easy!
-  Link to docs.github.com for further explanations.
-  Encourage users to open new tabs for steps!
--->
+```
+├── main.py                      # 主程序入口（训练/测试/演示）
+├── config.py                    # 配置管理
+├── unet_model.py                # U-Net 模型定义
+├── physics_renderer.py           # 可微分物理渲染器
+├── residual_modules.py           # 层次化残差模块
+├── loss_functions.py             # 损失函数集合
+├── trainer.py                   # 三阶段课程学习训练器
+├── data_loader.py                # 多光照数据加载器
+├── inference.py                  # 推理脚本
+├── auto_training_monitor.py      # 训练健康监控
+├── model_diagnostics.py          # 模型诊断与可视化
+├── dataset_test.py               # 数据集质量检查
+├── 逆向渲染项目操作手册.md        # 详细操作手册
+└── 项目交接文档.md                # 项目交接文档
+```
 
-## Step 1: Create a branch
+## 环境要求
 
-_Welcome to "Introduction to GitHub"! :wave:_
+- Python 3.8+
+- PyTorch 1.8+ (CUDA)
+- torchvision, numpy, Pillow, tqdm
+- matplotlib (可选，用于可视化)
 
-**What is GitHub?**: GitHub is a collaboration platform that uses _[Git](https://docs.github.com/get-started/quickstart/github-glossary#git)_ for versioning. GitHub is a popular place to share and contribute to [open-source](https://docs.github.com/get-started/quickstart/github-glossary#open-source) software.
-<br>:tv: [Video: What is GitHub?](https://www.youtube.com/watch?v=pBy1zgt0XPc)
+## 快速开始
 
-**What is a repository?**: A _[repository](https://docs.github.com/get-started/quickstart/github-glossary#repository)_ is a project containing files and folders. A repository tracks versions of files and folders. For more information, see "[About repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories)" from GitHub Docs.
+### 训练
 
-**What is a branch?**: A _[branch](https://docs.github.com/en/get-started/quickstart/github-glossary#branch)_ is a parallel version of your repository. By default, your repository has one branch named `main` and it is considered to be the definitive branch. Creating additional branches allows you to copy the `main` branch of your repository and safely make any changes without disrupting the main project. Many people use branches to work on specific features without affecting any other parts of the project.
+```bash
+python main.py --mode train
+```
 
-Branches allow you to separate your work from the `main` branch. In other words, everyone's work is safe while you contribute. For more information, see "[About branches](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches)".
+在 `main.py` 中修改 `data_root` 指向你的数据集路径。
 
-**What is a profile README?**: A _[profile README](https://docs.github.com/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme)_ is essentially an "About me" section on your GitHub profile where you can share information about yourself with the community on GitHub.com. GitHub shows your profile README at the top of your profile page. For more information, see "[Managing your profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme)".
+### 推理
 
-![profile-readme-example](/images/profile-readme-example.png)
+```bash
+python inference.py
+```
 
-### :keyboard: Activity: Your first branch
+编辑 `inference.py` 中的 `checkpoint_path` 和 `image_folder` 参数。
 
-1. Open a new browser tab and navigate to your newly made repository. Then, work on the steps in your second tab while you read the instructions in this tab.
-2. Navigate to the **< > Code** tab in the header menu of your repository.
+### 数据格式
 
-   ![code-tab](/images/code-tab.png)
+```
+data_root/
+└── rgb/
+    ├── scene_000000/
+    │   ├── light_001.png
+    │   ├── light_002.png
+    │   ├── light_003.png
+    │   ├── light_004.png
+    │   └── light_005.png
+    └── ...
+```
 
-3. Click on the **main** branch drop-down.
+每个场景包含 5 张灰度光照图像，分辨率 256×256。
 
-   ![main-branch-dropdown](/images/main-branch-dropdown.png)
+## 模型架构
 
-4. In the field, name your branch `my-first-branch`. In this case, the name must be `my-first-branch` to trigger the course workflow.
-5. Click **Create branch: my-first-branch** to create your branch.
+```
+输入: 5张多光照灰度图像 [B, 5, H, W]
+  ↓
+[IntrinsicUNet] → 深度 [B,1,H,W] + 反照率 [B,1,H,W] + 球谐系数 [B,5,9] + 权重图 [B,1,H,W]
+  ↓
+[PhysicsRenderer] → 深度→法线(Sobel) → 球谐光照计算 → 渲染图像
+  ↓
+[HierarchicalResidual] → 非朗伯效应修正
+  ↓
+输出: 分解后的内在属性 + 重建图像
+```
 
-   ![create-branch-button](/images/create-branch-button.png)
+## 三阶段课程学习
 
-   The branch will automatically switch to the one you have just created.
-   The **main** branch drop-down bar will reflect your new branch and display the new branch name.
+| 阶段 | 名称 | 重点 | 默认轮数 |
+|------|------|------|----------|
+| Stage 1 | 几何学习 | 深度、光照分离，Albedo 平滑 | 30 |
+| Stage 2 | 材质学习 | 反照率、权重正则化 | 30 |
+| Stage 3 | 残差学习 | 非朗伯效应建模 | 后续 |
 
-6. Wait about 20 seconds then refresh this page (the one you're following instructions from). [GitHub Actions](https://docs.github.com/en/actions) will automatically update to the next step.
+## 更多信息
 
-<footer>
-
-<!--
-  <<< Author notes: Footer >>>
-  Add a link to get support, GitHub status page, code of conduct, license link.
--->
-
----
-
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/introduction-to-github) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
-
-&copy; 2024 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
-
-</footer>
+详见 [逆向渲染项目操作手册](逆向渲染项目操作手册.md) 和 [项目交接文档](项目交接文档.md)。
