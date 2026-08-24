@@ -58,3 +58,8 @@ _render_smoke_log.txt
 _smoke_log.txt
 _pip_blender_log.txt
 _cm_*.txt
+
+_dl_log.txt
+_render_obj_log.txt
+_stress_log.txt
+obj_models_list.txt

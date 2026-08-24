@@ -38,6 +38,7 @@ Phase 1 合成数据集渲染脚本（BlenderProc 2.8.0 API）
 import argparse
 import math
 import os
+import shutil
 import sys
 
 import numpy as np
@@ -112,6 +113,46 @@ def set_world_black():
     bg.inputs[1].default_value = 1.0
 
 
+def _get_world_matrix(o):
+    if hasattr(o, "get_local2world_mat"):
+        return np.asarray(o.get_local2world_mat(), dtype=np.float64)
+    return np.asarray(o.blender_obj.matrix_world, dtype=np.float64)
+
+
+def _set_world_matrix(o, M):
+    if hasattr(o, "set_local2world_mat"):
+        o.set_local2world_mat(M.tolist())
+    else:
+        o.blender_obj.matrix_world = M
+
+
+def normalize_scene_multi(objs, target_longest=1.6):
+    """多对象联合归一化（GLB 常含多部件且父级带变换）：
+
+    统一清零自身缩放 -> 按联合包围盒最长边缩放 -> 以世界矩阵后乘平移
+    将组合几何中心移到原点。世界矩阵写回对任意父子层级（空节点缩放、
+    旋转、Y-up 转换节点）均正确，避免 local location 补偿失真。
+    """
+    objs = list(objs)
+    for o in objs:
+        o.set_scale([1.0, 1.0, 1.0])
+
+    def corners():
+        return np.vstack([np.asarray(o.get_bound_box(), dtype=np.float64) for o in objs])
+
+    pts = corners()
+    size = float((pts.max(axis=0) - pts.min(axis=0)).max())
+    s = target_longest / max(size, 1e-6)
+    for o in objs:
+        o.set_scale([s, s, s])
+    pts = corners()
+    center = (pts.max(axis=0) + pts.min(axis=0)) / 2.0
+    T = np.eye(4)
+    T[:3, 3] = -center
+    for o in objs:
+        _set_world_matrix(o, T @ _get_world_matrix(o))
+
+
 def assign_instance_ids():
     """为场景内全部网格对象分配非零 pass_index（背景恒 0）。
 
@@ -167,12 +208,23 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     # 清理上一场景的全部对象/光照（保留相机设置，后面重建）
     bproc.clean_up(clean_up_camera=True)
 
-    obj = bproc.loader.load_obj(obj_path)[0]
+    # load_obj 同时支持 .obj/.ply/.glb/.gltf，返回 MeshObject 列表
+    loaded = bproc.loader.load_obj(obj_path)
+    if not loaded:
+        raise RuntimeError("导入后无网格对象")
     # 2.8.0 无 manifold_cleanup：存在则调用（旧版本），否则跳过
     # （协议渲染对输入网格的流形质量不敏感，法线由 Cycles 平滑着色导出）
     if hasattr(bproc.object, "manifold_cleanup"):
-        bproc.object.manifold_cleanup(obj)
-    normalize_scene(obj)
+        try:
+            bproc.object.manifold_cleanup(loaded)
+        except Exception:
+            pass
+    # 关键：归一化只统计 MESH 对象——GLB/Sketchfab 结构中的 EMPTY 空节点
+    # 退化包围盒会污染联合 bbox，把真实几何挤出画幅（实测根因）
+    mesh_objs = [o for o in loaded if o.blender_obj.type == "MESH"]
+    if not mesh_objs:
+        raise RuntimeError("导入后无 MESH 对象")
+    normalize_scene_multi(mesh_objs)
     assign_instance_ids()
 
     # 相机：前视图（+X 方向 30° 俯视），look-at 原点
@@ -253,10 +305,11 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
         seg_raw = np.asarray(seg_raw)
     seg = np.asarray(seg_raw).astype(np.int64)
     mask = (seg != 0).astype(np.uint8)
-    if mask.sum() == 0:
+    coverage = float(mask.mean())
+    if not (0.05 <= coverage <= 0.98):
         raise RuntimeError(
-            f"掩码为空：seg 唯一值 {np.unique(seg)[:8]}，"
-            "instance_segmaps 语义与预期不符")
+            f"掩码覆盖异常 {coverage:.3f}（seg 唯一值 {np.unique(seg)[:8]}）："
+            "模型可能未入画幅或退化")
     np.save(os.path.join(scene_dir, "mask.npy"), mask[None])
 
     # 5) 法线：由深度导数导出（与 physics_renderer.DepthToNormal 约定完全一致）
@@ -331,6 +384,9 @@ def main():
             print(f"[fail] {obj_path}: {e}")
             import traceback
             traceback.print_exc()
+            # 清理半成品场景目录，避免污染数据集根目录（重跑时会自动重试）
+            _scene_dir = os.path.join(args.out_dir, os.path.splitext(os.path.basename(obj_path))[0])
+            shutil.rmtree(_scene_dir, ignore_errors=True)
     print("全部完成。")
 
 

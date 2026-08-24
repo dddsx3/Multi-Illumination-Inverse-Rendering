@@ -53,6 +53,26 @@ montage_sample.png（5 场景 × [light_001 | albedo | normal_rgb | depth_jet | 
 - 产物：D:/data/synthetic_stress/（含 _validation 全套报告）
 - 结论：管线在 256 全量参数下稳定，可放量
 
+## 追加：Objaverse 真实模型接入（T1.2 数据源打通）
+
+- 新增 download_objaverse.py：HF allenai/objaverse（未门禁，800K+ GLB），按分组随机抽样下载，体积过滤 [0.2MB, 60MB]，输出渲染清单
+- 实测下载 40 个 GLB（600s 网络瓶颈）；render_dataset 直接以 glb 接入（load_obj 原生分发 glTF 导入器），无需落盘格式转换
+- 多部件模型归一化：新增 normalize_scene_multi（联合包围盒缩放 + 世界矩阵后乘平移），并过滤 EMPTY 对象——其退化包围盒会污染联合 bbox，实测是把真实几何挤出画幅的根因
+- 渲染侧守卫与 C3 门禁对齐：覆盖 [0.05, 0.98] 之外的场景报错并自动清理半成品目录；失败可重跑且不污染数据集根目录
+
+### 真实模型批次结果（256^2, GPU）
+
+| 项 | 数值 |
+|---|---|
+| 下载 | 40 个 GLB / 50 次尝试 |
+| 渲染成功 | 30/40（良品率 75%） |
+| validate_dataset | PASS（exit 0） |
+| 掩码覆盖 | mean 0.184，位于 [0.05,0.95] |
+| 法线-导数夹角 | 0.01° |
+| 重渲染 PSNR | mean 25.5dB / min 15.1dB |
+
+10 个被拒模型为确定性退化（透明材质不可见、碎片出画幅等），正是门禁应当过滤的对象；重跑只重试缺失场景。
+
 ## 结论
 
 **G1 通过。** 可进入 T1.2 全量数据生成（建议先 --count 20 用 256² 全量参数压一遍再放量到 600）。
