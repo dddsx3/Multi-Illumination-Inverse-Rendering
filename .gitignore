@@ -63,3 +63,7 @@ _dl_log.txt
 _render_obj_log.txt
 _stress_log.txt
 obj_models_list.txt
+
+_dl_log.txt
+_pipeline_log.txt
+_run_pipeline.ps1.bak
