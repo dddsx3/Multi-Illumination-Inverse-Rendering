@@ -42,6 +42,8 @@ from evaluate import recon_metrics  # noqa: E402
 
 FILES = ["light_001.png", "light_002.png", "light_003.png",
          "light_004.png", "light_005.png",
+         "light_001_rgb.png", "light_002_rgb.png", "light_003_rgb.png",
+         "light_004_rgb.png", "light_005_rgb.png",
          "depth.npy", "albedo.npy", "normal.npy", "mask.npy", "sh_coeffs.npy"]
 
 
@@ -157,6 +159,26 @@ def validate_scene(scene_dir):
             issues.append(f"重渲染 PSNR {np.mean(psnrs):.1f}dB 低于 12dB（SH 量级/方向需检查）")
     except Exception as e:
         issues.append(f"C5 重渲染失败: {e}")
+
+    # C5b 彩色一致性（v3）：rgb PNG 逐通道解码后的 luma 应与灰度 PNG 一致
+    try:
+        for k in range(5):
+            rgb_p = os.path.join(scene_dir, f"light_{k + 1:03d}_rgb.png")
+            if not os.path.isfile(rgb_p):
+                continue
+            rgb = np.asarray(Image.open(rgb_p), dtype=np.float32) / 255.0
+            gray_p = np.asarray(Image.open(os.path.join(scene_dir,
+                f"light_{k + 1:03d}.png")), dtype=np.float32) / 255.0
+            luma = (0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1]
+                    + 0.0722 * rgb[..., 2])
+            dmax = float(np.abs(luma - gray).max())
+            if k == 0:
+                stat["color_luma_dev"] = dmax
+            if dmax > 4.0 / 255.0:
+                issues.append(f"light_{k + 1:03d} "
+                              f"\u5f69\u8272/\u7070\u5ea6 luma \u504f\u5dee {dmax:.4f}")
+    except Exception as exc:
+        issues.append(f"C5b \u5f69\u8272\u4e00\u81f4\u6027\u5931\u8d25: {exc}")
 
     # 统计（供报告）
     stat["depth_min"], stat["depth_max"] = float(depth[0][m].min()), float(depth[0][m].max())

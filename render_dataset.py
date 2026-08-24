@@ -276,7 +276,8 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
             return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
         return arr.astype(np.float32)
 
-    # 1) 光照图：线性 RGB -> BT.709 灰度 -> sRGB 编码
+    # 1) 光照图（v3 双输出）：线性 RGB -> BT.709 灰度 -> sRGB 编码；
+    #    同时落盘彩色 PNG（light_XXX_rgb.png，RGB 三通道同 OETF），供 RGB 链路
     grayscale_srgb = []
     for k in frames:
         rgb = _to_linear_float(data["colors"][k])[:, :, :3]   # 线性 float
@@ -284,6 +285,9 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
         gray = np.clip(gray, 0.0, 1.0)
         img8 = linear_to_srgb(gray)
         Image.fromarray(img8, mode="L").save(os.path.join(scene_dir, f"light_{k + 1:03d}.png"))
+        rgb8 = linear_to_srgb(np.clip(rgb, 0.0, 1.0))
+        Image.fromarray(rgb8, mode="RGB").save(
+            os.path.join(scene_dir, f"light_{k + 1:03d}_rgb.png"))
         grayscale_srgb.append(img8.astype(np.float32) / 255.0)
 
     # 2) 深度（视空间 z，近大远小正数）
