@@ -276,18 +276,22 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
             return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
         return arr.astype(np.float32)
 
-    # 1) 光照图（v3 双输出）：线性 RGB -> BT.709 灰度 -> sRGB 编码；
-    #    同时落盘彩色 PNG（light_XXX_rgb.png，RGB 三通道同 OETF），供 RGB 链路
+    # 1) 光照图（v3 双输出）：彩色 PNG 与灰度 PNG 共享同一组编码域通道值——
+    #    灰度 = 编码域 BT.709 luma(四舍五入)，保证两文件逐位自洽；
+    #    （饱和场景下"线性亮度再编码"与"编码后取亮度"可差 ~10 灰阶，
+    #      故统一以后者为准）
     grayscale_srgb = []
     for k in frames:
-        rgb = _to_linear_float(data["colors"][k])[:, :, :3]   # 线性 float
-        gray = 0.2126 * rgb[:, :, 0] + 0.7152 * rgb[:, :, 1] + 0.0722 * rgb[:, :, 2]
-        gray = np.clip(gray, 0.0, 1.0)
-        img8 = linear_to_srgb(gray)
-        Image.fromarray(img8, mode="L").save(os.path.join(scene_dir, f"light_{k + 1:03d}.png"))
-        rgb8 = linear_to_srgb(np.clip(rgb, 0.0, 1.0))
+        rgb_lin = _to_linear_float(data["colors"][k])[:, :, :3]   # 线性 float
+        rgb_lin = np.clip(rgb_lin, 0.0, 1.0)
+        rgb8 = linear_to_srgb(rgb_lin)
         Image.fromarray(rgb8, mode="RGB").save(
             os.path.join(scene_dir, f"light_{k + 1:03d}_rgb.png"))
+        gray_f = (0.2126 * rgb8[..., 0].astype(np.float32)
+                  + 0.7152 * rgb8[..., 1].astype(np.float32)
+                  + 0.0722 * rgb8[..., 2].astype(np.float32))
+        img8 = np.round(gray_f).astype(np.uint8)
+        Image.fromarray(img8, mode="L").save(os.path.join(scene_dir, f"light_{k + 1:03d}.png"))
         grayscale_srgb.append(img8.astype(np.float32) / 255.0)
 
     # 2) 深度（视空间 z，近大远小正数）

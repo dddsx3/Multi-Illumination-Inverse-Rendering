@@ -171,7 +171,7 @@ def validate_scene(scene_dir):
                 f"light_{k + 1:03d}.png")), dtype=np.float32) / 255.0
             luma = (0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1]
                     + 0.0722 * rgb[..., 2])
-            dmax = float(np.abs(luma - gray).max())
+            dmax = float(np.abs(luma - gray_p).max())
             if k == 0:
                 stat["color_luma_dev"] = dmax
             if dmax > 4.0 / 255.0:
