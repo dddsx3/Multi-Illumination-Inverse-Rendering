@@ -50,3 +50,11 @@ Thumbs.db
 # Data (large files)
 processed_data/
 data/
+# local smoke artifacts
+_smoke_models/
+models_list.txt
+_debug*
+_render_smoke_log.txt
+_smoke_log.txt
+_pip_blender_log.txt
+_cm_*.txt

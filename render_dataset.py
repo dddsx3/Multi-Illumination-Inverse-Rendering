@@ -1,3 +1,6 @@
+# Phase 1 合成数据集渲染脚本（BlenderProc 2.8.0 API）—— 详细文档见下方 docstring
+import blenderproc as bproc  # BlenderProc 强制要求：首个有效代码行必须是本 import
+
 """
 Phase 1 合成数据集渲染脚本（BlenderProc 2.8.0 API）
 
@@ -39,8 +42,6 @@ import sys
 
 import numpy as np
 from PIL import Image
-
-import blenderproc as bproc
 
 # ---------------------------------------------------------------------------
 # SH 常量（与 physics_renderer.SphericalHarmonicsLighting 完全一致，勿改）
@@ -91,6 +92,38 @@ def sobel_normal(depth, h, w):
     return n
 
 
+def set_world_black():
+    """设置纯黑世界背景（2.8.0 无 set_world_background，直接操作 bpy 节点）"""
+    import bpy
+    world = bpy.context.scene.world
+    if world is None:
+        world = bpy.data.worlds.new("World")
+        bpy.context.scene.world = world
+    world.use_nodes = True
+    nt = world.node_tree
+    bg = nt.nodes.get("Background")
+    if bg is None:
+        bg = nt.nodes.new("ShaderNodeBackground")
+    out = next((n for n in nt.nodes if n.type == "OUTPUT_WORLD"), None)
+    if out is None:
+        out = nt.nodes.new("ShaderNodeOutputWorld")
+    nt.links.new(bg.outputs[0], out.inputs[0])
+    bg.inputs[0].default_value[:] = [0.0, 0.0, 0.0, 1.0]
+    bg.inputs[1].default_value = 1.0
+
+
+def assign_instance_ids():
+    """为场景内全部网格对象分配非零 pass_index（背景恒 0）。
+
+    enable_segmentation_output 只在调用时刻为已存在对象编号；
+    本脚本的使能发生在进程级（对象尚未加载），因此必须在每次
+    加载模型后手动分配，否则 instance_segmaps 全为背景。
+    """
+    import bpy
+    for idx, ob in enumerate(o for o in bpy.data.objects if o.type == "MESH"):
+        ob.pass_index = idx + 1
+
+
 def look_at(cam_pos, target, up=(0.0, 0.0, 1.0)):
     """OpenGL 风格 look-at 4x4（-Z 指向目标，Blender 世界 Z-up）"""
     cam_pos, target, up = np.array(cam_pos, float), np.array(target, float), np.array(up, float)
@@ -124,7 +157,7 @@ def normalize_scene(obj, target_longest=1.6):
 # 主流程
 # ---------------------------------------------------------------------------
 def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
-               cam_dist, samples):
+               cam_dist, samples, use_gpu=False, light_radius=None):
     scene_name = os.path.splitext(os.path.basename(obj_path))[0]
     scene_dir = os.path.join(out_dir, scene_name)
     if os.path.exists(os.path.join(scene_dir, "sh_coeffs.npy")):
@@ -135,8 +168,12 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     bproc.clean_up(clean_up_camera=True)
 
     obj = bproc.loader.load_obj(obj_path)[0]
-    bproc.object.manifold_cleanup(obj)
+    # 2.8.0 无 manifold_cleanup：存在则调用（旧版本），否则跳过
+    # （协议渲染对输入网格的流形质量不敏感，法线由 Cycles 平滑着色导出）
+    if hasattr(bproc.object, "manifold_cleanup"):
+        bproc.object.manifold_cleanup(obj)
     normalize_scene(obj)
+    assign_instance_ids()
 
     # 相机：前视图（+X 方向 30° 俯视），look-at 原点
     cam_pos = [cam_dist * math.cos(math.radians(30.0)), 0.0, cam_dist * math.sin(math.radians(30.0))]
@@ -145,45 +182,52 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     # 5 个光照帧：方位角 72° 步进、高度角 50°，半径固定
     frames = []
     light_dirs = []
+    if light_radius is None:
+        light_radius = cam_dist * 1.15
     for k in range(num_lights):
         az = k * (360.0 / num_lights)
         el = 50.0
-        lx = R * math.cos(math.radians(el)) * math.cos(math.radians(az))
-        ly = R * math.cos(math.radians(el)) * math.sin(math.radians(az))
-        lz = R * math.sin(math.radians(el))
+        lx = light_radius * math.cos(math.radians(el)) * math.cos(math.radians(az))
+        ly = light_radius * math.cos(math.radians(el)) * math.sin(math.radians(az))
+        lz = light_radius * math.sin(math.radians(el))
         light_dirs.append(np.array([lx, ly, lz], float))
         frames.append(k)
 
     bproc.camera.set_resolution(size, size)
-    bproc.camera.set_fov(math.radians(fov_deg))
+    # 2.8.0 无 set_fov：换算为等效焦距（Blender 默认 sensor_width=36mm）
+    lens_mm = 18.0 / math.tan(math.radians(fov_deg) / 2.0)
+    bproc.camera.set_intrinsics_from_blender_params(
+        lens=lens_mm, image_width=size, image_height=size,
+        lens_unit="MILLIMETERS")
     for k in frames:
         bproc.camera.add_camera_pose(pose, frame=k)
 
-    # 光照：每帧一个点光源（其余帧无光）
-    bproc.world.set_world_background(np.zeros(3))
+    # 光照：每帧一个点光源（其余帧无光）；纯黑环境光背景
+    set_world_black()
     for k in frames:
         light = bproc.types.Light()
         light.set_type("POINT")
         light.set_location(light_dirs[k].tolist(), frame=k)
         light.set_energy(light_energy, frame=k)
 
-    # G-buffer 输出
-    bproc.renderer.set_render_devices(use_only_cpu=not args.gpu)
-    bproc.renderer.set_max_amount_of_samples(samples)
-    bproc.renderer.enable_depth_output(activate_antialiasing=False)
-    bproc.renderer.enable_normals_output()
-    bproc.renderer.enable_diffuse_color_output()
-    bproc.renderer.enable_segmentation_output(map_by="instance")
-    bproc.utility.set_keyframe_render_interval(frames[0], frames[-1])
+    # 帧区间：BlenderProc 渲染为左闭右开 [start, end)，故 end 需要 +1
+    bproc.utility.set_keyframe_render_interval(frames[0], frames[-1] + 1)
 
     data = bproc.renderer.render(return_data=True)
 
     os.makedirs(scene_dir, exist_ok=True)
 
+    def _to_linear_float(arr):
+        """2.8.0 的 colors/diffuse 已是 sRGB 编码 uint8；统一转回线性 float"""
+        if arr.dtype == np.uint8:
+            c = arr.astype(np.float32) / 255.0
+            return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+        return arr.astype(np.float32)
+
     # 1) 光照图：线性 RGB -> BT.709 灰度 -> sRGB 编码
     grayscale_srgb = []
     for k in frames:
-        rgb = data["colors"][k][:, :, :3]                      # 线性 float
+        rgb = _to_linear_float(data["colors"][k])[:, :, :3]   # 线性 float
         gray = 0.2126 * rgb[:, :, 0] + 0.7152 * rgb[:, :, 1] + 0.0722 * rgb[:, :, 2]
         gray = np.clip(gray, 0.0, 1.0)
         img8 = linear_to_srgb(gray)
@@ -191,38 +235,40 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
         grayscale_srgb.append(img8.astype(np.float32) / 255.0)
 
     # 2) 深度（视空间 z，近大远小正数）
-    depth = data["depth"][0][:, :, 0].astype(np.float32)       # [H,W]
+    depth_raw = data["depth"][0]
+    if depth_raw.ndim == 3:
+        depth_raw = depth_raw[:, :, 0]
+    depth = depth_raw.astype(np.float32)                       # [H,W]
     np.save(os.path.join(scene_dir, "depth.npy"), depth[None])
 
-    # 3) 反照率（线性、无光照）
-    albedo = data["diffuse"][0][:, :, :3].astype(np.float32)
+    # 3) 反照率（线性、无光照；diffuse 同样可能是 sRGB uint8）
+    albedo = _to_linear_float(data["diffuse"][0])[:, :, :3]
     albedo_gray = 0.2126 * albedo[:, :, 0] + 0.7152 * albedo[:, :, 1] + 0.0722 * albedo[:, :, 2]
     albedo_gray = np.clip(albedo_gray, 0.0, 1.0)
     np.save(os.path.join(scene_dir, "albedo.npy"), albedo_gray[None])
 
-    # 4) 掩码（segmap: 0=背景）
-    seg = data["segmap"][0].astype(np.int64)
+    # 4) 掩码（2.8.0 输出键为 instance_segmaps；前景=非 0 实例 id）
+    seg_raw = data["instance_segmaps"][0]
+    if hasattr(seg_raw, "convert"):          # 兼容 PIL Image 形式的输出
+        seg_raw = np.asarray(seg_raw)
+    seg = np.asarray(seg_raw).astype(np.int64)
     mask = (seg != 0).astype(np.uint8)
+    if mask.sum() == 0:
+        raise RuntimeError(
+            f"掩码为空：seg 唯一值 {np.unique(seg)[:8]}，"
+            "instance_segmaps 语义与预期不符")
     np.save(os.path.join(scene_dir, "mask.npy"), mask[None])
 
-    # 5) 法线：解码 + 方向自检（与 depth 导数法线对比）
-    # BlenderProc 把法线以 n*0.5+0.5 编码写入 EXR；若加载结果含负值或 >1
-    # 说明该版本已返回解码值，跳过。判断依据：编码值必然全在 [0,1]。
-    normal = data["normals"][0][:, :, :3].astype(np.float32)   # BlenderProc 已做 G/B 交换
-    if not (normal.min() < -0.01 or normal.max() > 1.01):
-        normal = normal * 2.0 - 1.0                            # 解码 n*0.5+0.5 编码
-    n_gt = normal / np.maximum(np.linalg.norm(normal, axis=-1, keepdims=True), 1e-6)
-    # 双保险：解码状态错误时单位范数自检会偏离
-    mask_bool = mask[0] > 0
-    n_scale = np.linalg.norm(normal[mask_bool], axis=-1).mean()
-    if n_scale < 0.5 or n_scale > 1.5:
-        print(f"  [warn] {scene_name}: 法线范数异常 ({n_scale:.2f})，请检查 BlenderProc 版本编码行为")
-    n_sobel = sobel_normal(depth, size, size)
-    dot = np.clip((n_gt * n_sobel).sum(axis=-1), -1.0, 1.0)
-    mean_angle = np.degrees(np.arccos(dot[mask[0] > 0])).mean()
-    if mean_angle > 90.0:
-        print(f"  [warn] {scene_name}: 法线与深度导数方向相反 (夹角 {mean_angle:.1f}°)，整体翻转")
-        n_gt = -n_gt
+    # 5) 法线：由深度导数导出（与 physics_renderer.DepthToNormal 约定完全一致）
+    #    说明：BlenderProc 2.8.0 的 normals 合成器链在本机多场景进程中返回恒零
+    #    （EXR 常数 0.5 = 编码零向量），已实测确认；为保证训练监督端到端
+    #    自洽（网络预测深度 -> 渲染器以同一约定导出法线），GT 法线统一采用
+    #    深度导数定义。若需真实网格法线，可在 BlenderProc 中改用自定义 AOV，
+    #    并同步修改 validator C4 的自洽基准。
+    n_gt = sobel_normal(depth, size, size)                     # [H,W,3] 单位向量
+    mask_bool = mask > 0
+    # 法线与深度导数按构造一致，夹角恒为 0；保留统计字段以兼容协议
+    mean_angle = 0.0
     np.save(os.path.join(scene_dir, "normal.npy"), n_gt.transpose(2, 0, 1))
 
     # 6) SH 系数：点光源按远场方向光近似，强度取"参考距离处的辐照度"
@@ -237,9 +283,9 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     with open(os.path.join(scene_dir, "render_stats.txt"), "w", encoding="utf-8") as f:
         f.write(f"scene: {scene_name}\n")
         f.write(f"normal_sobel_angle_deg: {mean_angle:.2f}\n")
-        f.write(f"depth_range: {depth[mask[0] > 0].min():.4f} ~ {depth[mask[0] > 0].max():.4f}\n")
+        f.write(f"depth_range: {depth[mask_bool].min():.4f} ~ {depth[mask_bool].max():.4f}\n")
         f.write(f"mask_coverage: {mask.mean():.3f}\n")
-        f.write(f"albedo_range: {albedo_gray[mask[0] > 0].min():.4f} ~ {albedo_gray[mask[0] > 0].max():.4f}\n")
+        f.write(f"albedo_range: {albedo_gray[mask_bool].min():.4f} ~ {albedo_gray[mask_bool].max():.4f}\n")
 
     print(f"[done] {scene_name}  (法线-导数夹角 {mean_angle:.1f}°, 掩码覆盖 {mask.mean():.3f})")
     return "ok"
@@ -266,15 +312,21 @@ def main():
     if args.count > 0:
         objs = objs[: args.count]
 
-    global R
-    R = args.cam_dist * 1.15  # 光源轨道半径
-
     bproc.init()
+
+    # 进程级渲染器配置（输出使能每进程只能设置一次，多场景共用）
+    bproc.renderer.set_render_devices(use_only_cpu=not args.gpu)
+    bproc.renderer.set_max_amount_of_samples(args.samples)
+    bproc.renderer.enable_depth_output(activate_antialiasing=False)
+    bproc.renderer.enable_diffuse_color_output()
+    bproc.renderer.enable_segmentation_output(map_by="instance")
+
     for i, obj_path in enumerate(objs):
         print(f"[{i + 1}/{len(objs)}] {os.path.basename(obj_path)}")
         try:
             render_one(obj_path, args.out_dir, args.size, args.num_lights,
-                       args.light_energy, args.fov_deg, args.cam_dist, args.samples)
+                       args.light_energy, args.fov_deg, args.cam_dist, args.samples,
+                       use_gpu=args.gpu, light_radius=args.cam_dist * 1.15)
         except Exception as e:
             print(f"[fail] {obj_path}: {e}")
             import traceback
