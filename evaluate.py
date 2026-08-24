@@ -118,7 +118,8 @@ def depth_metrics(pred, gt, mask=None) -> dict:
     深度评估：RMSE、MAE、尺度不变 RMSE（si-RMSE, Eigen et al. CVPR 2014）
 
     深度存在全局尺度歧义（近大远小的绝对值不可观），si-RMSE 在
-    log 空间去除全局偏移后计算，对尺度/偏移不变。
+    log 空间去除全局偏移后计算，对乘性尺度不变（scale-invariant）；
+    线性亮度偏移不保证不变。
     """
     pred, gt = as_tensor(pred), as_tensor(gt)
     b, _, h, w = pred.shape
