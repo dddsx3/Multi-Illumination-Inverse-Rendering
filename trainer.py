@@ -171,11 +171,24 @@ class InverseRenderTrainer:
 
         print(f"优化器设置完成: Adam, lr={lr}, weight_decay={weight_decay}")
 
-        # 混合精度训练配置
+        # 混合精度训练配置（Phase 1 T1.5：支持 BF16，规避 FP16 溢出）
         self.use_amp = self.config.get('use_amp', False)
+        self.amp_dtype = str(self.config.get('amp_dtype', 'bfloat16')).lower()
+        if self.amp_dtype not in ('bfloat16', 'float16'):
+            self.amp_dtype = 'bfloat16'
+        self._use_scaler = False
         if self.use_amp:
-            self.optimizer.scaler = torch.cuda.amp.GradScaler()
-            print("混合精度训练已启用")
+            if self.amp_dtype == 'bfloat16':
+                if torch.cuda.is_bf16_supported():
+                    print("混合精度: bfloat16（指数位同 fp32，无溢出风险；无需 GradScaler）")
+                else:
+                    print("⚠ GPU 不支持 BF16，回退 float16 + GradScaler")
+                    self.amp_dtype = 'float16'
+            if self.amp_dtype == 'float16':
+                self._use_scaler = True
+                self.optimizer.scaler = torch.cuda.amp.GradScaler()
+                print("混合精度: float16 + GradScaler")
+            self._autocast_dtype = torch.bfloat16 if self.amp_dtype == 'bfloat16' else torch.float16
 
     def _setup_scheduler(self):
         """设置学习率调度器"""
@@ -417,7 +430,7 @@ class InverseRenderTrainer:
 
             self.optimizer.zero_grad()
 
-            with torch.amp.autocast('cuda', enabled=self.use_amp):
+            with torch.amp.autocast('cuda', enabled=self.use_amp, dtype=self._autocast_dtype):
                 depth, albedo, sh_coeffs, weight_map, features = self.model(images)
 
                 rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
@@ -474,15 +487,23 @@ class InverseRenderTrainer:
                             total_loss = total_loss + _gw * gt_terms[_gk]
                         loss_dict[_gk] = float(gt_terms[_gk].item())
 
-            # T1.5 NaN 守卫：非有限损失（AMP 溢出/数值异常）直接跳过该
-            # batch，防止一次坏 batch 把权重永久污染成 nan
+            # T1.5 NaN 守卫（INC-0001 防复发机制）：非有限损失直接跳过该
+            # batch；连续超过阈值判定为发散，快速失败优于烧卡
             if not torch.isfinite(total_loss):
                 self.optimizer.zero_grad(set_to_none=True)
                 loss_dict['_skipped_nan'] = 1.0
+                self._nan_skip_streak = getattr(self, '_nan_skip_streak', 0) + 1
                 self.global_step += 1
+                if self._nan_skip_streak >= self.config.get('nan_abort_streak', 30):
+                    self.writer.flush()
+                    raise RuntimeError(
+                        f"连续 {self._nan_skip_streak} 个 batch 出现非有限损失，"
+                        "判定训练发散并自动停机（参见 docs/incidents/INC-0001）。"
+                        "建议：关闭 --use_amp / 降低 albedo_smooth / 降低学习率")
                 continue
+            self._nan_skip_streak = 0
 
-            if self.use_amp:
+            if self._use_scaler:
                 self.optimizer.scaler.scale(total_loss).backward()
             else:
                 total_loss.backward()
@@ -500,7 +521,7 @@ class InverseRenderTrainer:
                 )
 
             # 参数更新
-            if self.use_amp:
+            if self._use_scaler:
                 self.optimizer.scaler.step(self.optimizer)
                 self.optimizer.scaler.update()
             else:

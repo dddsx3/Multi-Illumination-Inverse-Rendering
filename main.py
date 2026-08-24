@@ -182,6 +182,7 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         'vis_dir': config.paths.vis_dir,
         'num_workers': config.data.num_workers,
         'use_amp': config.train.use_amp,
+        'amp_dtype': getattr(config.train, 'amp_dtype', 'bfloat16'),
         'use_edge_aware': config.model.use_edge_aware,
         'log_interval': config.train.log_interval,
         'tensorboard_interval': config.train.tensorboard_interval,
@@ -552,6 +553,10 @@ def parse_args():
 
     parser.add_argument('--use_amp', action='store_true',
                         help='使用混合精度训练')
+
+    parser.add_argument('--amp_dtype', type=str, default='bf16',
+                        choices=['bf16', 'fp16'],
+                        help='AMP 精度类型：bf16 无溢出风险（Blackwell/Ampere+ 默认），fp16 需 GradScaler')
     parser.add_argument(
         '--device',
         type=str,
@@ -623,6 +628,9 @@ def main():
     # 是否使用混合精度训练
     use_amp = args.use_amp
 
+    # AMP 精度类型：bf16 / fp16
+    amp_dtype = 'bfloat16' if args.amp_dtype == 'bf16' else 'float16'
+
     # 设备：'cuda' 或 'cpu'
     device = args.device
 
@@ -668,6 +676,7 @@ def main():
     config.train.stage2_epochs = stage2_epochs
     config.train.scheduler = scheduler
     config.train.use_amp = use_amp
+    config.train.amp_dtype = amp_dtype
 
     config.model.base_channels = base_channels
     config.model.num_images = num_lights
