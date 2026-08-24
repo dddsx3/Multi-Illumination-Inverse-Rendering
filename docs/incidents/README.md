@@ -24,3 +24,4 @@
 - [ ] 渲染/外部引擎长跑是否分块（<=50 单位/进程）并有逐块日志？
 - [ ] 失败场景是否自动清理半成品目录且可幂等续跑？
 - [ ] 关键产物（best checkpoint / validation.json）是否有独立的存档路径？
+- [ ] GitHub 推送走系统代理（`git -c http.proxy=http://127.0.0.1:53362 push ...`），直连会被重置；推送后核对 `git log origin/main` 与标签
