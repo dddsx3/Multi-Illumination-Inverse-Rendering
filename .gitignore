@@ -67,3 +67,9 @@ obj_models_list.txt
 _dl_log.txt
 _pipeline_log.txt
 _run_pipeline.ps1.bak
+
+_render_full_log.txt
+_validate_log.txt
+_chunks_log.txt
+_chunk_list.txt
+_poison_list.txt
