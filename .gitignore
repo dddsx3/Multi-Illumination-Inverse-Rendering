@@ -73,3 +73,8 @@ _validate_log.txt
 _chunks_log.txt
 _chunk_list.txt
 _poison_list.txt
+
+_eval_run_log.txt
+_train_fp32_log.txt
+_smoke_bf16_log.txt
+_train_bf16_log.txt
