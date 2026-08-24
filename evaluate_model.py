@@ -140,7 +140,9 @@ def main():
     json_path = os.path.join(args.out_dir, "eval_summary.json")
     summary = {
         "checkpoint": args.checkpoint,
+        "data_root": args.data_root,
         "split": args.split,
+        "split_manifest": args.split_manifest,
         "scenes": len(per_scene),
         "metrics_mean_std": {k: {"mean": agg[k][0], "std": agg[k][1]} for k in keys},
     }
