@@ -46,6 +46,13 @@ python validate_dataset.py --root D:/data/synthetic_smoke --sample 5
 montage_sample.png（5 场景 × [light_001 | albedo | normal_rgb | depth_jet | mask]）位于
 `D:/data/synthetic_smoke/_validation/`；逐场景统计见同目录 stats.csv / validation.json。
 
+## 追加：20 场景 256^2 全量参数压力测试（T1.2 预演）
+
+- 20/20 [done]，零失败；validate_dataset.py **PASS**（exit 0）
+- 掩码覆盖 mean=0.303（range 0.124-0.664）；法线-导数夹角 0.01°；重渲染 PSNR mean 18.1dB / min 14.4dB
+- 产物：D:/data/synthetic_stress/（含 _validation 全套报告）
+- 结论：管线在 256 全量参数下稳定，可放量
+
 ## 结论
 
 **G1 通过。** 可进入 T1.2 全量数据生成（建议先 --count 20 用 256² 全量参数压一遍再放量到 600）。
