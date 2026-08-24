@@ -244,9 +244,11 @@ class InverseRenderTrainer:
                     # === 基础 ===
                     'reconstruction': 1.0,
                     
-                    # 🔴 关键：物理粉碎 ===
-                    # 之前的 2.0、10.0、20.0 全部失败了，我们直接上 50.0
-                    'albedo_smooth': 50.0,   # 🔴【关键】从 1.0 提升到 50.0！粉碎所有纹理！
+                    # === 反照率平滑（T1.5 稳定性修复）===
+                    # 原值 50 在 AMP/真实数据下引发梯度爆炸与永久 NaN
+                    # （实测 epoch 35 起全 nan）；降至 10 保持主导正则地位，
+                    # 且阶段1 已有 GT 监督约束反照率，不再需要极端权重
+                    'albedo_smooth': 10.0,
                     # 这将迫使 Albedo 降到 0.1 以下的纯色板
                     
                     # === 光照：强制干活 ===
@@ -471,6 +473,14 @@ class InverseRenderTrainer:
                         if _gw > 0.0:
                             total_loss = total_loss + _gw * gt_terms[_gk]
                         loss_dict[_gk] = float(gt_terms[_gk].item())
+
+            # T1.5 NaN 守卫：非有限损失（AMP 溢出/数值异常）直接跳过该
+            # batch，防止一次坏 batch 把权重永久污染成 nan
+            if not torch.isfinite(total_loss):
+                self.optimizer.zero_grad(set_to_none=True)
+                loss_dict['_skipped_nan'] = 1.0
+                self.global_step += 1
+                continue
 
             if self.use_amp:
                 self.optimizer.scaler.scale(total_loss).backward()
