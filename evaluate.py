@@ -226,7 +226,7 @@ def recon_metrics(pred, target) -> dict:
     mse = ((pred - target) ** 2).mean(dim=(2, 3))
     psnr = 10.0 * torch.log10(1.0 / (mse + _eps()))
 
-    win = _gaussian_window()
+    win = _gaussian_window().to(device=pred.device, dtype=pred.dtype)
     ssim = _ssim_torch(pred, target, win).mean(dim=(2, 3))
 
     return {

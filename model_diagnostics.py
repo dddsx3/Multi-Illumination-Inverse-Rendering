@@ -335,7 +335,7 @@ def main():
     print(f"开始诊断，共 {len(val_loader)} 个批次，将处理前 {NUM_SAMPLES} 个...")
 
     with torch.no_grad():
-        for i, (images, scene_names) in enumerate(val_loader):
+        for i, (images, _gt, scene_names) in enumerate(val_loader):
             if i >= NUM_SAMPLES:
                 break
 

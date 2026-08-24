@@ -31,7 +31,9 @@ class DataConfig:
     prefetch_factor: int = 4  # 根据优化脚本的建议
     persistent_workers: bool = True  # 训练时保持worker进程
 
-    max_rotation_angle: float = 10.0
+    # Phase 1 (T1.4-A3)：旋转增强的 GT 同步（法线向量旋转）未实现，默认关闭；
+    # 图像/GT 同步的裁剪与翻转已实现，可正常启用。
+    max_rotation_angle: float = 0.0
     horizontal_flip_prob: float = 0.5
 
     def __post_init__(self):

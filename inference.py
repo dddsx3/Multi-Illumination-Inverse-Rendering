@@ -276,7 +276,7 @@ class InverseRenderInference:
 
         all_results = []
 
-        for images, scene_names in tqdm(data_loader, desc="推理进度"):
+        for images, _gt, scene_names in tqdm(data_loader, desc="推理进度"):
             B, K, H, W = images.shape
 
             for i in range(B):

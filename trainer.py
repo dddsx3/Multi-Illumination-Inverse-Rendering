@@ -17,9 +17,10 @@ from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 
 from unet_model import IntrinsicUNet
-from loss_functions import LossCalculator
+from loss_functions import LossCalculator, GtSupervisionLoss
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
+from evaluate import compute_all
 def _initialize_weights(module, init_type='kaiming'):
     """内置权重初始化，替代外部 gradient_utils 依赖"""
     if isinstance(module, (torch.nn.Conv2d, torch.nn.ConvTranspose2d)):
@@ -74,6 +75,9 @@ class InverseRenderTrainer:
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.config = config
+
+        # Phase 1 (T1.4)：GT 监督损失（合成数据集；无 GT 的 batch 自动跳过）
+        self.gt_loss = GtSupervisionLoss()
 
         # 强制使用GPU
         if not torch.cuda.is_available():
@@ -275,8 +279,15 @@ class InverseRenderTrainer:
                     # === 残差 ===
                     'residual_l1': 0.0,
                     'residual_tv': 0.0,
+
+                    # === Phase 1: GT 监督（阶段1/2 启用）===
+                    # 深度原始尺度 L1 权重取小值：深度数值量级 ~O(1)，
+                    # 避免压过自监督重建项
+                    'gt_depth': 0.05,
+                    'gt_albedo': 0.5,
+                    'gt_normal': 0.5,
                 },
-                'description': 'Albedo 粉碎机：粉碎纹理，强制物理分离'
+                'description': 'Albedo 粉碎机 + GT 监督：几何/材质向真值对齐'
             },
             2: {
                 'name': 'Material Learning',
@@ -294,9 +305,14 @@ class InverseRenderTrainer:
                     'sh_energy_dist': 1.0,
                     'sh_total_energy': 1.0,
                     'residual_l1': 0.0,
-                    'residual_tv': 0.0
+                    'residual_tv': 0.0,
+
+                    # === Phase 1: GT 监督（阶段1/2 启用）===
+                    'gt_depth': 0.05,
+                    'gt_albedo': 0.5,
+                    'gt_normal': 0.5
                 },
-                'description': '学习材质属性，引入反照率和权重正则化'
+                'description': '学习材质属性 + GT 监督：反照率/法线向真值对齐'
             },
             3: {
                 'name': 'Residual Learning',
@@ -314,17 +330,22 @@ class InverseRenderTrainer:
                     'sh_energy_dist': 1.0,
                     'sh_total_energy': 1.0,
                     'residual_l1': 0.01,
-                    'residual_tv': 0.01
+                    'residual_tv': 0.01,
+
+                    # === Phase 1: GT 监督（阶段3 关闭：自监督重建+残差主导）===
+                    'gt_depth': 0.0,
+                    'gt_albedo': 0.0,
+                    'gt_normal': 0.0
                 },
                 'description': '学习非朗伯效应，引入残差建模'
             }
         }
 
     def _get_current_stage(self) -> int:
-        """根据当前epoch确定训练阶段"""
-        if self.current_epoch <= self.stage_configs[1]['end_epoch']:
+        """根据当前epoch确定训练阶段（epoch 从 0 计数，用半开区间 [0, end)）"""
+        if self.current_epoch < self.stage_configs[1]['end_epoch']:
             return 1
-        elif self.current_epoch <= self.stage_configs[2]['end_epoch']:
+        elif self.current_epoch < self.stage_configs[2]['end_epoch']:
             return 2
         else:
             return 3
@@ -372,7 +393,10 @@ class InverseRenderTrainer:
             'sh_l2': 0.0,
             'sh_higher': 0.0,
             'residual_l1': 0.0,
-            'residual_tv': 0.0
+            'residual_tv': 0.0,
+            'gt_depth': 0.0,
+            'gt_albedo': 0.0,
+            'gt_normal': 0.0
         }
         # 反照率质量指标
         albedo_grad_l1_total = 0.0
@@ -381,8 +405,11 @@ class InverseRenderTrainer:
 
         num_batches = len(self.train_loader)
 
-        for batch_idx, (images, scene_names) in enumerate(self.train_loader):
+        for batch_idx, (images, gt, scene_names) in enumerate(self.train_loader):
             images = images.to(self.device)
+            gt_dev = None
+            if gt is not None:
+                gt_dev = {k: v.to(self.device) for k, v in gt.items()}
 
             B, K, H, W = images.shape
 
@@ -434,6 +461,16 @@ class InverseRenderTrainer:
                 loss_shading_mean = (mean_val - 1.0) ** 2
                 # 在 total_loss 中加上
                 total_loss = total_loss + self.loss_calculator.weights.get('shading_mean', 0.0) * loss_shading_mean
+
+                # Phase 1 (T1.4)：GT 监督损失。无 GT 的 batch 自动跳过；
+                # 阶段门控通过权重表实现（阶段3 权重为 0）。
+                if gt_dev is not None:
+                    gt_terms = self.gt_loss(depth, albedo, normal, gt_dev)
+                    for _gk in ('gt_depth', 'gt_albedo', 'gt_normal'):
+                        _gw = self.loss_calculator.weights.get(_gk, 0.0)
+                        if _gw > 0.0:
+                            total_loss = total_loss + _gw * gt_terms[_gk]
+                        loss_dict[_gk] = float(gt_terms[_gk].item())
 
             if self.use_amp:
                 self.optimizer.scaler.scale(total_loss).backward()
@@ -531,6 +568,13 @@ class InverseRenderTrainer:
         for key in epoch_losses:
             epoch_losses[key] /= num_batches
 
+        # Phase 1 (T1.4)：epoch 级损失分量写入 TensorBoard。
+        # 逐 step 记录受 tensorboard_interval 限制，小规模冒烟可能一次都不触发；
+        # GT 各项（gt_depth/gt_albedo/gt_normal）是门禁 G4 的观察项，
+        # 以 epoch 步长稳定记录。
+        for _gk in ('gt_depth', 'gt_albedo', 'gt_normal'):
+            self.writer.add_scalar(f'train/{_gk}', epoch_losses[_gk], self.current_epoch)
+
         return epoch_losses
 
     def _log_training_step(self, batch_idx: int, num_batches: int, loss_dict: Dict, total_loss: torch.Tensor, grad_norm: torch.Tensor):
@@ -579,10 +623,15 @@ class InverseRenderTrainer:
         num_batches = len(self.val_loader)
 
         vis_results = {}
+        # Phase 1 (T1.4)：量化指标累计（evaluate.compute_all 的 13 项）
+        metric_acc = {}
 
         with torch.no_grad():
-            for batch_idx, (images, scene_names) in enumerate(self.val_loader):
+            for batch_idx, (images, gt, scene_names) in enumerate(self.val_loader):
                 images = images.to(self.device)
+                gt_dev = None
+                if gt is not None:
+                    gt_dev = {k: v.to(self.device) for k, v in gt.items()}
 
                 B, K, H, W = images.shape
 
@@ -618,6 +667,19 @@ class InverseRenderTrainer:
                     if key in loss_dict:
                         val_losses[key] += loss_dict[key]
 
+                # Phase 1 (T1.4)：GT 量化指标（验证模式中心裁剪、无增强，
+                # 指标走 evaluate.compute_all；无 GT 数据集自动跳过）
+                if gt_dev is not None:
+                    m_dict = compute_all(
+                        pred={'normal': normal, 'depth': depth,
+                              'albedo': albedo, 'image': final_render},
+                        gt={'normal': gt_dev['normal'], 'depth': gt_dev['depth'],
+                            'albedo': gt_dev['albedo'], 'image': images},
+                        mask=gt_dev['mask'])
+                    for mk, mv in m_dict.items():
+                        if mv == mv and abs(mv) != float('inf'):  # 跳过 NaN/Inf
+                            metric_acc.setdefault(mk, []).append(mv)
+
                 if batch_idx == 0:
                     vis_results = self._collect_visualization(
                     images, depth, albedo, weight_map, final_render, normal, shading, sh_coeffs, scene_names
@@ -625,6 +687,11 @@ class InverseRenderTrainer:
 
         for key in val_losses:
             val_losses[key] /= num_batches
+
+        # 合入平均后的量化指标（键前缀 metric_，TensorBoard 自动记录）
+        for mk, values in metric_acc.items():
+            if len(values) > 0:
+                val_losses[f'metric_{mk}'] = sum(values) / len(values)
 
         return val_losses, vis_results
 

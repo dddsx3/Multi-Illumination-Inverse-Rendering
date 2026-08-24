@@ -556,6 +556,62 @@ class PhysicalContributionLoss(nn.Module):
         return loss * self.weight
 
 
+class GtSupervisionLoss(nn.Module):
+    """
+    Phase 1 合成数据集 GT 监督损失
+
+    对有 GT 的场景施加三项逐像素监督（全部用 mask 遮罩，只统计前景）：
+      - gt_depth:  预测深度与 GT 深度的 L1（原始视空间尺度）
+      - gt_albedo: 预测反照率与 GT 反照率的 L1
+      - gt_normal: 预测法线（渲染器由预测深度导出）与 GT 法线的角度损失
+                   （1 - cos，对方向敏感、对长度不敏感）
+
+    阶段门控由 trainer 的阶段权重表控制：阶段 1/2 启用（几何与材质先学对），
+    阶段 3 置零（自监督重建 + 残差学习主导）。
+
+    Args:
+        pred_depth:  [B,1,H,W]
+        pred_albedo: [B,1,H,W]
+        pred_normal: [B,3,H,W]（physics_renderer 由预测深度导出的法线）
+        gt:          dict，含 depth/albedo/normal/mask 张量（data_loader 输出）
+
+    Returns:
+        dict {'gt_depth', 'gt_albedo', 'gt_normal'} -> 标量张量（已 mask 归一）
+    """
+
+    def forward(
+        self,
+        pred_depth: torch.Tensor,
+        pred_albedo: torch.Tensor,
+        pred_normal: torch.Tensor,
+        gt: Dict[str, torch.Tensor],
+    ) -> Dict[str, torch.Tensor]:
+        m = gt["mask"]
+        if m.dim() == 3:
+            m = m.unsqueeze(0)
+        denom = m.sum().clamp_min(1.0)
+
+        out = {
+            "gt_depth": torch.zeros((), device=m.device),
+            "gt_albedo": torch.zeros((), device=m.device),
+            "gt_normal": torch.zeros((), device=m.device),
+        }
+
+        if "depth" in gt and pred_depth is not None:
+            out["gt_depth"] = (torch.abs(pred_depth - gt["depth"]) * m).sum() / denom
+
+        if "albedo" in gt and pred_albedo is not None:
+            out["gt_albedo"] = (torch.abs(pred_albedo - gt["albedo"]) * m).sum() / denom
+
+        if "normal" in gt and pred_normal is not None:
+            pn = F.normalize(pred_normal, p=2, dim=1)
+            gn = F.normalize(gt["normal"], p=2, dim=1)
+            cos = (pn * gn).sum(dim=1, keepdim=True).clamp(-1.0, 1.0)
+            out["gt_normal"] = ((1.0 - cos) * m).sum() / denom
+
+        return out
+
+
 class LossCalculator(nn.Module):
     """
     损失函数计算器

@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from typing import Optional
 from config import Config, get_default_config
-from data_loader import MultiLightingDataset, create_data_loader
+from data_loader import MultiLightingDataset, create_data_loader, split_scene_names
 from unet_model import IntrinsicUNet
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
@@ -73,6 +73,18 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     print("创建数据集...")
 
+    # Phase 1 (T1.4)：按场景做确定性划分（固定种子），训练集与验证集不重叠；
+    # 若命令行显式给出 train/val 场景列表则优先使用。
+    if getattr(config.data, 'train_scenes', None) and getattr(config.data, 'val_scenes', None):
+        train_names = list(config.data.train_scenes)
+        val_names = list(config.data.val_scenes)
+    else:
+        train_names, val_names = split_scene_names(
+            config.data.root_dir,
+            train_val_split=getattr(config.data, 'train_val_split', 0.8),
+            seed=getattr(config, 'seed', 42))
+    print(f"场景划分: train={len(train_names)}, val={len(val_names)}")
+
     train_dataset = MultiLightingDataset(
         root_dir=config.data.root_dir,
         num_lights=config.data.num_lights,
@@ -80,7 +92,8 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         is_training=True,
         file_extension=config.data.file_extension,
         max_rotation_angle=config.data.max_rotation_angle,
-        horizontal_flip_prob=config.data.horizontal_flip_prob
+        horizontal_flip_prob=config.data.horizontal_flip_prob,
+        scene_subset=train_names
     )
 
     val_dataset = MultiLightingDataset(
@@ -88,7 +101,8 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         num_lights=config.data.num_lights,
         image_size=config.data.image_size,
         is_training=False,
-        file_extension=config.data.file_extension
+        file_extension=config.data.file_extension,
+        scene_subset=val_names
     )
 
     print(f"训练集大小: {len(train_dataset)} 个场景")
@@ -130,16 +144,17 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         use_directional_light=config.model.use_directional_light
     )
 
-    # 🔴【关键修改】注释掉残差模块的初始化
-    # residual = HierarchicalResidual(
-    #     image_height=config.data.image_size[0],
-    #     image_width=config.data.image_size[1],
-    #     use_local_residual=config.model.use_local_residual
-    # )
-    residual = None  # 设为 None
+    # Phase 1：恢复残差模块。Phase 0 已将全局共享缓冲重构为逐场景、
+    # 逐光照的 LocalResidualNet（零初始化），阶段1/2 冻结、阶段3 解冻
+    # 由 trainer 的课程学习逻辑管理。
+    residual = HierarchicalResidual(
+        use_local_residual=config.model.use_local_residual,
+        num_images=config.model.num_images,
+        feature_channels=config.model.base_channels
+    )
 
     total_params = sum(p.numel() for p in model.parameters())
-    residual_params = 0
+    residual_params = sum(p.numel() for p in residual.parameters())
     print(f"模型参数量: {total_params:,}")
     print(f"残差模块参数量: {residual_params:,}")
     print(f"总参数量: {total_params + residual_params:,}")
@@ -275,7 +290,7 @@ def test_mode(config: Config, checkpoint_path: str):
     num_batches = 0
 
     with torch.no_grad():
-        for batch_idx, (images, scene_names) in enumerate(test_loader):
+        for batch_idx, (images, _gt, scene_names) in enumerate(test_loader):
             images = images.to(device)
             scene_name = scene_names[0]
 
@@ -409,7 +424,7 @@ def demo_mode(config: Config, checkpoint_path: Optional[str] = None):
     print("\n运行演示...\n")
 
     with torch.no_grad():
-        for images, scene_names in demo_loader:
+        for images, _gt, scene_names in demo_loader:
             images = images.to(device)
             scene_name = scene_names[0]
 
@@ -558,70 +573,67 @@ def parse_args():
 
 
 def main():
-    # ========== 直接在代码中设置参数 ==========
+    # ========== Phase 1 修复：命令行参数优先（旧版硬编码导致 CLI 全部失效）==========
+    args = parse_args()
 
     # 运行模式：'train'、'test' 或 'demo'
-    mode = 'train'
+    mode = args.mode
 
     # 检查点路径（用于恢复训练或测试）
-    checkpoint_path = None  # 例如：r'checkpoints\checkpoint_epoch_0050.pth'
+    checkpoint_path = args.checkpoint
 
     # 是否恢复训练
-    resume = False
+    resume = args.resume
 
     # 数据根目录
-    data_root = r"C:\Users\35702\Desktop\processed_data"
+    data_root = args.data_root
 
-    # 训练场景列表
-    train_scenes = []  # 留空，让数据集自动扫描
-
-    # 验证场景列表
-    val_scenes = []  # 留空，让数据集自动扫描
-
-    # 测试场景列表
-    test_scenes = []  # 留空，让数据集自动扫描
+    # 训练/验证/测试场景列表（留空则按种子确定性划分）
+    train_scenes = args.train_scenes or []
+    val_scenes = args.val_scenes or []
+    test_scenes = args.test_scenes or []
 
     # 每个场景的光照图像数量
-    num_lights = 5
+    num_lights = args.num_lights
 
     # 图像尺寸 [高度, 宽度]
-    image_size = [256, 256]
+    image_size = list(args.image_size)
 
     # 批次大小
-    batch_size = 8
+    batch_size = args.batch_size
 
     # 总训练轮数
-    total_epochs = 100
+    total_epochs = args.total_epochs
 
     # 学习率
-    learning_rate = 1e-4
+    learning_rate = args.learning_rate
 
     # 阶段1训练轮数
-    stage1_epochs = 30
+    stage1_epochs = args.stage1_epochs
 
     # 阶段2训练轮数
-    stage2_epochs = 30
+    stage2_epochs = args.stage2_epochs
 
     # 基础通道数
-    base_channels = 32
+    base_channels = args.base_channels
 
     # 学习率调度器：'step'、'cosine'、'plateau' 或 'none'
-    scheduler = 'step'
+    scheduler = args.scheduler
 
     # 是否使用混合精度训练
-    use_amp = False
+    use_amp = args.use_amp
 
     # 设备：'cuda' 或 'cpu'
-    device = 'cuda'
+    device = args.device
 
     # 随机种子
-    seed = 42
+    seed = args.seed
 
     # 是否显示详细信息
-    verbose = True
+    verbose = args.verbose
 
     # 是否启用反照率平滑激进疗法
-    aggressive_albedo_smooth = False
+    aggressive_albedo_smooth = args.aggressive_albedo_smooth
 
     # ========================================
 
