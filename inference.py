@@ -97,9 +97,9 @@ class InverseRenderInference:
         )
 
         self.residual = HierarchicalResidual(
-            image_height=self.config.get('image_size', [256, 256])[0],
-            image_width=self.config.get('image_size', [256, 256])[1],
-            use_local_residual=self.config.get('use_local_residual', True)
+            use_local_residual=self.config.get('use_local_residual', True),
+            num_images=self.config.get('num_images', 5),
+            feature_channels=self.config.get('base_channels', 32)
         )
 
         self.model.load_state_dict(self.checkpoint['model_state_dict'])
@@ -144,12 +144,13 @@ class InverseRenderInference:
 
         B, K, H, W = images.shape
 
-        depth, albedo, sh_coeffs, weight_map = self.model(images)
+        depth, albedo, sh_coeffs, weight_map, features = self.model(images)
 
         rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
 
         final_render, global_residual, local_residual = self.residual(
-            albedo, shading, normal, sh_coeffs
+            albedo, shading, normal, sh_coeffs,
+            features=features
         )
 
         results = {
@@ -436,4 +437,4 @@ def main():
     print("=" * 80)
 
 if __name__ == '__main__':
-    main()
+    main()

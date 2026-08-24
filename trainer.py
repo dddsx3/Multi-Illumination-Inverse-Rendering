@@ -89,6 +89,10 @@ class InverseRenderTrainer:
         self.model.apply(lambda m: _initialize_weights(m, init_type))
         if self.residual is not None:
             self.residual.apply(lambda m: _initialize_weights(m, init_type))
+            # 保持 LocalResidualNet 末层零初始化（残差从零开始，课程学习平滑引入）
+            if getattr(self.residual, 'local_net', None) is not None:
+                torch.nn.init.zeros_(self.residual.local_net.net[2].weight)
+                torch.nn.init.zeros_(self.residual.local_net.net[2].bias)
         print(f"权重初始化完成，类型: {init_type}")
 
         self.model.to(self.device)
@@ -109,9 +113,10 @@ class InverseRenderTrainer:
         self.aggressive_albedo_smooth = self.config.get('aggressive_albedo_smooth', False)
         print(f"反照率平滑激进疗法: {'启用' if self.aggressive_albedo_smooth else '禁用'}")
 
-        # 🔴【关键修改】如果残差模块存在，冻结它
+        # 残差模块在阶段1/2保持冻结（课程学习：先学几何与材质），
+        # 进入阶段3（残差学习）时在 train() 中解冻
         if self.residual is not None:
-            print("🔴 强制冻结残差模块，迫使主网络工作")
+            print("🔴 冻结残差模块（阶段1/2），进入阶段3时解冻")
             for param in self.residual.parameters():
                 param.requires_grad = False
         else:
@@ -250,7 +255,6 @@ class InverseRenderTrainer:
                     'sh_l2': 0.1,             # 防止系数爆炸
                     'sh_higher': 0.002,
                     'sh_sparsity': 0.001,
-                    'albedo_consistency': 0.0,
                     'weight_dist': 0.0,
                     'albedo_image_correlation': 0.0, # 暂时关闭，以免干扰粉碎过程
                     
@@ -289,7 +293,6 @@ class InverseRenderTrainer:
                     'sh0_nonneg': 1.0,
                     'sh_energy_dist': 1.0,
                     'sh_total_energy': 1.0,
-                    'albedo_consistency': 0.1,
                     'residual_l1': 0.0,
                     'residual_tv': 0.0
                 },
@@ -310,7 +313,6 @@ class InverseRenderTrainer:
                     'sh0_nonneg': 1.0,
                     'sh_energy_dist': 1.0,
                     'sh_total_energy': 1.0,
-                    'albedo_consistency': 0.1,
                     'residual_l1': 0.01,
                     'residual_tv': 0.01
                 },
@@ -387,19 +389,21 @@ class InverseRenderTrainer:
             self.optimizer.zero_grad()
 
             with torch.amp.autocast('cuda', enabled=self.use_amp):
-                depth, albedo, sh_coeffs, weight_map = self.model(images)
+                depth, albedo, sh_coeffs, weight_map, features = self.model(images)
 
                 rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
 
                 # 🔴【关键修改】如果不使用残差，强制纯物理渲染
                 if self.residual is not None:
                     final_render, global_residual, local_residual = self.residual(
-                        albedo, shading, normal, sh_coeffs
+                        albedo, shading, normal, sh_coeffs,
+                        stage=f'stage{self.current_stage}',
+                        features=features
                     )
                     # 计算残差 Loss (Residual L1, TV)
-                    loss_res_l1 = self.weights.get('residual_l1', 0.0) * torch.abs(global_residual).mean() \
+                    loss_res_l1 = self.loss_calculator.weights.get('residual_l1', 0.0) * torch.abs(global_residual).mean() \
                         if global_residual is not None else torch.tensor(0.0, device=self.device)
-                    loss_res_tv = self.weights.get('residual_tv', 0.0) * (
+                    loss_res_tv = self.loss_calculator.weights.get('residual_tv', 0.0) * (
                         torch.abs(global_residual[:, :, :, :-1] - global_residual[:, :, :, 1:]).mean() +
                         torch.abs(global_residual[:, :, :-1, :] - global_residual[:, :, 1:, :]).mean()
                     ) if global_residual is not None else torch.tensor(0.0, device=self.device)
@@ -568,7 +572,6 @@ class InverseRenderTrainer:
             'sh0_nonneg': 0.0,
             'sh_energy_dist': 0.0,
             'sh_total_energy': 0.0,
-            'albedo_consistency': 0.0,
             'residual_l1': 0.0,
             'residual_tv': 0.0
         }
@@ -583,14 +586,16 @@ class InverseRenderTrainer:
 
                 B, K, H, W = images.shape
 
-                depth, albedo, sh_coeffs, weight_map = self.model(images)
+                depth, albedo, sh_coeffs, weight_map, features = self.model(images)
 
                 rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
 
                 # 🔴【关键修改】如果不使用残差，强制纯物理渲染
                 if self.residual is not None:
                     final_render, global_residual, local_residual = self.residual(
-                        albedo, shading, normal, sh_coeffs
+                        albedo, shading, normal, sh_coeffs,
+                        stage=f'stage{self.current_stage}',
+                        features=features
                     )
                 else:
                     # 强制设置
@@ -825,9 +830,16 @@ class InverseRenderTrainer:
             new_stage = self._get_current_stage()
 
             if new_stage != self.current_stage:
+                prev_stage = self.current_stage
                 self.current_stage = new_stage
                 self._update_loss_weights()
                 self._log_stage_transition()
+
+                # 进入阶段3（残差学习）时解冻残差模块
+                if new_stage == 3 and prev_stage < 3 and self.residual is not None:
+                    for param in self.residual.parameters():
+                        param.requires_grad = True
+                    print("🔴 解冻残差模块：进入阶段3（残差学习）")
 
             # 训练一个epoch
             print(f"\n开始Epoch {self.current_epoch}")

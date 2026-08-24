@@ -245,9 +245,9 @@ def test_mode(config: Config, checkpoint_path: str):
     ).to(device)
 
     residual = HierarchicalResidual(
-        image_height=config.data.image_size[0],
-        image_width=config.data.image_size[1],
-        use_local_residual=config.model.use_local_residual
+        use_local_residual=config.model.use_local_residual,
+        num_images=config.model.num_images,
+        feature_channels=config.model.base_channels
     ).to(device)
 
     print(f"加载检查点: {checkpoint_path}")
@@ -281,10 +281,11 @@ def test_mode(config: Config, checkpoint_path: str):
 
             print(f"处理场景 {batch_idx + 1}/{len(test_loader)}: {scene_name}")
 
-            depth, albedo, sh_coeffs, weight_map = model(images)
+            depth, albedo, sh_coeffs, weight_map, features = model(images)
             rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
             final_render, global_residual, local_residual = residual(
-                albedo, shading, normal, sh_coeffs
+                albedo, shading, normal, sh_coeffs,
+                features=features
             )
 
             total_loss_batch, loss_dict = loss_calculator(
@@ -388,9 +389,9 @@ def demo_mode(config: Config, checkpoint_path: Optional[str] = None):
     ).to(device)
 
     residual = HierarchicalResidual(
-        image_height=config.data.image_size[0],
-        image_width=config.data.image_size[1],
-        use_local_residual=config.model.use_local_residual
+        use_local_residual=config.model.use_local_residual,
+        num_images=config.model.num_images,
+        feature_channels=config.model.base_channels
     ).to(device)
 
     if checkpoint_path is not None and os.path.exists(checkpoint_path):
@@ -415,10 +416,11 @@ def demo_mode(config: Config, checkpoint_path: Optional[str] = None):
             print(f"场景: {scene_name}")
             print(f"输入形状: {images.shape}")
 
-            depth, albedo, sh_coeffs, weight_map = model(images)
+            depth, albedo, sh_coeffs, weight_map, features = model(images)
             rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
             final_render, global_residual, local_residual = residual(
-                albedo, shading, normal, sh_coeffs
+                albedo, shading, normal, sh_coeffs,
+                features=features
             )
 
             print(f"\n预测结果:")

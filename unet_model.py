@@ -152,6 +152,7 @@ class IntrinsicUNet(nn.Module):
         albedo: [B, 1, H, W] - 反照率图（sigmoid，范围[0,1]）
         sh_coeffs: [B, K, 9] - 每张图像的球谐系数
         weight_map: [B, 1, H, W] - 自适应权重图（sigmoid，范围[0,1]）
+        features: [B, C, H, W] - 解码器末层特征图（供局部残差网络逐场景预测使用）
     """
 
     def __init__(
@@ -264,7 +265,7 @@ class IntrinsicUNet(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         前向传播
 
@@ -276,6 +277,7 @@ class IntrinsicUNet(nn.Module):
             albedo: 反照率图 [B, 1, H, W]
             sh_coeffs: 球谐系数 [B, K, 9]
             weight_map: 权重图 [B, 1, H, W]
+            features: 解码器末层特征图 [B, C, H, W]，供局部残差网络使用
         """
         # ============================
         # Encoder
@@ -345,6 +347,9 @@ class IntrinsicUNet(nn.Module):
         # ============================
         # Output Heads
         # ============================
+        # 解码器末层特征图（全分辨率），供局部残差网络逐场景预测
+        features = x
+
         # Depth: [B, 32, H, W] -> [B, 1, H, W]
         depth = self.depth_head(x)
 
@@ -354,7 +359,7 @@ class IntrinsicUNet(nn.Module):
         # Weight map: [B, 32, H, W] -> [B, 1, H, W]
         weight_map = self.weight_head(x)
 
-        return depth, albedo, sh_coeffs, weight_map
+        return depth, albedo, sh_coeffs, weight_map, features
 
 
 # ============================================================================
@@ -420,7 +425,7 @@ if __name__ == "__main__":
     print(f"\n执行前向传播...")
     model.eval()
     with torch.no_grad():
-        depth, albedo, sh_coeffs, weight_map = model(dummy_input)
+        depth, albedo, sh_coeffs, weight_map, features = model(dummy_input)
 
     print(f"✓ 前向传播成功")
 
@@ -453,6 +458,10 @@ if __name__ == "__main__":
     print(f"   应在 [0, 1] 范围内: {(weight_map >= 0).all() and (weight_map <= 1).all()}")
     print(f"   数据类型: {weight_map.dtype}")
 
+    print(f"\n5. Features（解码器特征图）:")
+    print(f"   形状: {features.shape}  # [B, C, H, W]，供局部残差网络使用")
+    print(f"   数据类型: {features.dtype}")
+
     # ========== 测试梯度传播 ==========
     print("\n" + "=" * 80)
     print("【4】测试梯度传播")
@@ -463,7 +472,7 @@ if __name__ == "__main__":
     dummy_input_grad.requires_grad = True
 
     # 前向传播
-    depth_g, albedo_g, sh_coeffs_g, weight_g = model(dummy_input_grad)
+    depth_g, albedo_g, sh_coeffs_g, weight_g, features_g = model(dummy_input_grad)
 
     # 计算一个简单的损失
     loss = depth_g.mean() + albedo_g.mean() + sh_coeffs_g.mean() + weight_g.mean()
@@ -488,7 +497,7 @@ if __name__ == "__main__":
     for size in test_sizes:
         test_input = torch.randn(1, NUM_IMAGES, size, size).to(device)
         with torch.no_grad():
-            d, a, s, w = model(test_input)
+            d, a, s, w, f = model(test_input)
 
         print(f"  输入 {size}x{size} -> 输出 depth: {d.shape}, albedo: {a.shape}, SH: {s.shape}, weight: {w.shape}")
 

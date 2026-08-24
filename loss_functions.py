@@ -385,13 +385,14 @@ class LightingConstraintLoss(nn.Module):
 
 class AlbedoConsistencyLoss(nn.Module):
     """
-    反照率一致性损失
+    反照率一致性损失（保留类，当前架构下为空操作）
 
-    确保多光照图像预测的反照率是一致的
-    这是多图本征分解最核心的先验
+    在现有单通道反照率设计中，所有 K 张光照图像共用同一张反照率图，
+    跨光照一致性由网络结构本身保证（架构性约束），无需损失函数——
+    此前该损失在 albedo.shape[1]==1 时直接返回 0，实际从未生效，
+    Phase 0 已将其从 LossCalculator 活跃损失中移除。
 
-    Args:
-        None
+    当 A2 升级（任意 N 输入、逐光照反照率分支）落地后，此损失将重新启用。
     """
 
     def __init__(self):
@@ -452,7 +453,7 @@ class ResidualSparsityLoss(nn.Module):
         L1稀疏损失
 
         Args:
-            residual: 局部残差 [1, 1, H, W]
+            residual: 局部残差 [B, K, H, W]
 
         Returns:
             loss: 标量损失值
@@ -464,7 +465,7 @@ class ResidualSparsityLoss(nn.Module):
         Total Variation损失
 
         Args:
-            residual: 局部残差 [1, 1, H, W]
+            residual: 局部残差 [B, K, H, W]
 
         Returns:
             loss: 标量损失值
@@ -487,7 +488,7 @@ class ResidualSparsityLoss(nn.Module):
         计算残差稀疏性损失
 
         Args:
-            local_residual: 局部残差 [1, 1, H, W] 或 None
+            local_residual: 局部残差 [B, K, H, W] 或 None
 
         Returns:
             l1: L1损失
@@ -580,7 +581,6 @@ class LossCalculator(nn.Module):
                 'sh_l2': 0.001,
                 'sh_higher': 0.002,
                 'sh_sparsity': 0.001,
-                'albedo_consistency': 2.0,  # 物理约束权重高
                 'sh0_nonneg': 2.0,  # 物理约束权重高
                 'sh_energy_dist': 1.5,  # 物理约束权重高
                 'sh_total_energy': 1.5,  # 物理约束权重高
@@ -598,7 +598,6 @@ class LossCalculator(nn.Module):
                 'sh_l2': 0.001,
                 'sh_higher': 0.002,
                 'sh_sparsity': 0.001,
-                'albedo_consistency': 0.5,  # 物理约束权重中
                 'sh0_nonneg': 0.5,  # 物理约束权重中
                 'sh_energy_dist': 0.5,  # 物理约束权重中
                 'sh_total_energy': 0.5,  # 物理约束权重中
@@ -616,7 +615,6 @@ class LossCalculator(nn.Module):
                 'sh_l2': 0.001,
                 'sh_higher': 0.002,
                 'sh_sparsity': 0.001,
-                'albedo_consistency': 0.1,  # 物理约束权重低
                 'sh0_nonneg': 0.1,  # 物理约束权重低
                 'sh_energy_dist': 0.1,  # 物理约束权重低
                 'sh_total_energy': 0.1,  # 物理约束权重低
@@ -643,7 +641,6 @@ class LossCalculator(nn.Module):
         self.lighting_prior = LightingPriorLoss(higher_order_weight=2.0)
         self.lighting_constraint = LightingConstraintLoss()
         self.residual_sparsity = ResidualSparsityLoss()
-        self.albedo_consistency = AlbedoConsistencyLoss()
         self.physical_contribution_loss = PhysicalContributionLoss(threshold=0.3, weight=1.0)  # 添加物理贡献度损失模块
 
 
@@ -740,7 +737,7 @@ class LossCalculator(nn.Module):
             albedo: 反照率图 [B, 1, H, W]
             weight_map: 权重图 [B, 1, H, W]
             sh_coeffs: 球谐系数 [B, K, 9]
-            local_residual: 局部残差 [1, 1, H, W] 或 None
+            local_residual: 局部残差 [B, K, H, W] 或 None
             shading: 着色图 [B, K, H, W]，用于计算物理贡献度损失
         Returns:
             total_loss: 总损失
@@ -777,16 +774,13 @@ class LossCalculator(nn.Module):
         loss_dict['sh_energy_dist'] = loss_sh_energy_dist.item()
         loss_dict['sh_total_energy'] = loss_sh_total_energy.item()
 
-        # 7. 反照率一致性损失（多图本征分解核心先验）
-        loss_albedo_consistency = self.albedo_consistency(albedo, target_images)
-        loss_dict['albedo_consistency'] = loss_albedo_consistency.item()
-        # 8. 残差稀疏性损失
+        # 7. 残差稀疏性损失
         loss_res_l1, loss_res_tv = self.compute_residual_sparsity_loss(local_residual)
         loss_dict['residual_l1'] = loss_res_l1.item() if isinstance(loss_res_l1, torch.Tensor) else loss_res_l1
         loss_dict['residual_tv'] = loss_res_tv.item() if isinstance(loss_res_tv, torch.Tensor) else loss_res_tv
 
         # 计算加权总损失
-        # 9. 物理贡献度损失
+        # 8. 物理贡献度损失
         loss_physical_contribution = 0.0
         if shading is not None:
             loss_physical_contribution = self.compute_physical_contribution(albedo, shading, pred_images)
@@ -804,7 +798,6 @@ class LossCalculator(nn.Module):
             self.weights['sh_l2'] * loss_sh_l2 +
             self.weights['sh_higher'] * loss_sh_higher +
             self.weights['sh_sparsity'] * loss_sh_sparsity +
-            self.weights['albedo_consistency'] * loss_albedo_consistency +
             self.weights['sh0_nonneg'] * loss_sh0_nonneg +
             self.weights['sh_energy_dist'] * loss_sh_energy_dist +
             self.weights['sh_total_energy'] * loss_sh_total_energy +
@@ -915,11 +908,12 @@ if __name__ == "__main__":
     print("=" * 80)
 
     lighting_prior = LightingPriorLoss(higher_order_weight=2.0).to(device)
-    loss_sh_l2, loss_sh_higher = lighting_prior(sh_coeffs)
+    loss_sh_l2, loss_sh_higher, loss_sh_sparsity = lighting_prior(sh_coeffs)
 
     print(f"\nLighting Prior Loss:")
     print(f"  L2正则化: {loss_sh_l2.item():.6f}")
     print(f"  高阶惩罚: {loss_sh_higher.item():.6f}")
+    print(f"  稀疏惩罚: {loss_sh_sparsity.item():.6f}")
     print(f"✓ 对高阶球谐系数施加更强惩罚")
 
     # ========== 测试 6: Residual Sparsity Loss ==========

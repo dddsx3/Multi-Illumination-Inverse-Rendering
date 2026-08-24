@@ -67,9 +67,9 @@ def load_model_and_data(config_path, checkpoint_path, data_root, num_lights=5):
     ).to(device)
 
     residual = HierarchicalResidual(
-        image_height=config.data.image_size[0],
-        image_width=config.data.image_size[1],
-        use_local_residual=config.model.use_local_residual
+        use_local_residual=config.model.use_local_residual,
+        num_images=config.model.num_images,
+        feature_channels=config.model.base_channels
     ).to(device)
 
     # 3. 加载权重
@@ -345,9 +345,10 @@ def main():
             images = images.to(device)
 
             # 推理
-            depth, albedo, sh_coeffs, weight_map = model(images)
+            depth, albedo, sh_coeffs, weight_map, features = model(images)
             rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
-            final_render, global_residual, local_residual = residual(albedo, shading, normal, sh_coeffs)
+            final_render, global_residual, local_residual = residual(
+                albedo, shading, normal, sh_coeffs, features=features)
 
             # 计算指标
             metrics = calculate_metrics(images, albedo, shading, normal, local_residual, global_residual)
@@ -374,4 +375,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()
