@@ -52,6 +52,19 @@
 3. **fp32 重训**：关闭 --use_amp 作为稳定性基线；AMP 仅在连续一次干净跑通后
    以对照实验方式重新评估。
 
+## 7. 关闭记录（2026-08-25，T2.1 完成时追加）
+
+- **NaN 自动停机**：已实现并经注入测试验证——连续非有限损失达
+  nan_abort_streak（收敛值 **10**，声明见 docs/design/t2_1_params.md）抛
+  RuntimeError 终止；tests/test_stability_guards.py case1 通过；
+- **梯度范数预警/硬停机两级阈值**：>1e3 预警写 TB 标量、>1e4 硬停机，
+  case2/case3 通过；集成测试证明守卫经真实 train_epoch 全链路生效；
+- **回归冒烟**：fp32 与 BF16 各一次 3-epoch 全管线（独立目录），零 NaN、
+  覆盖两次阶段切换。
+
+**状态：已关闭。** 后续观察项保留：fp32 重训若再现梯度范数 >1e3 频发，按
+docs/design/t2_1_params.md 升级路径处理（降 LR + warmup）。
+
 ## 5. 未尽事项 / 后续观察
 
 - `_skipped_nan` 目前仅计数，未接自动停机（连续 N 次 >0 应终止并告警）；

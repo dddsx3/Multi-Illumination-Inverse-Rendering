@@ -82,3 +82,7 @@ _train_bf16_log.txt
 _diligent_log.txt
 
 _smoke_manifest_log.txt
+
+_smoke_t21_fp32_log.txt
+_smoke_t21_bf16_log.txt
+_tests_log.txt

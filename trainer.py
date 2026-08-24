@@ -21,6 +21,7 @@ from loss_functions import LossCalculator, GtSupervisionLoss
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
 from evaluate import compute_all
+from stability import StabilityGuard
 def _initialize_weights(module, init_type='kaiming'):
     """内置权重初始化，替代外部 gradient_utils 依赖"""
     if isinstance(module, (torch.nn.Conv2d, torch.nn.ConvTranspose2d)):
@@ -78,6 +79,17 @@ class InverseRenderTrainer:
 
         # Phase 1 (T1.4)：GT 监督损失（合成数据集；无 GT 的 batch 自动跳过）
         self.gt_loss = GtSupervisionLoss()
+
+        # T2.1（C3）：稳定性守卫——NaN 连续跳过停机 + 梯度范数两级阈值
+        # （默认值与 docs/design/t2_1_params.md 声明一致）
+        self.stability = StabilityGuard(
+            nan_streak_limit=self.config.get('nan_abort_streak', 10),
+            warn_threshold=self.config.get('grad_norm_warn_threshold', 1e3),
+            abort_threshold=self.config.get('grad_norm_abort_threshold', 1e4),
+            on_abort=lambda: self.writer.flush(),
+            tb_scalar=lambda name, val: self.writer.add_scalar(
+                f'train/{name}', val, self.global_step)
+        )
 
         # 强制使用GPU
         if not torch.cuda.is_available():
@@ -176,6 +188,8 @@ class InverseRenderTrainer:
         self.amp_dtype = str(self.config.get('amp_dtype', 'bfloat16')).lower()
         if self.amp_dtype not in ('bfloat16', 'float16'):
             self.amp_dtype = 'bfloat16'
+        # 无条件初始化（fp32 路径也要有定义，train_epoch 的 autocast 引用它）
+        self._autocast_dtype = torch.bfloat16 if self.amp_dtype == 'bfloat16' else torch.float16
         self._use_scaler = False
         if self.use_amp:
             if self.amp_dtype == 'bfloat16':
@@ -489,19 +503,13 @@ class InverseRenderTrainer:
 
             # T1.5 NaN 守卫（INC-0001 防复发机制）：非有限损失直接跳过该
             # batch；连续超过阈值判定为发散，快速失败优于烧卡
-            if not torch.isfinite(total_loss):
+            # T2.1：守卫逻辑已抽取为 StabilityGuard（stability.py），
+            # 连续非有限损失达到 nan_abort_streak 即抛 RuntimeError 停机
+            if not self.stability.check_loss(total_loss):
                 self.optimizer.zero_grad(set_to_none=True)
                 loss_dict['_skipped_nan'] = 1.0
-                self._nan_skip_streak = getattr(self, '_nan_skip_streak', 0) + 1
                 self.global_step += 1
-                if self._nan_skip_streak >= self.config.get('nan_abort_streak', 30):
-                    self.writer.flush()
-                    raise RuntimeError(
-                        f"连续 {self._nan_skip_streak} 个 batch 出现非有限损失，"
-                        "判定训练发散并自动停机（参见 docs/incidents/INC-0001）。"
-                        "建议：关闭 --use_amp / 降低 albedo_smooth / 降低学习率")
                 continue
-            self._nan_skip_streak = 0
 
             if self._use_scaler:
                 self.optimizer.scaler.scale(total_loss).backward()
@@ -520,16 +528,9 @@ class InverseRenderTrainer:
                     self.grad_clip
                 )
 
-            # C3（INC-0001 防复发）：梯度范数预警。预裁剪范数 >1e3 即记录并
-            # 写入 TensorBoard——这是发散的早期信号（run1 中该值达 9.8e3，
-            # 数十个 epoch 后才演化为可见 NaN，预警本可提前数十个 epoch）
-            if torch.isfinite(grad_norm) and grad_norm > self.config.get('grad_norm_warn_threshold', 1e3):
-                self._grad_warn_count = getattr(self, '_grad_warn_count', 0) + 1
-                if self._grad_warn_count <= 5 or self._grad_warn_count % 50 == 0:
-                    print(f"⚠ 梯度范数预警(第{self._grad_warn_count}次): "
-                          f"{grad_norm.item():.1f} > 1e3 @ Epoch {self.current_epoch}")
-                self.writer.add_scalar('train/grad_norm_exceed_1e3',
-                                       float(grad_norm), self.global_step)
+            # C3/T2.1：梯度范数两级阈值（>1e3 预警写 TB；>1e4 硬停机），
+            # 逻辑在 StabilityGuard.check_grad_norm（可单测）
+            self.stability.check_grad_norm(grad_norm)
 
             # 参数更新
             if self._use_scaler:
