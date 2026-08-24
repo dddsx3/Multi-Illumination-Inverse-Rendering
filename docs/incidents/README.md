@@ -23,5 +23,8 @@
 - [ ] 历史遗留的极端超参（如 albedo_smooth=50）在新数据域下是否重新校准？
 - [ ] 渲染/外部引擎长跑是否分块（<=50 单位/进程）并有逐块日志？
 - [ ] 失败场景是否自动清理半成品目录且可幂等续跑？
-- [ ] 关键产物（best checkpoint / validation.json）是否有独立的存档路径？
+- [ ] **【硬检查·INC-0003】**关键产物独立存档：训练/冒烟命令必须携带
+  `--checkpoint_dir ../checkpoints/{run_id}`（及 --log_dir/--viz_dir），禁止写入单一生产路径；
+  冒烟后核对生产根目录零新增文件
+- [ ] GitHub 推送走系统代理（`git -c http.proxy=http://127.0.0.1:53362 push ...`），直连会被重置；推送后核对 `git log origin/main` 与标签
 - [ ] GitHub 推送走系统代理（`git -c http.proxy=http://127.0.0.1:53362 push ...`），直连会被重置；推送后核对 `git log origin/main` 与标签

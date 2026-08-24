@@ -166,7 +166,18 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     print("\n创建训练器...")
 
+    # T2.0（INC-0003）修复：目录解析已上移至 main()，经 config 传入本函数
+    # （原实现在此处引用 args 触发 NameError——args 不属于 train_mode 作用域）
+    run_id = getattr(config, 'run_id', 'run_default')
+    checkpoint_dir = config.paths.checkpoint_dir
+    log_dir = config.paths.log_dir
+    viz_dir = config.paths.vis_dir
+    print(f"[T2.0] run_id={run_id}")
+    print(f"[T2.0] checkpoint_dir={checkpoint_dir}")
+    print(f"[T2.0] log_dir={log_dir} | viz_dir={viz_dir}")
+
     trainer_config = {
+        'run_id': run_id,
         'data_root': config.data.root_dir,
         'train_scenes': config.data.train_scenes,
         'val_scenes': config.data.val_scenes,
@@ -182,9 +193,9 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         'scheduler': config.train.scheduler,
         'step_size': config.train.step_size,
         'gamma': config.train.gamma,
-        'log_dir': config.paths.log_dir,
-        'checkpoint_dir': config.paths.checkpoint_dir,
-        'vis_dir': config.paths.vis_dir,
+        'log_dir': log_dir,
+        'checkpoint_dir': checkpoint_dir,
+        'vis_dir': viz_dir,
         'num_workers': config.data.num_workers,
         'use_amp': config.train.use_amp,
         'amp_dtype': getattr(config.train, 'amp_dtype', 'bfloat16'),
@@ -565,6 +576,18 @@ def parse_args():
 
     parser.add_argument('--split_manifest', type=str, default=None,
                         help='划分清单 JSON（含 train/val/test 列表）。提供后训练/验证使用清单划分，test 冻结只评不调参')
+
+    parser.add_argument('--run_id', type=str, default=None,
+                        help='运行标识；缺省自动生成 run_YYYYMMDD_HHMMSS')
+
+    parser.add_argument('--checkpoint_dir', type=str, default=None,
+                        help='checkpoint 输出目录（INC-0003：强制独立目录，缺省 checkpoints/{run_id}/）')
+
+    parser.add_argument('--log_dir', type=str, default=None,
+                        help='TensorBoard 日志目录（缺省 logs/{run_id}/）')
+
+    parser.add_argument('--viz_dir', type=str, default=None,
+                        help='可视化输出目录（缺省 visualizations/{run_id}/）')
     parser.add_argument(
         '--device',
         type=str,
@@ -689,6 +712,17 @@ def main():
     config.train.use_amp = use_amp
     config.train.amp_dtype = amp_dtype
     config.split_manifest = split_manifest
+
+    # T2.0（INC-0003）：产物目录参数化——缺省按 run_id 独立目录，
+    # 杜绝冒烟/多实验互相覆盖生产资产。目录保持在仓库外（../ 前缀）。
+    run_id = args.run_id or datetime.now().strftime('run_%Y%m%d_%H%M%S')
+    config.run_id = run_id
+    config.paths.checkpoint_dir = args.checkpoint_dir or f'../checkpoints/{run_id}'
+    config.paths.log_dir = args.log_dir or f'../logs/{run_id}'
+    config.paths.vis_dir = args.viz_dir or f'../visualizations/{run_id}'
+    print(f"[T2.0] run_id={run_id}")
+    print(f"[T2.0] checkpoint_dir={config.paths.checkpoint_dir}")
+    print(f"[T2.0] log_dir={config.paths.log_dir} | viz_dir={config.paths.vis_dir}")
 
     config.model.base_channels = base_channels
     config.model.num_images = num_lights
