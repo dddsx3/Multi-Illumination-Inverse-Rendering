@@ -520,6 +520,17 @@ class InverseRenderTrainer:
                     self.grad_clip
                 )
 
+            # C3（INC-0001 防复发）：梯度范数预警。预裁剪范数 >1e3 即记录并
+            # 写入 TensorBoard——这是发散的早期信号（run1 中该值达 9.8e3，
+            # 数十个 epoch 后才演化为可见 NaN，预警本可提前数十个 epoch）
+            if torch.isfinite(grad_norm) and grad_norm > self.config.get('grad_norm_warn_threshold', 1e3):
+                self._grad_warn_count = getattr(self, '_grad_warn_count', 0) + 1
+                if self._grad_warn_count <= 5 or self._grad_warn_count % 50 == 0:
+                    print(f"⚠ 梯度范数预警(第{self._grad_warn_count}次): "
+                          f"{grad_norm.item():.1f} > 1e3 @ Epoch {self.current_epoch}")
+                self.writer.add_scalar('train/grad_norm_exceed_1e3',
+                                       float(grad_norm), self.global_step)
+
             # 参数更新
             if self._use_scaler:
                 self.optimizer.scaler.step(self.optimizer)

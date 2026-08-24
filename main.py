@@ -73,11 +73,16 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     print("创建数据集...")
 
-    # Phase 1 (T1.4)：按场景做确定性划分（固定种子），训练集与验证集不重叠；
-    # 若命令行显式给出 train/val 场景列表则优先使用。
+    # Phase 1 (C1 正式化)：划分优先级 = 命令行场景列表 > 划分清单 JSON >
+    # 确定性计算。清单中的 test 子集受冻结规则保护（只评不训）。
     if getattr(config.data, 'train_scenes', None) and getattr(config.data, 'val_scenes', None):
         train_names = list(config.data.train_scenes)
         val_names = list(config.data.val_scenes)
+    elif getattr(config, 'split_manifest', None):
+        from split_manifest import load_split
+        train_names = load_split(config.split_manifest, 'train')
+        val_names = load_split(config.split_manifest, 'val')
+        print(f"[manifest] test 集 {len(load_split(config.split_manifest, 'test'))} 场景已冻结（只准评估）")
     else:
         train_names, val_names = split_scene_names(
             config.data.root_dir,
@@ -557,6 +562,9 @@ def parse_args():
     parser.add_argument('--amp_dtype', type=str, default='bf16',
                         choices=['bf16', 'fp16'],
                         help='AMP 精度类型：bf16 无溢出风险（Blackwell/Ampere+ 默认），fp16 需 GradScaler')
+
+    parser.add_argument('--split_manifest', type=str, default=None,
+                        help='划分清单 JSON（含 train/val/test 列表）。提供后训练/验证使用清单划分，test 冻结只评不调参')
     parser.add_argument(
         '--device',
         type=str,
@@ -628,6 +636,9 @@ def main():
     # 是否使用混合精度训练
     use_amp = args.use_amp
 
+    # 划分清单（C1）：提供后 train/val 取自清单，test 冻结只评不训
+    split_manifest = args.split_manifest
+
     # AMP 精度类型：bf16 / fp16
     amp_dtype = 'bfloat16' if args.amp_dtype == 'bf16' else 'float16'
 
@@ -677,6 +688,7 @@ def main():
     config.train.scheduler = scheduler
     config.train.use_amp = use_amp
     config.train.amp_dtype = amp_dtype
+    config.split_manifest = split_manifest
 
     config.model.base_channels = base_channels
     config.model.num_images = num_lights

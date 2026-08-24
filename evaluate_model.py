@@ -20,7 +20,10 @@ def main():
     ap = argparse.ArgumentParser(description="Phase 1 T1.6 量化评估")
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--data_root", required=True)
-    ap.add_argument("--split", choices=["val", "train"], default="val")
+    ap.add_argument("--split", choices=["val", "train", "test"], default="test",
+                    help="test=冻结正式测试集（推荐）；需配合 --split_manifest")
+    ap.add_argument("--split_manifest", default=None,
+                    help="划分清单 JSON（C1 正式化）；提供后优先于 --split 的计算划分")
     ap.add_argument("--train_val_split", type=float, default=0.8)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--batch_size", type=int, default=4)
@@ -39,10 +42,14 @@ def main():
     print("checkpoint epoch:", ckpt.get("epoch"), "| saved stage:",
           tcfg.get("current_stage"), "| val_loss@save:", ckpt.get("val_loss"))
 
-    # 确定性划分（与训练完全一致），取验证子集
-    train_names, val_names = split_scene_names(
-        args.data_root, args.train_val_split, args.seed)
-    names = val_names if args.split == "val" else train_names
+    # 划分来源优先级：清单 JSON（C1 正式化，test 冻结）> 确定性计算
+    if args.split_manifest:
+        from split_manifest import load_split
+        names = load_split(args.split_manifest, args.split)
+    else:
+        train_names, val_names = split_scene_names(
+            args.data_root, args.train_val_split, args.seed)
+        names = val_names if args.split == "val" else train_names
     print(f"split={args.split}: {len(names)} scenes")
 
     dataset = MultiLightingDataset(

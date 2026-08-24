@@ -80,3 +80,5 @@ _smoke_bf16_log.txt
 _train_bf16_log.txt
 
 _diligent_log.txt
+
+_smoke_manifest_log.txt
