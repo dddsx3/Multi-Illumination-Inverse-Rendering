@@ -78,3 +78,5 @@ _eval_run_log.txt
 _train_fp32_log.txt
 _smoke_bf16_log.txt
 _train_bf16_log.txt
+
+_diligent_log.txt
