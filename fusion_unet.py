@@ -84,7 +84,8 @@ class FusionUNet(nn.Module):
     def __init__(self, num_images: int = 5, in_channels: int = 1,
                  base_channels: int = 32, sh_order: int = 2,
                  fusion_dim: int = 128, delta_bound: float = 0.1,
-                 use_per_light_albedo: bool = True):
+                 use_per_light_albedo: bool = True,
+                 sh_constraint: str = "clamp"):
         super().__init__()
         self.num_images = num_images          # 仅用于 SH 头输出形状；前向不依赖
         self.in_channels = in_channels
@@ -139,6 +140,7 @@ class FusionUNet(nn.Module):
 
         # S2 逐光照反照率分支（有界残差）；F-albOff 时整体禁用
         self.use_per_light_albedo = use_per_light_albedo
+        self.sh_constraint = sh_constraint if sh_constraint in ("clamp", "softplus") else "clamp"
         self.delta_head = nn.Sequential(
             nn.Conv2d(bc + 1, 16, 3, padding=1), nn.ReLU(inplace=True),
             nn.Conv2d(16, 1, 1)) if use_per_light_albedo else None
@@ -209,7 +211,17 @@ class FusionUNet(nn.Module):
 
         # SH 头：逐光照全局描述子 -> 每光照 SH（输入为 stem/decoder 的 bc 维）
         sh_fc_in = feats.flatten(0, 1).mean(dim=(2, 3))          # [B*N, bc]
-        sh_coeffs = self.sh_fc(sh_fc_in).reshape(B, N, -1)
+        raw = self.sh_fc(sh_fc_in).reshape(B, N, -1)             # [B,N,9] tanh 域 [-1,1]
+
+        # SH[0] 物理约束变体（T2.3）：
+        #   clamp    —— 与基线一致：截断到 [0,1]（hack 语义）
+        #   softplus —— 可微重参数化：SH0 = softplus(x)，天然 >=0 且梯度恒正
+        if self.sh_constraint == "softplus":
+            sh0 = F.softplus(raw[..., 0:1])
+            sh_coeffs = torch.cat([sh0, raw[..., 1:]], dim=-1)
+        else:
+            sh_coeffs = torch.cat([torch.clamp(raw[..., 0:1], 0.0, 1.0),
+                                   raw[..., 1:]], dim=-1)
 
         # 主头作用于逐光照特征后再均值池化为共享输出
         depth = self.depth_head(feats.flatten(0, 1)).reshape(B, N, 1, H, W).mean(dim=1)

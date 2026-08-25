@@ -148,7 +148,8 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
             in_channels=in_ch,
             base_channels=config.model.base_channels,
             sh_order=config.model.sh_order,
-            use_per_light_albedo=not getattr(args, 'no_per_light_albedo', False))
+            use_per_light_albedo=not getattr(config, 'no_per_light_albedo', False),
+            sh_constraint=getattr(config.model, 'sh_constraint', 'clamp'))
         print(f"架构: FusionUNet (in_channels={in_ch}, N-agnostic)")
     else:
         model = IntrinsicUNet(
@@ -168,9 +169,9 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         use_local_residual=config.model.use_local_residual,
         num_images=config.model.num_images,
         feature_channels=config.model.base_channels,
-        hidden_channels=getattr(args, 'res_hidden', 64)
+        hidden_channels=getattr(config, 'res_hidden', 64)
     )
-    if getattr(args, 'residual_off', False):
+    if getattr(config, 'residual_off', False):
         # F-resA：阶段3 残差缩放恒 0（模块保留，参数量口径可解释）
         residual.residual_scales = {'stage1': 0.0, 'stage2': 0.0, 'stage3': 0.0}
         print('[F-resA] 残差缩放全部置零')
@@ -195,7 +196,7 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     trainer_config = {
         'run_id': run_id,
-        'no_per_light_albedo': getattr(args, 'no_per_light_albedo', False),
+        'no_per_light_albedo': getattr(config, 'no_per_light_albedo', False),
         'data_root': config.data.root_dir,
         'train_scenes': config.data.train_scenes,
         'val_scenes': config.data.val_scenes,
@@ -601,6 +602,9 @@ def parse_args():
     parser.add_argument('--modality', type=str, default='gray', choices=['gray', 'rgb'],
                         help='输入模态：gray 读 light_NNN.png；rgb 读 light_NNN_rgb.png 三通道')
 
+    parser.add_argument('--sh_constraint', type=str, default='clamp', choices=['clamp', 'softplus'],
+                        help='SH[0] 约束形式：clamp=基线 hack；softplus=可微重参数化（T2.3）')
+
     # T2.5 消融变体旗标（每变体相对基准只动一个变量）
     parser.add_argument('--residual_off', action='store_true',
                         help='F-resA：阶段3 残差缩放恒 0（模块保留，参数量口径可解释）')
@@ -745,7 +749,11 @@ def main():
     config.train.amp_dtype = amp_dtype
     config.split_manifest = split_manifest
     config.model.architecture = getattr(args, 'model', 'unet')
-    config.data.modality = getattr(args, 'modality', 'gray')
+    config.data.modality = args.modality; config.model.sh_constraint = args.sh_constraint
+    config.model.sh_constraint = args.sh_constraint
+    config.res_hidden = args.res_hidden
+    config.residual_off = args.residual_off
+    config.no_per_light_albedo = args.no_per_light_albedo
 
     # T2.0（INC-0003）：产物目录参数化——缺省按 run_id 独立目录，
     # 杜绝冒烟/多实验互相覆盖生产资产。目录保持在仓库外（../ 前缀）。
