@@ -254,6 +254,9 @@ class MultiLightingDataset(Dataset):
 
         # ---- 图像 ----
         image_tensors = []
+        # rgb 模态额外产出重建目标：编码域 BT.709 luma（与 _regen_gray.py
+        # 推导灰度 PNG 的公式逐位一致，保证 F-N5-rgb 与灰度臂监督同源）
+        luma_tensors = [] if self.modality == "rgb" else None
         for img in images_pil:
             if pad_h > 0 or pad_w > 0:
                 canvas = Image.new(self._pil_mode, (max(w0, tw), max(h0, th)))
@@ -262,13 +265,19 @@ class MultiLightingDataset(Dataset):
             img = img.crop((left, top, left + tw, top + th))
             if flip:
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            arr = np.asarray(img, dtype=np.float32) / 255.0
+            arr = np.asarray(img, dtype=np.float32)
+            if luma_tensors is not None:
+                luma8 = np.round(0.2126 * arr[..., 0] + 0.7152 * arr[..., 1]
+                                 + 0.0722 * arr[..., 2])
+                lt = np.power(luma8 / 255.0, 1.0 / 2.2).astype(np.float32)
+                luma_tensors.append(torch.from_numpy(lt))
+            arr = arr / 255.0
             arr = np.power(arr, 1.0 / 2.2)  # 反 gamma（与旧 data_loader 一致）
             t = torch.from_numpy(arr)
             if self.modality == "rgb":
                 t = t.permute(2, 0, 1).contiguous()   # [3, H, W]
             image_tensors.append(t)
-        images = torch.stack(image_tensors, dim=0)  # [K, H, W]
+        images = torch.stack(image_tensors, dim=0)  # [K, H, W]；rgb 为 [K, 3, H, W]
 
         # ---- GT（与图像同一组裁剪/翻转参数）----
         gt = self._load_gt(scene_name)
@@ -288,6 +297,8 @@ class MultiLightingDataset(Dataset):
                 gt_out[key] = t.contiguous()
             if "sh_coeffs" in gt:
                 gt_out["sh_coeffs"] = gt["sh_coeffs"]  # 全局量，不受空间增强影响
+            if luma_tensors is not None:
+                gt_out["image_luma"] = torch.stack(luma_tensors, dim=0)  # [K,H,W]
             gt = gt_out
 
         return images, gt, scene_name

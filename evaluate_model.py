@@ -30,6 +30,17 @@ def main():
     ap.add_argument("--num_workers", type=int, default=0)
     ap.add_argument("--limit", type=int, default=0, help="只评估前 N 个场景（0=全部）")
     ap.add_argument("--out_dir", default="eval_output")
+    # T2.2/T2.3/T2.5：架构与变体参数。默认 auto 从 checkpoint 自动识别；
+    # 无法从权重形状推断的项（sh_constraint、residual_off）优先读训练期
+    # 存档的 config 元数据，读不到时回落默认值或显式旗标。
+    ap.add_argument("--model", choices=["auto", "unet", "fusion"], default="auto")
+    ap.add_argument("--modality", choices=["auto", "gray", "rgb"], default="auto")
+    ap.add_argument("--sh_constraint", choices=["auto", "clamp", "softplus"],
+                    default="auto")
+    ap.add_argument("--res_hidden", type=int, default=0,
+                    help="残差隐藏通道；0=从 checkpoint 形状自动识别")
+    ap.add_argument("--residual_off", action="store_true",
+                    help="F-resA：推理时残差缩放置零（与训练期行为一致）")
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -52,6 +63,29 @@ def main():
         names = val_names if args.split == "val" else train_names
     print(f"split={args.split}: {len(names)} scenes")
 
+    # 架构/模态/约束解析：显式旗标 > checkpoint 训练期元数据 > 权重形状 > 默认
+    msd_probe = ckpt["model_state_dict"]
+    if args.model != "auto":
+        architecture = args.model
+    elif "aggregator.proj.weight" in msd_probe:
+        architecture = "fusion"
+    else:
+        architecture = "unet"
+    if args.modality != "auto":
+        modality = args.modality
+    elif tcfg.get("modality"):
+        modality = str(tcfg["modality"])
+    elif architecture == "fusion":
+        modality = "rgb" if msd_probe["stem.net.0.weight"].shape[1] == 3 else "gray"
+    else:
+        modality = "gray"
+    if args.sh_constraint != "auto":
+        sh_constraint = args.sh_constraint
+    else:
+        sh_constraint = str(tcfg.get("sh_constraint", "clamp"))
+    print(f"[arch] model={architecture} modality={modality} "
+          f"sh_constraint={sh_constraint}")
+
     dataset = MultiLightingDataset(
         root_dir=args.data_root,
         num_lights=num_images,
@@ -59,16 +93,37 @@ def main():
         is_training=False,
         scene_subset=names,
         load_gt=True,
+        modality=modality,
     )
 
-    model = IntrinsicUNet(num_images=num_images, base_channels=base_channels)
+    msd = ckpt["model_state_dict"]
+    if architecture == "fusion":
+        from fusion_unet import FusionUNet
+        in_channels = int(msd["stem.net.0.weight"].shape[1])
+        use_pl_alb = "delta_head.0.weight" in msd
+        model = FusionUNet(
+            num_images=num_images, in_channels=in_channels,
+            base_channels=base_channels,
+            use_per_light_albedo=use_pl_alb, sh_constraint=sh_constraint)
+        print(f"[auto] FusionUNet in_channels={in_channels} "
+              f"per_light_albedo={use_pl_alb} sh_constraint={sh_constraint}")
+    else:
+        model = IntrinsicUNet(num_images=num_images, base_channels=base_channels)
     renderer = PhysicsRenderer()
+    r_sd = ckpt.get("residual_state_dict") or {}
+    res_hidden = args.res_hidden or int(
+        r_sd.get("local_net.net.0.weight", torch.empty(64, 1)).shape[0])
     residual = HierarchicalResidual(
-        use_local_residual=True, num_images=num_images, feature_channels=base_channels)
-    model.load_state_dict(ckpt["model_state_dict"])
+        use_local_residual=True, num_images=num_images, feature_channels=base_channels,
+        hidden_channels=res_hidden)
+    if getattr(args, "residual_off", False) or tcfg.get("residual_off"):
+        # F-resA：阶段3 残差缩放恒 0，推理与训练期口径一致
+        residual.residual_scales = {"stage1": 0.0, "stage2": 0.0, "stage3": 0.0}
+        print("[F-resA] 推理残差缩放置零")
+    model.load_state_dict(msd)
     renderer.load_state_dict(ckpt["renderer_state_dict"])
-    if ckpt.get("residual_state_dict"):
-        residual.load_state_dict(ckpt["residual_state_dict"])
+    if r_sd:
+        residual.load_state_dict(r_sd)
     model.to(device).eval(); renderer.to(device).eval(); residual.to(device).eval()
 
     loader = create_data_loader(dataset, batch_size=args.batch_size,
@@ -81,7 +136,21 @@ def main():
         for images, gt, names_b in loader:
             images = images.to(device)
             gt_dev = {k: v.to(device) for k, v in gt.items()} if gt is not None else None
-            depth, albedo, sh_coeffs, weight_map, features = model(images)
+            # rgb 模态：网络吃 [B,K,3,H,W]；重建/图像指标用与灰度链路
+            # 逐位同源的 BT.709 luma 目标（数据加载器在编码域生成）
+            recon_target = images
+            if images.dim() == 5:
+                recon_target = gt_dev["image_luma"] if (
+                    gt_dev is not None and "image_luma" in gt_dev) else \
+                    (0.2126 * images[:, :, 0] + 0.7152 * images[:, :, 1]
+                     + 0.0722 * images[:, :, 2])
+                if gt_dev is not None and "image_luma" in gt_dev:
+                    gt_dev.pop("image_luma")
+            out = model(images)
+            if len(out) == 6:  # FusionUNet（S2 开启）：末位为逐光照反照率
+                depth, albedo, sh_coeffs, weight_map, features, _alb_pl = out
+            else:
+                depth, albedo, sh_coeffs, weight_map, features = out
             rendered, normal, shading = renderer(depth, albedo, sh_coeffs)
             final_render, g_res, l_res = residual(
                 albedo, shading, normal, sh_coeffs,
@@ -92,7 +161,7 @@ def main():
                 pred={"normal": normal, "depth": depth, "albedo": albedo,
                       "image": final_render},
                 gt={"normal": gt_dev["normal"], "depth": gt_dev["depth"],
-                    "albedo": gt_dev["albedo"], "image": images},
+                    "albedo": gt_dev["albedo"], "image": recon_target},
                 mask=gt_dev["mask"])
 
             # 深度对齐评估（Eigen 惯例）：网络预测的绝对深度存在尺度+偏移
@@ -143,6 +212,11 @@ def main():
         "data_root": args.data_root,
         "split": args.split,
         "split_manifest": args.split_manifest,
+        "architecture": architecture,
+        "modality": modality,
+        "sh_constraint": sh_constraint,
+        "res_hidden": res_hidden,
+        "residual_off": bool(getattr(args, "residual_off", False) or tcfg.get("residual_off")),
         "scenes": len(per_scene),
         "metrics_mean_std": {k: {"mean": agg[k][0], "std": agg[k][1]} for k in keys},
     }

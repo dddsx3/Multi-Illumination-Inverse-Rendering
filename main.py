@@ -196,6 +196,11 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     trainer_config = {
         'run_id': run_id,
+        'architecture': getattr(config.model, 'architecture', 'unet'),
+        'modality': getattr(config.data, 'modality', 'gray'),
+        'sh_constraint': getattr(config.model, 'sh_constraint', 'clamp'),
+        'res_hidden': getattr(config, 'res_hidden', 64),
+        'residual_off': getattr(config, 'residual_off', False),
         'no_per_light_albedo': getattr(config, 'no_per_light_albedo', False),
         'data_root': config.data.root_dir,
         'train_scenes': config.data.train_scenes,

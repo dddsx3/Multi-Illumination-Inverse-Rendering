@@ -414,6 +414,19 @@ class InverseRenderTrainer:
             self.current_epoch
         )
 
+    @staticmethod
+    def _resolve_recon_target(images, gt_dev):
+        """T2.2 RGB 双链路：网络输入原样透传（rgb 为 [B,K,3,H,W]）；
+        重建损失与图像指标的对比目标用编码域 BT.709 luma——与灰度 PNG
+        的推导公式逐位一致（见 _regen_gray.py），保证 F-N5-rgb 与灰度
+        臂的监督口径同源。灰度模态原样返回。"""
+        if images.dim() == 4:
+            return images
+        if gt_dev is not None and 'image_luma' in gt_dev:
+            return gt_dev['image_luma']
+        return (0.2126 * images[:, :, 0] + 0.7152 * images[:, :, 1]
+                + 0.0722 * images[:, :, 2])
+
     def train_epoch(self) -> Dict[str, float]:
         """
         训练一个epoch
@@ -453,7 +466,8 @@ class InverseRenderTrainer:
             if gt is not None:
                 gt_dev = {k: v.to(self.device) for k, v in gt.items()}
 
-            B, K, H, W = images.shape
+            B, K, H, W = *images.shape[:2], *images.shape[-2:]
+            recon_target = self._resolve_recon_target(images, gt_dev)
 
             self.optimizer.zero_grad()
 
@@ -495,7 +509,7 @@ class InverseRenderTrainer:
 
                 total_loss, loss_dict = self.loss_calculator(
                     pred_images=final_render,
-                    target_images=images,
+                    target_images=recon_target,
                     depth=depth,
                     albedo=albedo,
                     weight_map=weight_map,
@@ -530,7 +544,7 @@ class InverseRenderTrainer:
                     rendered_pl = a4 * shading
                     _w_rpl = self.loss_calculator.weights.get('recon_per_light', 0.0)
                     if _w_rpl > 0.0:
-                        _l_rpl = self.charb(rendered_pl, images)
+                        _l_rpl = self.charb(rendered_pl, recon_target)
                         total_loss = total_loss + _w_rpl * _l_rpl
                         loss_dict['recon_per_light'] = float(_l_rpl.item())
                     _w_da = self.loss_calculator.weights.get('delta_l1', 0.0)
@@ -595,7 +609,7 @@ class InverseRenderTrainer:
                 for b in range(B):
                     for k in range(K):
                         albedo_flat = albedo_expanded[b, k].flatten()
-                        image_flat = images[b, k].flatten()
+                        image_flat = recon_target[b, k].flatten()
                         corr = torch.corrcoef(torch.stack([albedo_flat, image_flat]))[0, 1]
                         corr_list.append(corr.item())
                 albedo_image_corr = sum(corr_list) / len(corr_list)
@@ -714,7 +728,8 @@ class InverseRenderTrainer:
                 if gt is not None:
                     gt_dev = {k: v.to(self.device) for k, v in gt.items()}
 
-                B, K, H, W = images.shape
+                B, K, H, W = *images.shape[:2], *images.shape[-2:]
+                recon_target = self._resolve_recon_target(images, gt_dev)
 
                 out = self.model(images)
                 is_fusion = len(out) == 6
@@ -740,7 +755,7 @@ class InverseRenderTrainer:
 
                 total_loss, loss_dict = self.loss_calculator(
                     pred_images=final_render,
-                    target_images=images,
+                    target_images=recon_target,
                     depth=depth,
                     albedo=albedo,
                     weight_map=weight_map,
@@ -757,7 +772,7 @@ class InverseRenderTrainer:
                 if is_fusion and gt_dev is not None:
                     a4 = albedo_pl.squeeze(2)
                     rendered_pl = a4 * shading
-                    _l_rpl = self.charb(rendered_pl, images)
+                    _l_rpl = self.charb(rendered_pl, recon_target)
                     val_losses['recon_per_light'] = (val_losses.get('recon_per_light', 0.0)
                                                      + float(_l_rpl.item()))
 
@@ -768,7 +783,7 @@ class InverseRenderTrainer:
                         pred={'normal': normal, 'depth': depth,
                               'albedo': albedo, 'image': final_render},
                         gt={'normal': gt_dev['normal'], 'depth': gt_dev['depth'],
-                            'albedo': gt_dev['albedo'], 'image': images},
+                            'albedo': gt_dev['albedo'], 'image': recon_target},
                         mask=gt_dev['mask'])
                     for mk, mv in m_dict.items():
                         if mv == mv and abs(mv) != float('inf'):  # 跳过 NaN/Inf
@@ -776,7 +791,7 @@ class InverseRenderTrainer:
 
                 if batch_idx == 0:
                     vis_results = self._collect_visualization(
-                    images, depth, albedo, weight_map, final_render, normal, shading, sh_coeffs, scene_names
+                    recon_target, depth, albedo, weight_map, final_render, normal, shading, sh_coeffs, scene_names
                 )
 
         for key in val_losses:

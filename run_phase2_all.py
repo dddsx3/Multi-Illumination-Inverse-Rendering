@@ -31,7 +31,8 @@ PROGRESS = HERE / "progress.json"
 MANIFEST = HERE / "splits" / "synthetic_v3.json"
 
 # 数据集与产物根目录（相对仓库；云端解压后保持结构即可）
-DATA_ROOT = os.environ.get("P2_DATA_ROOT", str(HERE.parent / "data" / "synthetic_v3"))
+# 2026-08-25 起云端计划取消，七臂全部转本地串行执行；P2_* 环境变量仍可覆盖
+DATA_ROOT = os.environ.get("P2_DATA_ROOT", r"D:/data/synthetic_v3")
 CKPT_ROOT = os.environ.get("P2_CKPT_ROOT", str(HERE.parent / "checkpoints"))
 LOG_ROOT = os.environ.get("P2_LOG_ROOT", str(HERE.parent / "logs"))
 EVAL_ROOT = os.environ.get("P2_EVAL_ROOT", str(HERE.parent / "eval_output"))
@@ -43,19 +44,27 @@ IMG_W = int(os.environ.get("P2_IMG_W", "256"))
 BATCH = int(os.environ.get("P2_BATCH", "8"))
 THREADS = os.environ.get("P2_THREADS", "")
 
-# arm 定义: (run_id, 额外 CLI 参数列表)
+# arm 定义: (run_id, 训练额外参数, 冻结 test 评估额外参数)
+# 已完成臂（本地人工执行，不在本表）：
+#   p2_r0_gray_20260825   —— R0 对照臂，评估 eval_output/p2_r0_v3gray_test
+#   p2_t22_f_n5gray_20260825 —— F-N5-gray 主交付臂，评估 eval_output/p2_t22_f_n5gray_test
+# 消融臂评估旗标与训练旗标一一对应；架构/模态之外的变体参数
+# （sh_constraint/res_hidden/residual_off）无法从权重形状推断，必须显式传。
 ARMS = [
-    ("p2_r0_gray_R0BASE", ["--model", "unet"]),
-    ("p2_t22_f_n5gray", ["--model", "fusion", "--modality", "gray"]),
-    ("p2_t22_f_n5rgb", ["--model", "fusion", "--modality", "rgb"]),
+    ("p2_t22_f_n5rgb", ["--model", "fusion", "--modality", "rgb"],
+     ["--model", "fusion", "--modality", "rgb"]),
     ("p2_t23_f_physcon", ["--model", "fusion", "--modality", "gray",
-                          "--sh_constraint", "softplus"]),
+                          "--sh_constraint", "softplus"],
+     ["--model", "fusion", "--sh_constraint", "softplus"]),
     ("p2_t25_f_resA", ["--model", "fusion", "--modality", "gray",
-                       "--residual_off"]),
+                       "--residual_off"],
+     ["--model", "fusion", "--residual_off"]),
     ("p2_t25_f_resC", ["--model", "fusion", "--modality", "gray",
-                       "--res_hidden", "32"]),
+                       "--res_hidden", "32"],
+     ["--model", "fusion", "--res_hidden", "32"]),
     ("p2_t25_f_albOff", ["--model", "fusion", "--modality", "gray",
-                         "--no_per_light_albedo"]),
+                         "--no_per_light_albedo"],
+     ["--model", "fusion"]),
 ]
 
 
@@ -99,7 +108,7 @@ def eval_arm(run_id, extra=None):
            "--split", "test",
            "--split_manifest", str(MANIFEST),
            "--batch_size", "4",
-           "--out_dir", str(Path(EVAL_ROOT) / run_id)]
+           "--out_dir", str(Path(EVAL_ROOT) / f"{run_id}_test")]
     if extra:
         cmd += extra
     return run_cmd(cmd)
@@ -120,7 +129,7 @@ def main():
     selected = ARMS if not args.only else [
         a for a in ARMS if a[0] in args.only.split(",")]
 
-    for run_id, extra in selected:
+    for run_id, train_extra, eval_extra in selected:
         st = progress.get(run_id, {})
         if st.get("status") == "done":
             print(f"[skip] {run_id} 已完成")
@@ -148,7 +157,7 @@ def main():
                    "--checkpoint_dir", str(ck_dir),
                    "--log_dir", str(Path(LOG_ROOT) / run_id),
                    "--viz_dir", str(Path(HERE.parent) / "visualizations" / run_id),
-                   ] + extra
+                   ] + train_extra
             if latest:
                 cmd += ["--resume", "--checkpoint", latest]
 
@@ -175,7 +184,7 @@ def main():
 
         # 冻结 test 评估
         print(f"[eval] {run_id}")
-        rc = eval_arm(run_id)
+        rc = eval_arm(run_id, extra=eval_extra)
         progress[run_id] = {"status": "done" if rc == 0 else "eval_failed",
                             "epochs_done": TOTAL_EPOCHS}
         save_progress(progress)
