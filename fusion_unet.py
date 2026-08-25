@@ -169,7 +169,10 @@ class FusionUNet(nn.Module):
         raise ValueError("扁平输入需提供 C_in；请传 [B,N,C,H,W]")
 
     def forward(self, x: torch.Tensor):
-        """x: [B, N, C_in, H, W]。返回五元组 + 逐光照反照率。"""
+        """x: [B, N, C_in, H, W]；灰度模态可传 [B, N, H, W]（自动升维 C=1）。
+        返回五元组 + 逐光照反照率。"""
+        if x.dim() == 4:
+            x = x.unsqueeze(2)
         assert x.dim() == 5, f"期望 [B,N,C,H,W]，收到 {tuple(x.shape)}"
         B, N, C_in, H, W = x.shape
 
@@ -187,7 +190,13 @@ class FusionUNet(nn.Module):
         e3, skip3 = self.down3(e2)
         e4, skip4 = self.down4(e3)
         bn_, skip_bn = self.bottleneck(e4)
-        bn_ = bn_ + gamma * bn_ + beta                       # FiLM（零初始化等价）
+        # FiLM（零初始化等价）：z 为场景级条件，同一场景的 N 个逐光照样本
+        # 共享同一组调制参数（repeat_interleave 与 token 顺序 b0l0..b0lN 一致）
+        g = self.film_gamma(z).unsqueeze(1).expand(B, N, -1)
+        bta = self.film_beta(z).unsqueeze(1).expand(B, N, -1)
+        g = g.reshape(B * N, -1, 1, 1)
+        bta = bta.reshape(B * N, -1, 1, 1)
+        bn_ = bn_ + g * bn_ + bta
 
         # 解码（batch 维保持 B*N 以共享权重；skip 同形）
         d = self.up1(bn_, skip4)

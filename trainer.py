@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from PIL import Image
 
 from unet_model import IntrinsicUNet
-from loss_functions import LossCalculator, GtSupervisionLoss
+from loss_functions import LossCalculator, GtSupervisionLoss, CharbonnierLoss
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
 from evaluate import compute_all
@@ -79,6 +79,7 @@ class InverseRenderTrainer:
 
         # Phase 1 (T1.4)：GT 监督损失（合成数据集；无 GT 的 batch 自动跳过）
         self.gt_loss = GtSupervisionLoss()
+        self.charb = CharbonnierLoss()
 
         # T2.1（C3）：稳定性守卫——NaN 连续跳过停机 + 梯度范数两级阈值
         # （默认值与 docs/design/t2_1_params.md 声明一致）
@@ -315,6 +316,10 @@ class InverseRenderTrainer:
                     'gt_depth': 0.05,
                     'gt_albedo': 0.5,
                     'gt_normal': 0.5,
+
+                    # === T2.2（F 系列）：逐光照反照率 ===
+                    'recon_per_light': 0.25,
+                    'delta_l1': 0.0,
                 },
                 'description': 'Albedo 粉碎机 + GT 监督：几何/材质向真值对齐'
             },
@@ -339,7 +344,11 @@ class InverseRenderTrainer:
                     # === Phase 1: GT 监督（阶段1/2 启用）===
                     'gt_depth': 0.05,
                     'gt_albedo': 0.5,
-                    'gt_normal': 0.5
+                    'gt_normal': 0.5,
+
+                    # === T2.2（F 系列）：阶段2 半权 ===
+                    'recon_per_light': 0.5,
+                    'delta_l1': 0.01
                 },
                 'description': '学习材质属性 + GT 监督：反照率/法线向真值对齐'
             },
@@ -364,7 +373,11 @@ class InverseRenderTrainer:
                     # === Phase 1: GT 监督（阶段3 关闭：自监督重建+残差主导）===
                     'gt_depth': 0.0,
                     'gt_albedo': 0.0,
-                    'gt_normal': 0.0
+                    'gt_normal': 0.0,
+
+                    # === T2.2（F 系列）：阶段3 全权（逐光照反照率成熟期）===
+                    'recon_per_light': 0.5,
+                    'delta_l1': 0.05
                 },
                 'description': '学习非朗伯效应，引入残差建模'
             }
@@ -445,9 +458,17 @@ class InverseRenderTrainer:
             self.optimizer.zero_grad()
 
             with torch.amp.autocast('cuda', enabled=self.use_amp, dtype=self._autocast_dtype):
-                depth, albedo, sh_coeffs, weight_map, features = self.model(images)
+                out = self.model(images)
+                is_fusion = len(out) == 6
+                if is_fusion:
+                    depth, albedo, sh_coeffs, weight_map, features, albedo_pl = out
+                else:
+                    depth, albedo, sh_coeffs, weight_map, features = out
 
                 rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
+
+                # T2.2（F 系列）：逐光照反照率参与该光照的渲染重建。
+                # A_k 独立于共享主反照率，直接与该光照的 shading 相乘。
 
                 # 🔴【关键修改】如果不使用残差，强制纯物理渲染
                 if self.residual is not None:
@@ -500,6 +521,23 @@ class InverseRenderTrainer:
                         if _gw > 0.0:
                             total_loss = total_loss + _gw * gt_terms[_gk]
                         loss_dict[_gk] = float(gt_terms[_gk].item())
+
+                # T2.2（F 系列）：逐光照反照率参与渲染重建 + DeltaA L1 正则。
+                # 阶段门控经权重表 recon_per_light / delta_l1
+                # （阶段1 关、阶段2 半权、阶段3 全权；见阶段配置表）。
+                if is_fusion:
+                    a4 = albedo_pl.squeeze(2)                       # [B,N,H,W]
+                    rendered_pl = a4 * shading
+                    _w_rpl = self.loss_calculator.weights.get('recon_per_light', 0.0)
+                    if _w_rpl > 0.0:
+                        _l_rpl = self.charb(rendered_pl, images)
+                        total_loss = total_loss + _w_rpl * _l_rpl
+                        loss_dict['recon_per_light'] = float(_l_rpl.item())
+                    _w_da = self.loss_calculator.weights.get('delta_l1', 0.0)
+                    if _w_da > 0.0:
+                        _l_da = (albedo_pl - albedo.unsqueeze(1)).abs().mean()
+                        total_loss = total_loss + _w_da * _l_da
+                        loss_dict['delta_l1'] = float(_l_da.item())
 
             # T1.5 NaN 守卫（INC-0001 防复发机制）：非有限损失直接跳过该
             # batch；连续超过阈值判定为发散，快速失败优于烧卡
@@ -678,7 +716,12 @@ class InverseRenderTrainer:
 
                 B, K, H, W = images.shape
 
-                depth, albedo, sh_coeffs, weight_map, features = self.model(images)
+                out = self.model(images)
+                is_fusion = len(out) == 6
+                if is_fusion:
+                    depth, albedo, sh_coeffs, weight_map, features, albedo_pl = out
+                else:
+                    depth, albedo, sh_coeffs, weight_map, features = out
 
                 rendered, normal, shading = self.renderer(depth, albedo, sh_coeffs)
 
@@ -709,6 +752,14 @@ class InverseRenderTrainer:
                 for key in val_losses:
                     if key in loss_dict:
                         val_losses[key] += loss_dict[key]
+
+                # T2.2：逐光照重建质量入验证损失（F 系列才有意义）
+                if is_fusion and gt_dev is not None:
+                    a4 = albedo_pl.squeeze(2)
+                    rendered_pl = a4 * shading
+                    _l_rpl = self.charb(rendered_pl, images)
+                    val_losses['recon_per_light'] = (val_losses.get('recon_per_light', 0.0)
+                                                     + float(_l_rpl.item()))
 
                 # Phase 1 (T1.4)：GT 量化指标（验证模式中心裁剪、无增强，
                 # 指标走 evaluate.compute_all；无 GT 数据集自动跳过）

@@ -62,13 +62,21 @@ class MultiLightingDataset(Dataset):
         max_rotation_angle: float = 0.0,
         horizontal_flip_prob: float = 0.5,
         scene_subset: Optional[List[str]] = None,
-        load_gt: bool = True
+        load_gt: bool = True,
+        modality: str = "gray"
     ):
         self.root_dir = root_dir
         self.num_lights = num_lights
         self.image_size = tuple(image_size)
         self.is_training = is_training
         self.file_extension = file_extension
+        self.modality = str(modality).lower()
+        assert self.modality in ("gray", "rgb"), f"未知模态 {modality}"
+        # v3 双输出命名：灰度 light_NNN.png / 彩色 light_NNN_rgb.png
+        self._glob_pattern = (
+            f"light_[0-9][0-9][0-9]{file_extension}" if self.modality == "gray"
+            else f"light_[0-9][0-9][0-9]_rgb{file_extension}")
+        self._pil_mode = "L" if self.modality == "gray" else "RGB"
         self.max_rotation_angle = float(max_rotation_angle)
         self.horizontal_flip_prob = float(horizontal_flip_prob)
         self.load_gt = load_gt
@@ -139,7 +147,7 @@ class MultiLightingDataset(Dataset):
         for scene_folder in scene_dirs:
             scene_name = os.path.basename(scene_folder)
             image_files = sorted(glob.glob(
-                os.path.join(scene_folder, f"light_*{self.file_extension}")))
+                os.path.join(scene_folder, self._glob_pattern)))
 
             if len(image_files) < self.num_lights:
                 if len(image_files) > 0:
@@ -231,7 +239,7 @@ class MultiLightingDataset(Dataset):
         images_pil = []
         for img_path in image_paths:
             try:
-                images_pil.append(Image.open(img_path).convert("L"))
+                images_pil.append(Image.open(img_path).convert(self._pil_mode))
             except Exception as e:
                 raise IOError(f"无法加载图像 {img_path}: {e}")
 
@@ -248,7 +256,7 @@ class MultiLightingDataset(Dataset):
         image_tensors = []
         for img in images_pil:
             if pad_h > 0 or pad_w > 0:
-                canvas = Image.new("L", (max(w0, tw), max(h0, th)))
+                canvas = Image.new(self._pil_mode, (max(w0, tw), max(h0, th)))
                 canvas.paste(img, (0, 0))
                 img = canvas
             img = img.crop((left, top, left + tw, top + th))
@@ -256,7 +264,10 @@ class MultiLightingDataset(Dataset):
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
             arr = np.asarray(img, dtype=np.float32) / 255.0
             arr = np.power(arr, 1.0 / 2.2)  # 反 gamma（与旧 data_loader 一致）
-            image_tensors.append(torch.from_numpy(arr))
+            t = torch.from_numpy(arr)
+            if self.modality == "rgb":
+                t = t.permute(2, 0, 1).contiguous()   # [3, H, W]
+            image_tensors.append(t)
         images = torch.stack(image_tensors, dim=0)  # [K, H, W]
 
         # ---- GT（与图像同一组裁剪/翻转参数）----

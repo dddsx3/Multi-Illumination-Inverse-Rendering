@@ -98,7 +98,8 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         file_extension=config.data.file_extension,
         max_rotation_angle=config.data.max_rotation_angle,
         horizontal_flip_prob=config.data.horizontal_flip_prob,
-        scene_subset=train_names
+        scene_subset=train_names,
+        modality=getattr(config.data, 'modality', 'gray')
     )
 
     val_dataset = MultiLightingDataset(
@@ -107,7 +108,8 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
         image_size=config.data.image_size,
         is_training=False,
         file_extension=config.data.file_extension,
-        scene_subset=val_names
+        scene_subset=val_names,
+        modality=getattr(config.data, 'modality', 'gray')
     )
 
     print(f"训练集大小: {len(train_dataset)} 个场景")
@@ -138,11 +140,20 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
 
     print("\n创建模型...")
 
-    model = IntrinsicUNet(
-        num_images=config.model.num_images,
-        base_channels=config.model.base_channels,
-        sh_order=config.model.sh_order
-    )
+    if getattr(config.model, 'architecture', 'unet') == 'fusion':
+        from fusion_unet import FusionUNet
+        in_ch = 3 if config.data.modality == 'rgb' else 1
+        model = FusionUNet(
+            num_images=config.model.num_images,
+            in_channels=in_ch,
+            base_channels=config.model.base_channels,
+            sh_order=config.model.sh_order)
+        print(f"架构: FusionUNet (in_channels={in_ch}, N-agnostic)")
+    else:
+        model = IntrinsicUNet(
+            num_images=config.model.num_images,
+            base_channels=config.model.base_channels,
+            sh_order=config.model.sh_order)
 
     renderer = PhysicsRenderer(
         use_edge_aware=config.model.use_edge_aware,
@@ -577,6 +588,12 @@ def parse_args():
     parser.add_argument('--split_manifest', type=str, default=None,
                         help='划分清单 JSON（含 train/val/test 列表）。提供后训练/验证使用清单划分，test 冻结只评不调参')
 
+    parser.add_argument('--model', type=str, default='unet', choices=['unet', 'fusion'],
+                        help='网络架构：unet=原堆叠 U-Net；fusion=光照数量无关融合网络（T2.2）')
+
+    parser.add_argument('--modality', type=str, default='gray', choices=['gray', 'rgb'],
+                        help='输入模态：gray 读 light_NNN.png；rgb 读 light_NNN_rgb.png 三通道')
+
     parser.add_argument('--run_id', type=str, default=None,
                         help='运行标识；缺省自动生成 run_YYYYMMDD_HHMMSS')
 
@@ -712,6 +729,8 @@ def main():
     config.train.use_amp = use_amp
     config.train.amp_dtype = amp_dtype
     config.split_manifest = split_manifest
+    config.model.architecture = getattr(args, 'model', 'unet')
+    config.data.modality = getattr(args, 'modality', 'gray')
 
     # T2.0（INC-0003）：产物目录参数化——缺省按 run_id 独立目录，
     # 杜绝冒烟/多实验互相覆盖生产资产。目录保持在仓库外（../ 前缀）。
