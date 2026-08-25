@@ -200,7 +200,8 @@ class HierarchicalResidual(nn.Module):
         use_local_residual: bool = True,
         residual_scales: dict = None,
         num_images: int = 5,
-        feature_channels: int = 32
+        feature_channels: int = 32,
+        hidden_channels: int = 64
     ):
         super(HierarchicalResidual, self).__init__()
 
@@ -219,7 +220,8 @@ class HierarchicalResidual(nn.Module):
         if use_local_residual:
             self.local_net = LocalResidualNet(
                 feature_channels=feature_channels,
-                num_images=num_images
+                num_images=num_images,
+                hidden_channels=hidden_channels
             )
         else:
             self.local_net = None

@@ -83,7 +83,8 @@ class FusionUNet(nn.Module):
 
     def __init__(self, num_images: int = 5, in_channels: int = 1,
                  base_channels: int = 32, sh_order: int = 2,
-                 fusion_dim: int = 128, delta_bound: float = 0.1):
+                 fusion_dim: int = 128, delta_bound: float = 0.1,
+                 use_per_light_albedo: bool = True):
         super().__init__()
         self.num_images = num_images          # 仅用于 SH 头输出形状；前向不依赖
         self.in_channels = in_channels
@@ -136,14 +137,14 @@ class FusionUNet(nn.Module):
         nn.init.zeros_(self.film_beta.weight)
         nn.init.zeros_(self.film_beta.bias)
 
-        # S2 逐光照反照率分支（有界残差）
+        # S2 逐光照反照率分支（有界残差）；F-albOff 时整体禁用
+        self.use_per_light_albedo = use_per_light_albedo
         self.delta_head = nn.Sequential(
             nn.Conv2d(bc + 1, 16, 3, padding=1), nn.ReLU(inplace=True),
-            nn.Conv2d(16, 1, 1))
+            nn.Conv2d(16, 1, 1)) if use_per_light_albedo else None
 
         self._initialize_weights()
-        # 守卫依赖项占位（保持与 InverseRenderTrainer 兼容）
-        self.delta_head_last = self.delta_head[-1]
+        self.delta_head_last = self.delta_head[-1] if self.delta_head else None
 
     def _initialize_weights(self):
         for m in self.modules():
@@ -220,6 +221,9 @@ class FusionUNet(nn.Module):
         features = feats.mean(dim=1)                         # [B, bc, H, W]
 
         # S2 逐光照反照率：DeltaA_k = bound*tanh(conv(cat[f_k, A_main]))
+        # F-albOff：分支整体禁用，返回五元组（训练器按 5 元组走基线路径）
+        if not self.use_per_light_albedo:
+            return (depth, albedo_main, sh_coeffs, weight_map, features)
         a_exp = albedo_main.unsqueeze(1).expand(-1, N, -1, -1, -1)
         da_in = torch.cat([feats, a_exp], dim=2).flatten(0, 1)
         delta = self.delta_bound * torch.tanh(self.delta_head(da_in))
