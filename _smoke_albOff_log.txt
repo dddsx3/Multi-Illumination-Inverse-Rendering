@@ -1,0 +1,187 @@
+================================================================================
+逆向渲染项目
+================================================================================
+
+运行模式: train
+设备: cuda
+数据根目录: D:/data/synthetic_v3
+光照数量: 5
+批次大小: 8
+总训练轮数: 1
+学习率: 0.0001
+[T2.0] run_id=p2_smoke_albOff_20260825
+[T2.0] checkpoint_dir=../checkpoints/p2_smoke_albOff_20260825
+[T2.0] log_dir=../logs/p2_smoke_albOff_20260825 | viz_dir=../visualizations/p2_smoke_albOff_20260825
+
+================================================================================
+训练模式
+================================================================================
+
+随机种子已设置为: 42
+使用设备: cuda
+GPU: NVIDIA GeForce RTX 5070 Ti Laptop GPU
+显存: 11.94 GB
+CUDA版本: 12.8
+PyTorch版本: 2.12.0.dev20260303+cu128
+
+================================================================================
+配置信息
+================================================================================
+
+【数据配置】
+  root_dir: D:/data/synthetic_v3
+  train_scenes: []
+  val_scenes: []
+  test_scenes: []
+  num_lights: 5
+  image_size: (256, 256)
+  file_extension: .png
+  batch_size: 8
+  num_workers: 4
+  pin_memory: True
+  prefetch_factor: 4
+  persistent_workers: True
+  max_rotation_angle: 0.0
+  horizontal_flip_prob: 0.5
+  modality: gray
+
+【模型配置】
+  num_images: 5
+  base_channels: 32
+  sh_order: 2
+  use_edge_aware: True
+  use_directional_light: False
+  use_local_residual: True
+  residual_hidden_dim: 32
+  architecture: fusion
+  sh_constraint: clamp
+
+【训练配置】
+  total_epochs: 1
+  learning_rate: 0.0001
+  weight_decay: 1e-06
+  stage1_epochs: 1
+  stage2_epochs: 0
+  scheduler: step
+  step_size: 30
+  gamma: 0.5
+  min_lr: 1e-06
+  use_amp: True
+  gradient_clip: 1.0
+  grad_monitor_interval: 10
+  grad_logging: True
+  weight_init: xavier
+  log_interval: 10
+  tensorboard_interval: 50
+  val_interval: 1
+  vis_interval: 5
+  save_interval: 10
+  amp_dtype: bfloat16
+
+【损失配置】
+  reconstruction: 1.0
+  depth_smooth: 0.01
+  albedo_smooth: 0.01
+  shading_smooth_weight: 0.0
+  retinex_constraint_weight: 0.0
+  weight_dist: 0.01
+  weight_tv: 0.01
+  sh_l2: 0.001
+  sh_higher: 0.002
+  residual_l1: 0.01
+  residual_tv: 0.01
+  sh_sparsity: 0.001
+  albedo_consistency: 1.0
+
+【路径配置】
+  log_dir: ../logs/p2_smoke_albOff_20260825
+  checkpoint_dir: ../checkpoints/p2_smoke_albOff_20260825
+  vis_dir: ../visualizations/p2_smoke_albOff_20260825
+  output_dir: ../outputs
+
+【其他配置】
+  seed: 42
+  device: cuda
+  verbose: True
+
+================================================================================
+
+创建数据集...
+[manifest] test 集 124 场景已冻结（只准评估）
+场景划分: train=447, val=49
+检测到扁平协议布局: 620 个候选场景目录
+有效场景: 620 | 图像: 3100/3100
+数据集初始化完成[train(增强)]: 447 个有效场景（含 GT: 620）
+检测到扁平协议布局: 620 个候选场景目录
+有效场景: 620 | 图像: 3100/3100
+数据集初始化完成[val(中心裁剪)]: 49 个有效场景（含 GT: 620）
+训练集大小: 447 个场景
+验证集大小: 49 个场景
+训练批次数: 55
+验证批次数: 7
+
+创建模型...
+架构: FusionUNet (in_channels=1, N-agnostic)
+模型参数量: 13,650,540
+残差模块参数量: 23,782
+总参数量: 13,674,322
+
+创建训练器...
+[T2.0] run_id=p2_smoke_albOff_20260825
+[T2.0] checkpoint_dir=../checkpoints/p2_smoke_albOff_20260825
+[T2.0] log_dir=../logs/p2_smoke_albOff_20260825 | viz_dir=../visualizations/p2_smoke_albOff_20260825
+训练器使用设备: cuda
+GPU: NVIDIA GeForce RTX 5070 Ti Laptop GPU
+显存: 11.94 GB
+权重初始化完成，类型: xavier
+梯度裁剪配置: clip=1.0
+反照率平滑激进疗法: 禁用
+🔴 冻结残差模块（阶段1/2），进入阶段3时解冻
+优化器设置完成: Adam, lr=0.0001, weight_decay=1e-06
+混合精度: bfloat16（指数位同 fp32，无溢出风险；无需 GradScaler）
+调度器设置完成: step
+
+================================================================================
+进入阶段 1: Geometry Learning
+描述: Albedo 粉碎机 + GT 监督：几何/材质向真值对齐
+损失权重: {'reconstruction': 1.0, 'albedo_smooth': 10.0, 'shading_gradient': 5.0, 'shading_mean': 1.0, 'sh_l2': 0.1, 'sh_higher': 0.002, 'sh_sparsity': 0.001, 'weight_dist': 0.0, 'albedo_image_correlation': 0.0, 'depth_smooth': 0.001, 'shading_variance_loss': 0.0, 'weight_tv': 0.0, 'shading_smooth_weight': 0.0, 'retinex_constraint_weight': 0.0, 'physical_contribution': 0.0, 'residual_l1': 0.0, 'residual_tv': 0.0, 'gt_depth': 0.05, 'gt_albedo': 0.5, 'gt_normal': 0.5, 'recon_per_light': 0.25, 'delta_l1': 0.0}
+================================================================================
+
+开始训练...
+
+
+================================================================================
+开始训练
+总Epoch数: 1
+设备: cuda
+================================================================================
+
+开始Epoch 0
+Epoch [0/1] Batch [0/55] Loss: 6.790946 Grad Norm: 28.0591 LR: 0.00010000
+Epoch [0/1] Batch [10/55] Loss: 2.506362 Grad Norm: 8.6764 LR: 0.00010000
+Epoch [0/1] Batch [20/55] Loss: 1.529026 Grad Norm: 4.3089 LR: 0.00010000
+Epoch [0/1] Batch [30/55] Loss: 1.019155 Grad Norm: 4.3738 LR: 0.00010000
+Epoch [0/1] Batch [40/55] Loss: 0.756032 Grad Norm: 2.4876 LR: 0.00010000
+Epoch [0/1] Batch [50/55] Loss: 0.639779 Grad Norm: 2.8600 LR: 0.00010000
+Epoch 0: 反照率梯度L1范数 = 0.122843
+Epoch 0: 反照率-图像相关性 = 0.316111
+
+验证Epoch 0
+❌ Epoch 0 未达标
+  指标: Shading Var=0.0235, SH[0]=0.2961, Albedo Corr=0.6781, Lambertian Ratio=0.0212
+新最佳验证损失: 0.240385
+检查点已保存: ..\checkpoints\p2_smoke_albOff_20260825\checkpoint_epoch_0000.pth
+最佳模型已保存: ..\checkpoints\p2_smoke_albOff_20260825\best_model.pth
+
+Epoch 0 完成
+训练损失: 0.818021
+验证损失: 0.240385
+
+================================================================================
+训练完成
+总耗时: 150.62 秒
+最佳验证损失: 0.240385
+================================================================================
+检查点已保存: ..\checkpoints\p2_smoke_albOff_20260825\checkpoint_epoch_0000.pth
+
+训练完成!
