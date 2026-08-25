@@ -35,7 +35,7 @@ MANIFEST = HERE / "splits" / "synthetic_v3.json"
 DATA_ROOT = os.environ.get("P2_DATA_ROOT", r"D:/data/synthetic_v3")
 CKPT_ROOT = os.environ.get("P2_CKPT_ROOT", str(HERE.parent / "checkpoints"))
 LOG_ROOT = os.environ.get("P2_LOG_ROOT", str(HERE.parent / "logs"))
-EVAL_ROOT = os.environ.get("P2_EVAL_ROOT", str(HERE.parent / "eval_output"))
+EVAL_ROOT = os.environ.get("P2_EVAL_ROOT", str(HERE / "eval_output"))
 
 SEGMENT_EPOCHS = int(os.environ.get("P2_SEGMENT_EPOCHS", "10"))
 TOTAL_EPOCHS = int(os.environ.get("P2_TOTAL_EPOCHS", "100"))
