@@ -37,6 +37,41 @@ class StabilityGuard:
         self.nan_streak = 0
         self.warn_count = 0
         self.total_nan_skips = 0
+        # INC-0007：fp16 + GradScaler 专用计数。缩放因子标定期的偶发溢出是
+        # 正常现象（scaler 会跳过该次更新并下调 scale），不能按发散处理；
+        # 但连续溢出说明 scale 无法收敛，仍需停机。
+        self.scaler_overflow_streak = 0
+        self.total_scaler_overflows = 0
+
+    def note_scaler_overflow(self) -> None:
+        """记录一次 GradScaler 溢出（非有限梯度）。
+
+        Raises:
+            RuntimeError: 连续溢出达到 nan_streak_limit（缩放因子无法收敛）
+        """
+        self.scaler_overflow_streak += 1
+        self.total_scaler_overflows += 1
+        if self.tb_scalar is not None:
+            try:
+                self.tb_scalar('stability/scaler_overflow_streak',
+                               self.scaler_overflow_streak,
+                               self.total_scaler_overflows)
+            except Exception:
+                pass
+        if self.scaler_overflow_streak >= self.nan_streak_limit:
+            if self.on_abort is not None:
+                try:
+                    self.on_abort()
+                except Exception:
+                    pass
+            raise RuntimeError(
+                f"连续 {self.scaler_overflow_streak} 个 batch 的 fp16 梯度溢出，"
+                "GradScaler 缩放因子无法收敛，判定发散并停机。"
+                "建议：改用 bf16（需 sm_80+ GPU）或关闭 --use_amp")
+
+    def note_scaler_ok(self) -> None:
+        """一次有限梯度的正常更新，重置溢出连击。"""
+        self.scaler_overflow_streak = 0
 
     def check_loss(self, total_loss: torch.Tensor) -> bool:
         """检查损失是否有限。

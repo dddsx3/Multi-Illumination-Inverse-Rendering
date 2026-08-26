@@ -70,6 +70,8 @@ def main():
     ap.add_argument("--modality", default="gray", choices=["gray", "rgb"])
     ap.add_argument("--batch_size", type=int, default=8)
     ap.add_argument("--num_workers", type=int, default=4)
+    ap.add_argument("--dtype", default="bf16", choices=["bf16", "fp16", "fp32"],
+                    help="计算精度：bf16=基线口径；fp16 需 GradScaler；fp32 关闭 AMP")
     ap.add_argument("--batches", type=int, default=12, help="计时批次数（不含预热）")
     ap.add_argument("--warmup", type=int, default=3)
     ap.add_argument("--batches_per_epoch", type=int, default=56)
@@ -86,11 +88,18 @@ def main():
     name = torch.cuda.get_device_name(0)
     total_gb = torch.cuda.get_device_properties(0).total_memory / 1024 ** 3
     cc = torch.cuda.get_device_capability(0)
-    bf16_ok = torch.cuda.is_bf16_supported()
+    bf16_native = cc[0] >= 8          # BF16 张量核心自 Ampere(sm_80) 起
+    bf16_api = torch.cuda.is_bf16_supported()
     print(f"[env] GPU={name} | 显存={total_gb:.1f}GB | 算力={cc[0]}.{cc[1]} "
-          f"| BF16={bf16_ok} | torch={torch.__version__} | cpu={os.cpu_count()}")
-    if not bf16_ok:
-        print("[WARN] 该设备不支持 BF16：训练口径要求 bf16，请勿用 fp16 替代（数值口径不同）")
+          f"| BF16原生={bf16_native}（API报告={bf16_api}）| torch={torch.__version__} "
+          f"| cpu={os.cpu_count()}")
+    if args.dtype == "bf16" and not bf16_native:
+        print("[WARN] 该设备无 BF16 原生支持（需 sm_80+）。API 可能因'仿真'返回 True，"
+              "但吞吐会极差——T4/sm_75 请显式用 --dtype fp16 或 fp32")
+
+    amp_enabled = args.dtype in ("bf16", "fp16")
+    amp_dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
+    scaler = torch.amp.GradScaler("cuda") if args.dtype == "fp16" else None
 
     loader, model, renderer, residual, opt = build(args, device)
     from loss_functions import CharbonnierLoss
@@ -111,23 +120,30 @@ def main():
         target = images if images.dim() == 4 else (
             0.2126 * images[:, :, 0] + 0.7152 * images[:, :, 1] + 0.0722 * images[:, :, 2])
         opt.zero_grad(set_to_none=True)
-        with torch.amp.autocast("cuda", enabled=True, dtype=torch.bfloat16):
+        with torch.amp.autocast("cuda", enabled=amp_enabled, dtype=amp_dtype):
             out = model(images)
             depth, albedo, sh, wmap, feats = out[:5]
             rendered, normal, shading = renderer(depth, albedo, sh)
             final, _, _ = residual(albedo, shading, normal, sh,
                                    stage="stage3", features=feats)
             loss = charb(final, target)
-        loss.backward()
-        opt.step()
+        if scaler is not None:
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
+        else:
+            loss.backward()
+            opt.step()
+        return float(loss.detach())
 
     for _ in range(args.warmup):
         step()
     torch.cuda.synchronize()
 
     t0 = time.time()
+    losses = []
     for i in range(args.batches):
-        step()
+        losses.append(step())
         s = gpu_query()
         if s:
             temps.append(s[0]); utils.append(s[1])
@@ -156,7 +172,9 @@ def main():
 
     res = {
         "gpu": name, "total_mem_gb": round(total_gb, 2),
-        "compute_capability": f"{cc[0]}.{cc[1]}", "bf16": bf16_ok,
+        "compute_capability": f"{cc[0]}.{cc[1]}",
+        "bf16_native": bf16_native, "bf16_api_reported": bf16_api,
+        "dtype": args.dtype, "grad_scaler": scaler is not None,
         "torch": torch.__version__, "cpu_count": os.cpu_count(),
         "batch_size": args.batch_size, "num_workers": args.num_workers,
         "model": args.model, "modality": args.modality,
@@ -164,6 +182,8 @@ def main():
         "sec_per_batch_data": round(data_spb, 4) if data_spb else None,
         "data_bound_ratio": round(data_spb / train_spb, 3) if data_spb else None,
         "peak_mem_gb": round(peak_gb, 2), "peak_reserved_gb": round(reserved_gb, 2),
+        "loss_finite_all": all(l == l and abs(l) != float("inf") for l in losses),
+        "loss_first_last": [round(losses[0], 5), round(losses[-1], 5)] if losses else None,
         "gpu_util_mean": round(sum(utils) / len(utils), 1) if utils else None,
         "gpu_temp_max": max(temps) if temps else None,
         "batches_per_epoch": args.batches_per_epoch,

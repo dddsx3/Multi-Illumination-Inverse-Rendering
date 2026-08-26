@@ -195,14 +195,24 @@ class InverseRenderTrainer:
         self._use_scaler = False
         if self.use_amp:
             if self.amp_dtype == 'bfloat16':
-                if torch.cuda.is_bf16_supported():
+                # 只认**原生** BF16（张量核心自 Ampere sm_80 起）。
+                # torch.cuda.is_bf16_supported() 在 Turing(sm_75，如 T4) 上可能
+                # 因"仿真支持"返回 True，实测吞吐会塌到不可用——必须按算力判定。
+                _cc = torch.cuda.get_device_capability(0) if torch.cuda.is_available() else (0, 0)
+                if _cc[0] >= 8:
                     print("混合精度: bfloat16（指数位同 fp32，无溢出风险；无需 GradScaler）")
                 else:
-                    print("⚠ GPU 不支持 BF16，回退 float16 + GradScaler")
+                    print(f"⚠ 该 GPU 算力 {_cc[0]}.{_cc[1]} 无原生 BF16（需 sm_80+），"
+                          f"回退 float16 + GradScaler。注意：fp16 与既有 bf16 基线"
+                          f"不同数值口径，跨臂对比前须声明（D10）")
                     self.amp_dtype = 'float16'
             if self.amp_dtype == 'float16':
                 self._use_scaler = True
-                self.optimizer.scaler = torch.cuda.amp.GradScaler()
+                # 新式 API（torch>=2.4）；旧版回退保持兼容
+                try:
+                    self.optimizer.scaler = torch.amp.GradScaler('cuda')
+                except (AttributeError, TypeError):
+                    self.optimizer.scaler = torch.cuda.amp.GradScaler()
                 print("混合精度: float16 + GradScaler")
             self._autocast_dtype = torch.bfloat16 if self.amp_dtype == 'bfloat16' else torch.float16
 
@@ -566,6 +576,10 @@ class InverseRenderTrainer:
 
             if self._use_scaler:
                 self.optimizer.scaler.scale(total_loss).backward()
+                # INC-0007：GradScaler 路径必须先 unscale_ 再裁剪/检查，
+                # 否则拿到的是被放大 2^16 倍的梯度——裁剪值失真，且 fp16
+                # 溢出会立刻让范数变成 inf/nan。
+                self.optimizer.scaler.unscale_(self.optimizer)
             else:
                 total_loss.backward()
 
@@ -583,6 +597,20 @@ class InverseRenderTrainer:
 
             # C3/T2.1：梯度范数两级阈值（>1e3 预警写 TB；>1e4 硬停机），
             # 逻辑在 StabilityGuard.check_grad_norm（可单测）
+            # INC-0007：fp16 + GradScaler 下，偶发非有限梯度是缩放因子标定的
+            # 正常现象（scaler.step 会跳过该次更新并下调 scale），不构成发散。
+            # 因此该路径改为"跳过并计数"，只有连续多次才由损失守卫判定发散；
+            # bf16/fp32 路径的硬停机语义完全不变。
+            if self._use_scaler and not torch.isfinite(grad_norm):
+                self.stability.note_scaler_overflow()
+                loss_dict['_scaler_overflow'] = 1.0
+                self.optimizer.scaler.step(self.optimizer)   # 内部检测到 inf 会跳过
+                self.optimizer.scaler.update()
+                self.optimizer.zero_grad(set_to_none=True)
+                self.global_step += 1
+                continue
+            if self._use_scaler:
+                self.stability.note_scaler_ok()
             self.stability.check_grad_norm(grad_norm)
 
             # 参数更新

@@ -1,0 +1,29 @@
+{
+ "gpu": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+ "total_mem_gb": 11.94,
+ "compute_capability": "12.0",
+ "bf16_native": true,
+ "bf16_api_reported": true,
+ "dtype": "bf16",
+ "grad_scaler": false,
+ "torch": "2.12.0.dev20260303+cu128",
+ "cpu_count": 32,
+ "batch_size": 8,
+ "num_workers": 4,
+ "model": "fusion",
+ "modality": "gray",
+ "sec_per_batch_train": 0.5995,
+ "sec_per_batch_data": null,
+ "data_bound_ratio": null,
+ "peak_mem_gb": 8.63,
+ "peak_reserved_gb": 11.56,
+ "loss_finite_all": true,
+ "loss_first_last": [
+  0.28989,
+  0.30824
+ ],
+ "gpu_util_mean": 99.2,
+ "gpu_temp_max": 79.0,
+ "batches_per_epoch": 56,
+ "est_sec_per_epoch": 33.6
+}

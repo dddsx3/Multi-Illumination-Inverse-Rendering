@@ -42,6 +42,9 @@ BATCHES_PER_EPOCH = 56       # 447 训练场景 / bs8，上取整
 STAGE1, STAGE2 = 30, 30
 CKPT_MB = 157                # 单个 checkpoint 实测体积
 
+# 各精度在 bs8 下的实测峰值分配显存（本机 RTX 5070 Ti Laptop）
+PEAK_GB_BY_DTYPE = {"bf16": 8.63, "fp16": 8.08, "fp32": 15.35}
+
 # 端到端 epoch 墙钟 ÷ 纯训练步耗时 的实测比值，用于把标定 proxy 折算成
 # 真实 epoch 预算。来源：本机 RTX 5070 Ti Laptop，bench_throughput proxy
 # 0.528 s/batch（=29.6 s/epoch）vs TensorBoard 实测端到端 98–101 s/epoch。
@@ -144,12 +147,26 @@ def preflight(args):
             info["gpu"] = prop.name
             info["gpu_mem_gb"] = round(prop.total_memory / 1024 ** 3, 2)
             info["compute_capability"] = f"{cc[0]}.{cc[1]}"
-            info["bf16"] = bool(torch.cuda.is_bf16_supported())
-            if not info["bf16"]:
-                blockers.append("设备不支持 BF16；基线口径为 bf16，不可用 fp16 顶替")
-            if info["gpu_mem_gb"] < 11:
-                blockers.append(f"显存 {info['gpu_mem_gb']}GB < 11GB：bs8 实测峰值"
-                                f"约 8.6GB 分配 / 11.6GB 保留，会 OOM")
+            info["bf16_native"] = cc[0] >= 8          # 张量核心自 sm_80 起
+            info["bf16_api_reported"] = bool(torch.cuda.is_bf16_supported())
+            info["amp_dtype"] = args.amp_dtype
+            # 精度可用性：bf16 是既有基线口径，非 Ampere+ 卡上必须显式换档
+            if args.amp_dtype == "bf16" and not info["bf16_native"]:
+                blockers.append(
+                    f"该 GPU 算力 {cc[0]}.{cc[1]} 无原生 BF16（需 sm_80+），"
+                    f"而 bf16 是既有基线口径。T4/Turing 请显式 --amp-dtype fp16 "
+                    f"并向审计声明数值口径偏差（见 INC-0007）；"
+                    f"注意 is_bf16_supported() 可能因仿真返回 True，吞吐会塌")
+            need_gb = PEAK_GB_BY_DTYPE.get(args.amp_dtype, 8.63)
+            info["peak_gb_expected"] = need_gb
+            if info["gpu_mem_gb"] < need_gb * 1.25 + 1.0:
+                blockers.append(
+                    f"显存 {info['gpu_mem_gb']}GB 不足：{args.amp_dtype} @bs8 实测峰值"
+                    f"分配 {need_gb}GB（+碎片余量），会 OOM 或退化到系统内存交换"
+                    + ("　fp32 在 16GB 卡上必然不可行，实测保留达 17.76GB"
+                       if args.amp_dtype == "fp32" else ""))
+        elif not args.dry_run:
+            blockers.append("无可用 CUDA 设备")
         elif not args.dry_run:
             blockers.append("无可用 CUDA 设备")
     except ImportError:
@@ -215,15 +232,19 @@ def calibrate(args, info):
                 "source": "调用方给定（车道子进程或用户显式指定）",
                 "peak_alloc_gb": args.assume_peak_gb, "gpu_util_mean": None}
     if args.dry_run:
-        return {"sec_per_epoch": round(fallback_spb * bpe * OVERHEAD_FACTOR, 1),
-                "source": f"dry-run：沿用本机 proxy {fallback_spb} s/batch × {bpe}"
-                          f" × 开销系数 {OVERHEAD_FACTOR}",
+        return {"sec_per_epoch": round(fallback_spb * bpe * OVERHEAD_FACTOR
+                                       * args.slowdown, 1),
+                "source": f"dry-run：本机 proxy {fallback_spb} s/batch × {bpe}"
+                          f" × 开销系数 {OVERHEAD_FACTOR}"
+                          + (f" × 目标机减速 {args.slowdown}x" if args.slowdown != 1
+                             else ""),
                 "peak_alloc_gb": args.assume_peak_gb, "gpu_util_mean": 98.7}
     out = HERE / "_a10_bench.json"
     rc = sh([sys.executable, "-u", "bench_throughput.py",
              "--data_root", args.data_root, "--split_manifest", MANIFEST,
              "--batch_size", BATCH_SIZE, "--num_workers", max(2, args.num_workers or 4),
-             "--batches", 12, "--batches_per_epoch", bpe, "--json", out],
+             "--batches", 12, "--batches_per_epoch", bpe,
+             "--dtype", args.amp_dtype, "--json", out],
             cwd=HERE).returncode
     if rc != 0 or not out.is_file():
         print("[warn] 标定失败，退回本机 proxy 常数")
@@ -298,7 +319,8 @@ def print_plan(info, calib, p):
     print("\n" + "=" * 78)
     print("A10 训练预算规划")
     print("=" * 78)
-    for k in ("gpu", "gpu_mem_gb", "compute_capability", "bf16", "torch",
+    for k in ("gpu", "gpu_mem_gb", "compute_capability", "bf16_native",
+              "amp_dtype", "peak_gb_expected", "torch",
               "cpu_count", "scene_dirs", "split_counts", "rgb_present",
               "batches_per_epoch", "disk_free_gb", "disk_per_arm_gb"):
         if k in info:
@@ -366,7 +388,7 @@ def train_arm(args, run_id, train_extra, deadline, rate, state):
                "--stage1_epochs", STAGE1, "--stage2_epochs", STAGE2,
                "--batch_size", BATCH_SIZE, "--image_size", 256, 256,
                "--num_lights", 5, "--device", "cuda",
-               "--use_amp", "--amp_dtype", "bf16",
+               "--use_amp", "--amp_dtype", args.amp_dtype,
                "--split_manifest", MANIFEST,
                "--run_id", run_id,
                "--checkpoint_dir", ck_dir,
@@ -449,12 +471,21 @@ def main():
                     help="预留给评估与打包的分钟数")
     ap.add_argument("--max-lanes", dest="max_lanes", type=int, default=2)
     ap.add_argument("--num_workers", type=int, default=0, help="0=自动")
+    ap.add_argument("--amp-dtype", dest="amp_dtype", default="bf16",
+                    choices=["bf16", "fp16"],
+                    help="计算精度。bf16=既有基线口径（需 sm_80+）；"
+                         "fp16=Turing/T4 唯一可用的张量核心路径，属数值口径偏差，"
+                         "须向审计声明（见 INC-0007）")
     ap.add_argument("--only", default="")
     ap.add_argument("--state-file", dest="state_file",
                     default=str(HERE / "a10_progress.json"))
     ap.add_argument("--sec-per-epoch", dest="sec_per_epoch", type=float, default=0)
-    ap.add_argument("--assume-peak-gb", dest="assume_peak_gb", type=float, default=8.63,
+    ap.add_argument("--assume-peak-gb", dest="assume_peak_gb", type=float, default=0,
                     help="标定不可用时假定的单车道峰值分配显存（本机实测）")
+    ap.add_argument("--slowdown", type=float, default=1.0,
+                    help="仅 dry-run 用：目标机相对本机的减速倍数，用于异地估算。"
+                         "Tesla T4 相对 RTX 5070 Ti Laptop 换算区间 2.5–3.0"
+                         "（张量核心峰值比 1.66x、显存带宽比 2.8x、fp32 向量比 3.3x）")
     ap.add_argument("--dry-run", dest="dry_run", action="store_true")
     ap.add_argument("--plan-only", dest="plan_only", action="store_true")
     ap.add_argument("--status", action="store_true")
@@ -463,6 +494,8 @@ def main():
                     help="仅用于管线自检：把目标 epoch 数临时改成该值，"
                          "跑通 训练→评估→打包 全链路。产物不得进对比矩阵。")
     args = ap.parse_args()
+    if not args.assume_peak_gb:
+        args.assume_peak_gb = PEAK_GB_BY_DTYPE.get(args.amp_dtype, 8.63)
 
     if args.smoke_epochs:
         global TOTAL_EPOCHS, SEGMENT_EPOCHS
@@ -521,6 +554,7 @@ def main():
                    "--log_root", args.log_root, "--viz_root", args.viz_root,
                    "--only", ",".join(a[0] for a in bucket),
                    "--max-lanes", 1, "--num_workers", args.num_workers,
+                   "--amp-dtype", args.amp_dtype,
                    "--sec-per-epoch", round(lane_spe, 1),
                    "--budget-hours", max(0.05, (deadline - time.time()) / 3600),
                    "--reserve-min", 0, "--skip-package",
