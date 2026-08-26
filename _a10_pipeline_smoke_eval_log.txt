@@ -1,0 +1,26 @@
+checkpoint epoch: 63 | saved stage: None | val_loss@save: 0.01813313498028687
+split=test: 124 scenes
+[arch] model=fusion modality=rgb sh_constraint=clamp
+检测到扁平协议布局: 620 个候选场景目录
+有效场景: 620 | 图像: 3100/3100
+数据集初始化完成[val(中心裁剪)]: 124 个有效场景（含 GT: 620）
+[auto] FusionUNet in_channels=3 per_light_albedo=True sh_constraint=clamp
+
+=== 13 项指标（124 场景, mean ± std）===
+  albedo_mae                       0.3683 ± 0.0911
+  albedo_mse                       0.1717 ± 0.0751
+  albedo_si_mae                    0.1327 ± 0.0347
+  depth_mae                        0.7901 ± 0.1117
+  depth_mae_aligned                0.2542 ± 0.0606
+  depth_rmse                       0.8611 ± 0.1139
+  depth_rmse_aligned               0.3227 ± 0.0706
+  depth_si_rmse                    0.9585 ± 0.1806
+  image_psnr                      35.8537 ± 1.7136
+  image_ssim                       0.9646 ± 0.0268
+  normal_acc_11_25                 0.9123 ± 0.0326
+  normal_acc_22_5                  0.9294 ± 0.0307
+  normal_acc_30                    0.9330 ± 0.0300
+  normal_mae_deg                   7.8206 ± 2.5951
+  normal_median_deg                1.5265 ± 0.3261
+CSV -> D:\Multi-Illumination Inverse Rendering\repo\eval_output\p2_t22_f_n5rgb_test\per_scene_metrics.csv
+JSON -> D:\Multi-Illumination Inverse Rendering\repo\eval_output\p2_t22_f_n5rgb_test\eval_summary.json

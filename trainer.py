@@ -977,7 +977,8 @@ class InverseRenderTrainer:
         Args:
             checkpoint_path: 检查点文件路径
         """
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device,
+                                weights_only=False)
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.renderer.load_state_dict(checkpoint['renderer_state_dict'])
@@ -988,15 +989,18 @@ class InverseRenderTrainer:
         if self.scheduler and checkpoint['scheduler_state_dict'] is not None:
             self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
-        self.current_epoch = checkpoint['epoch']
+        # INC-0006：checkpoint 里的 epoch 是**已完成**的那一个，续跑必须从
+        # 下一个 epoch 开始。原实现直接赋值导致每次续跑重做最后一个 epoch
+        # 并覆盖其 checkpoint（10-epoch 分段下浪费 10% 算力 + 破坏可追溯性）。
+        self.current_epoch = checkpoint['epoch'] + 1
         self.best_val_loss = checkpoint['best_val_loss']
-        self.current_stage = checkpoint.get('current_stage', 1)
 
-        # INC-0005：__init__ 只按阶段1初始化损失权重表并冻结残差；
-        # 断点若落在阶段2/3，必须把两处阶段状态同步到恢复点，
-        # 否则整个续跑段都在错误的监督口径下训练（权重表错 +
-        # 残差该解冻而未解冻）。训练循环只在"检测到切换"时更新，
-        # 直接恢复的场景永远不会触发。
+        # INC-0005：__init__ 只按阶段1初始化损失权重表并冻结残差；断点若落在
+        # 阶段2/3，必须把阶段状态同步到"即将开跑的那个 epoch"，否则整个续跑段
+        # 都在错误的监督口径下训练。阶段以 epoch 重算为准（checkpoint 里存的是
+        # 已完成 epoch 的阶段，跨边界续跑时会差一个阶段）。
+        # 训练循环只在"检测到阶段切换"时更新权重，直接恢复的场景不会触发。
+        self.current_stage = self._get_current_stage()
         self._update_loss_weights()
         if self.residual is not None:
             _unfrozen = self.current_stage >= 3
@@ -1004,7 +1008,7 @@ class InverseRenderTrainer:
                 param.requires_grad = _unfrozen
 
         print(f"检查点已加载: {checkpoint_path}")
-        print(f"  Epoch: {self.current_epoch}")
+        print(f"  已完成 Epoch: {checkpoint['epoch']}　续跑起点: {self.current_epoch}")
         print(f"  Best Val Loss: {self.best_val_loss:.6f}")
         print(f"  Current Stage: {self.current_stage}")
         print(f"  损失权重表已同步到阶段{self.current_stage}; "

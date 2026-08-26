@@ -1,0 +1,21 @@
+{
+ "gpu": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+ "total_mem_gb": 11.94,
+ "compute_capability": "12.0",
+ "bf16": true,
+ "torch": "2.12.0.dev20260303+cu128",
+ "cpu_count": 32,
+ "batch_size": 8,
+ "num_workers": 4,
+ "model": "fusion",
+ "modality": "gray",
+ "sec_per_batch_train": 0.528,
+ "sec_per_batch_data": 0.0334,
+ "data_bound_ratio": 0.063,
+ "peak_mem_gb": 8.63,
+ "peak_reserved_gb": 11.56,
+ "gpu_util_mean": 98.7,
+ "gpu_temp_max": 79.0,
+ "batches_per_epoch": 56,
+ "est_sec_per_epoch": 29.6
+}

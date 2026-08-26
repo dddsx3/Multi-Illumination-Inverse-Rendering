@@ -1,9 +1,12 @@
 # Multi-Illumination Inverse Rendering - 运行依赖
-# Python 3.8+，PyTorch 2.x（CUDA 版请按 https://pytorch.org 选择对应安装命令）
-torch>=2.1
-torchvision>=0.16
+# Python 3.9+，PyTorch >=2.4（代码用 torch.amp.autocast('cuda', dtype=bfloat16)
+# 新式 API；CUDA 版按 https://pytorch.org 选对应安装命令）
+# A10 = Ampere sm_86，cu121/cu124 轮子均可；必须原生支持 BF16
+torch>=2.4
+torchvision>=0.19
 numpy>=1.24
 Pillow>=10.0
 tqdm>=4.60
 matplotlib>=3.7
 tensorboard>=2.14
+openpyxl>=3.1
