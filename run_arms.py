@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""A10 单机一键训练入口（Phase 2 剩余消融臂）。
+"""Phase 2 消融臂训练引擎（单机通用：A10 / V100 / 本机）。
+
+一键入口见 train_v100.sh（V100）与 setup_a10.sh（A10）；本文件是共用引擎。
 
 一条命令跑完：环境预检 → 吞吐标定 → 预算规划 → 训练（分段续跑）→
 冻结 test 评估 → 回传打包。
@@ -33,7 +35,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "splits" / "synthetic_v3.json"
-PLAN_JSON = HERE / "a10_plan.json"
+PLAN_JSON = HERE / "arms_plan.json"
 
 TOTAL_EPOCHS = 100
 SEGMENT_EPOCHS = 10
@@ -51,6 +53,17 @@ PEAK_GB_BY_DTYPE = {"bf16": 8.63, "fp16": 8.08, "fp32": 15.35}
 # 差额来自完整损失项、GT 监督、逐光照分支、49 场景验证、每 epoch 157MB 落盘。
 # 仅用于"首段之前"的预估；首段跑完即被实测速率取代（见 measured_rate）。
 OVERHEAD_FACTOR = 3.38
+
+# 同精度参照臂：仅当精度 != bf16 时自动排在最前。
+# 理由：既有 R0 / F-N5-gray 基线是 bf16；实测 fp16 与 bf16 不等效
+# （INC-0007 §6.4，同种子 epoch1 验证损失差 2.04x）。先在目标精度下重跑
+# F-N5-gray，既得到「同精度参照」让后续消融臂可比，又直接量出精度本身的
+# 影响量（与 eval_output/p2_t22_f_n5gray_test 的 bf16 数字对照）。
+REFERENCE_ARM = (
+    "p2_t22_f_n5gray",
+    ["--model", "fusion", "--modality", "gray"],
+    ["--model", "fusion", "--modality", "gray"],
+    "同精度参照臂：给消融臂提供同口径基线，并量出 fp16↔bf16 差值")
 
 # (run_id, 训练旗标, 评估旗标, 门禁价值)　顺序即优先级：预算不足从后往前砍
 ARMS = [
@@ -80,6 +93,12 @@ ARMS = [
 def sh(cmd, **kw):
     print("+", " ".join(str(c) for c in cmd), flush=True)
     return subprocess.run([str(c) for c in cmd], **kw)
+
+
+def tag_run(run_id, amp_dtype):
+    """非 bf16 精度的产物一律带精度后缀：既避免覆盖既有 bf16 产物，
+    也让审计一眼看出该臂的数值口径（D8 变更可回溯）。"""
+    return run_id if amp_dtype == "bf16" else f"{run_id}_{amp_dtype}"
 
 
 def epochs_done(ckpt_root, run_id):
@@ -239,7 +258,7 @@ def calibrate(args, info):
                           + (f" × 目标机减速 {args.slowdown}x" if args.slowdown != 1
                              else ""),
                 "peak_alloc_gb": args.assume_peak_gb, "gpu_util_mean": 98.7}
-    out = HERE / "_a10_bench.json"
+    out = HERE / "_arms_bench.json"
     rc = sh([sys.executable, "-u", "bench_throughput.py",
              "--data_root", args.data_root, "--split_manifest", MANIFEST,
              "--batch_size", BATCH_SIZE, "--num_workers", max(2, args.num_workers or 4),
@@ -286,7 +305,10 @@ def make_plan(args, info, calib):
     lanes, gain, reason = decide_lanes(args, info, calib)
     usable_s = args.budget_hours * 3600 - args.reserve_min * 60
 
-    selected = [a for a in ARMS if not args.only or a[0] in args.only.split(",")]
+    pool = list(ARMS)
+    if args.amp_dtype != "bf16" and not args.no_reference_arm:
+        pool.insert(0, REFERENCE_ARM)
+    selected = [a for a in pool if not args.only or a[0] in args.only.split(",")]
     if args.only:
         # --only 显式给定时按用户书写顺序执行（便于把"便宜且能确定跑完"的臂排前面）
         order = {rid: i for i, rid in enumerate(args.only.split(","))}
@@ -296,7 +318,8 @@ def make_plan(args, info, calib):
     afford = info.get("disk_arms_affordable", len(selected))
 
     rows, cum, will = [], 0, []
-    for i, (run_id, _, _, why) in enumerate(selected):
+    for i, (base_id, _, _, why) in enumerate(selected):
+        run_id = tag_run(base_id, args.amp_dtype)
         done = epochs_done(args.ckpt_root, run_id)
         if contaminated(args.ckpt_root, run_id):
             why += "　[已按 INC-0006 作废，本轮从 epoch 0 重训]"
@@ -399,14 +422,14 @@ def train_arm(args, run_id, train_extra, deadline, rate, state):
             cmd += ["--resume", "--checkpoint", ck]
         print(f"[segment] {run_id}: epoch {done} -> {target}", flush=True)
         t0 = time.time()
-        with open(HERE / f"_a10_{run_id}_log.txt", "a", encoding="utf-8") as f:
+        with open(HERE / f"_arm_{run_id}_log.txt", "a", encoding="utf-8") as f:
             rc = sh(cmd, cwd=HERE, stdout=f, stderr=subprocess.STDOUT).returncode
         after = epochs_done(args.ckpt_root, run_id)
         rate.update(time.time() - t0, after - done)
         state.set(run_id, epochs_done=after, sec_per_epoch=round(rate.spe, 1))
         if after <= done:
             print(f"[abort] {run_id} 本段未推进（rc={rc}），"
-                  f"见 _a10_{run_id}_log.txt 末尾", flush=True)
+                  f"见 _arm_{run_id}_log.txt 末尾", flush=True)
             return False
 
 
@@ -417,7 +440,7 @@ def eval_arm(args, run_id, eval_extra):
            "--data_root", args.data_root, "--split", "test",
            "--split_manifest", MANIFEST, "--batch_size", 4,
            "--out_dir", out] + eval_extra
-    with open(HERE / f"_a10_{run_id}_eval_log.txt", "w", encoding="utf-8") as f:
+    with open(HERE / f"_arm_{run_id}_eval_log.txt", "w", encoding="utf-8") as f:
         rc = sh(cmd, cwd=HERE, stdout=f, stderr=subprocess.STDOUT).returncode
     if rc == 0:
         j = out / "eval_summary.json"
@@ -443,14 +466,14 @@ def package(args, merged):
         ev = HERE / "eval_output" / f"{run_id}_test"
         if ev.is_dir():
             shutil.copytree(ev, out / "eval_output" / f"{run_id}_test")
-        for lg in HERE.glob(f"_a10_{run_id}*log.txt"):
+        for lg in HERE.glob(f"_arm_{run_id}*log.txt"):
             shutil.copy2(lg, out / "logs" / lg.name)
         tb = Path(args.log_root) / run_id
         if tb.is_dir():
             shutil.copytree(tb, out / "logs" / f"tb_{run_id}", dirs_exist_ok=True)
-    (out / "a10_progress_merged.json").write_text(
+    (out / "arms_progress_merged.json").write_text(
         json.dumps(merged, ensure_ascii=False, indent=1), encoding="utf-8")
-    for f in (PLAN_JSON, HERE / "_a10_bench.json"):
+    for f in (PLAN_JSON, HERE / "_arms_bench.json"):
         if f.is_file():
             shutil.copy2(f, out / f.name)
     z = shutil.make_archive(str(out), "zip", root_dir=out)
@@ -465,7 +488,7 @@ def main():
     ap.add_argument("--log_root", default=str(HERE.parent / "logs"))
     ap.add_argument("--viz_root", default=str(HERE.parent / "visualizations"))
     ap.add_argument("--package-dir", dest="package_dir",
-                    default=str(HERE.parent / "a10_return_package"))
+                    default=str(HERE.parent / "arms_return_package"))
     ap.add_argument("--budget-hours", dest="budget_hours", type=float, default=6.0)
     ap.add_argument("--reserve-min", dest="reserve_min", type=int, default=40,
                     help="预留给评估与打包的分钟数")
@@ -477,8 +500,11 @@ def main():
                          "fp16=Turing/T4 唯一可用的张量核心路径，属数值口径偏差，"
                          "须向审计声明（见 INC-0007）")
     ap.add_argument("--only", default="")
+    ap.add_argument("--no-reference-arm", dest="no_reference_arm",
+                    action="store_true",
+                    help="非 bf16 精度下不自动插入同精度参照臂（默认插入）")
     ap.add_argument("--state-file", dest="state_file",
-                    default=str(HERE / "a10_progress.json"))
+                    default=str(HERE / "arms_progress.json"))
     ap.add_argument("--sec-per-epoch", dest="sec_per_epoch", type=float, default=0)
     ap.add_argument("--assume-peak-gb", dest="assume_peak_gb", type=float, default=0,
                     help="标定不可用时假定的单车道峰值分配显存（本机实测）")
@@ -509,7 +535,7 @@ def main():
             p = json.loads(PLAN_JSON.read_text(encoding="utf-8"))
             print(f"计划：车道 {p['lanes']}｜{p['sec_per_epoch']} s/epoch｜"
                   f"执行 {p['will_run']}｜顺延 {p['deferred']}")
-        merged = State.merge(list(HERE.glob("a10_progress*.json")))
+        merged = State.merge(list(HERE.glob("arms_progress*.json")))
         for k, v in sorted(merged.items()):
             print(f"  {k}: {v}")
         return
@@ -539,7 +565,10 @@ def main():
     if not args.num_workers:
         args.num_workers = max(2, min(8, (os.cpu_count() or 8) // lanes))
     deadline = t0 + args.budget_hours * 3600 - args.reserve_min * 60
-    todo = [a for a in ARMS if a[0] in p["will_run"]]
+    pool = list(ARMS)
+    if args.amp_dtype != "bf16" and not args.no_reference_arm:
+        pool.insert(0, REFERENCE_ARM)
+    todo = [a for a in pool if tag_run(a[0], args.amp_dtype) in p["will_run"]]
 
     if lanes > 1 and len(todo) > 1:
         # 多车道：每条车道一个子进程、一份 state 文件，避免并发写冲突
@@ -558,8 +587,8 @@ def main():
                    "--sec-per-epoch", round(lane_spe, 1),
                    "--budget-hours", max(0.05, (deadline - time.time()) / 3600),
                    "--reserve-min", 0, "--skip-package",
-                   "--state-file", HERE / f"a10_progress_lane{li}.json"]
-            log = HERE / f"_a10_lane{li}_log.txt"
+                   "--state-file", HERE / f"arms_progress_lane{li}.json"]
+            log = HERE / f"_arm_lane{li}_log.txt"
             print(f"[lane {li}] {[a[0] for a in bucket]} -> {log.name}", flush=True)
             f = open(log, "w", encoding="utf-8")
             procs.append((subprocess.Popen([str(c) for c in cmd], cwd=HERE,
@@ -570,8 +599,9 @@ def main():
     else:
         state = State(args.state_file)
         rate = Rate(p["sec_per_epoch"])
-        for run_id, tr, ev, _ in todo:
-            print(f"\n===== ARM {run_id} =====", flush=True)
+        for base_id, tr, ev, _ in todo:
+            run_id = tag_run(base_id, args.amp_dtype)
+            print(f"\n===== ARM {run_id}（精度 {args.amp_dtype}）=====", flush=True)
             ok = train_arm(args, run_id, tr, deadline, rate, state)
             state.set(run_id, complete=ok,
                       epochs_done=epochs_done(args.ckpt_root, run_id))
@@ -583,7 +613,7 @@ def main():
                 break
 
     if not args.skip_package:
-        merged = State.merge(list(HERE.glob("a10_progress*.json")))
+        merged = State.merge(list(HERE.glob("arms_progress*.json")))
         package(args, merged)
         print(f"\n总耗时 {(time.time()-t0)/3600:.2f} h　完成情况：")
         for k, v in sorted(merged.items()):
