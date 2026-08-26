@@ -105,6 +105,31 @@ python main.py --mode train
 
 Set `data_root` in `main.py` to point to your dataset directory.
 
+### Phase 2 ablation arms (one-click, single machine)
+
+`run_arms.py` is the shared engine: preflight → throughput calibration →
+deadline-aware queueing → segmented training (resumable per epoch) →
+frozen-test evaluation → return package. It refuses to start a segment that
+would not finish inside the budget, so a rented window never ends in
+half-trained arms.
+
+```bash
+# rented V100 (Volta, no native BF16 -> fp16 + same-dtype reference arm)
+bash train_v100.sh /path/to/phase2_cloud_package.zip
+
+# rented A10 / any Ampere+ box (keeps the bf16 baseline regime)
+bash setup_a10.sh /path/to/phase2_cloud_package.zip
+
+# any machine, manual
+python run_arms.py --data_root /path/to/synthetic_v3 --budget-hours 6
+python run_arms.py --data_root ... --dry-run     # plan only, no GPU needed
+python run_arms.py --status                     # progress
+```
+
+Guides: [V100 6h](docs/V100_6h_一键启动.md) ·
+[A10 6h](docs/A10_6h_作战手册.md) ·
+[local long runs](docs/本机长跑前置清单.md)
+
 ### Inference
 
 ```bash
