@@ -6,6 +6,7 @@ Author: Python Engineer
 Date: 2026-01-24
 """
 
+import os
 import time
 from pathlib import Path
 from typing import Dict, Tuple, List
@@ -591,6 +592,13 @@ class InverseRenderTrainer:
             else:
                 self.optimizer.step()
 
+            # 热节流（低散热平台）：每 batch 后微暂停压低平均功耗。
+            # 由环境变量 THERMAL_PACE 控制（秒/批次），默认 0=关闭；
+            # 不触碰任何超参与随机流，不影响 D10 单变量口径（只改墙钟）。
+            _pace = float(os.environ.get('THERMAL_PACE', '0') or 0)
+            if _pace > 0:
+                time.sleep(_pace)
+
             for key in epoch_losses:
                 if key in loss_dict:
                     epoch_losses[key] += loss_dict[key]
@@ -984,10 +992,23 @@ class InverseRenderTrainer:
         self.best_val_loss = checkpoint['best_val_loss']
         self.current_stage = checkpoint.get('current_stage', 1)
 
+        # INC-0005：__init__ 只按阶段1初始化损失权重表并冻结残差；
+        # 断点若落在阶段2/3，必须把两处阶段状态同步到恢复点，
+        # 否则整个续跑段都在错误的监督口径下训练（权重表错 +
+        # 残差该解冻而未解冻）。训练循环只在"检测到切换"时更新，
+        # 直接恢复的场景永远不会触发。
+        self._update_loss_weights()
+        if self.residual is not None:
+            _unfrozen = self.current_stage >= 3
+            for param in self.residual.parameters():
+                param.requires_grad = _unfrozen
+
         print(f"检查点已加载: {checkpoint_path}")
         print(f"  Epoch: {self.current_epoch}")
         print(f"  Best Val Loss: {self.best_val_loss:.6f}")
         print(f"  Current Stage: {self.current_stage}")
+        print(f"  损失权重表已同步到阶段{self.current_stage}; "
+              f"残差模块{'解冻' if self.current_stage >= 3 else '冻结'}")
     def train(self):
         """完整训练流程"""
         total_epochs = self.config.get('total_epochs', 100)
