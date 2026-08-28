@@ -1,0 +1,27 @@
+{
+  "n_scenes": 124,
+  "mae_lin_mean": 0.17870884361027198,
+  "mae_lin_std": 0.1102587907569473,
+  "psnr_lin_mean": 14.883892611278455,
+  "psnr_lin_p10": 8.283447347047924,
+  "psnr_train_domain_mean": 6.310183845402751,
+  "psnr_point_direct_mean": 14.972955087958479,
+  "psnr_point_direct_p10": 8.065052016449275,
+  "ssim_lin_mean": 0.8212042811897493,
+  "normal_ang_mae_mean": 0.006471495031409206,
+  "normal_ang_p90_max": 0.02797645330429077,
+  "light_err_vs_world_mean": 0.9163854482769572,
+  "light_err_vs_camframe_mean": 69.61937455682767,
+  "worst_scenes": [
+    "12aef634af8944ff86f9a967ccb1608b",
+    "060c9e87a01b4fd08f87578d63e4961e",
+    "2dfa3a4d58a442bb9abbf1f7beb2e5e6",
+    "0b6168841a3f46bdaa56947d469c79da",
+    "08aab5b01d384e0082c56c17fc9f2245",
+    "229df31da28c4d3390d6ae1fef2867e0",
+    "21228b0cf30745efbf0842c86f34e584",
+    "1907da7461054e5ba6885302c08c2677",
+    "24a0d4520d444db7980f3737950f2a5c",
+    "16ffa17d84c8467f89403df9ad894301"
+  ]
+}

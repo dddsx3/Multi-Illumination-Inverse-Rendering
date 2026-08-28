@@ -1,0 +1,131 @@
+# PRE-0 唯一实验协议 · Multi-Illumination Inverse Rendering
+# 本文件是 PRE-0 阶段全部实验的唯一约定来源。
+# 所有取值均从仓库代码逐行核实（render_dataset.py / physics_renderer.py /
+# data_loader.py / config.py / evaluate.py），不是文档转抄。
+# 协议版本: 2026-08-29 v1.0
+
+protocol_id: "pre0_synthetic_v3_v1"
+git_commit: "a9f9526e424c600e124a1c209479c68026c0016c"   # 协议建立时 HEAD；最终结果 commit 见 HANDOFF.md
+random_seed: 20260829
+
+image:
+  modality: grayscale            # light_XXX.png（BT.709 luma）；light_XXX_rgb.png 为彩色辅助输出，PRE-0 不使用
+  resolution: [256, 256]
+  linear_or_srgb: >
+    磁盘为 sRGB 编码 uint8。真实编码是标准 sRGB OETF（render_dataset.linear_to_srgb）；
+    灰度 = sRGB 编码域 RGB 的 BT.709 luma（编码后取亮度，非线性亮度再编码）。
+    训练/评估端解码约定为 uint8/255 后 ^(1/2.2) 近似反 gamma（data_loader），
+    与精确 sRGB 反变换存在暗部 ~2% 偏差——该偏差计入 renderer mismatch，
+    由 PRE-01 oracle 审计量化，不单独修正。
+  normalization: 解码后 [0,1] float，无均值方差归一化
+  file_pattern: "light_{001..005}.png"    # K=5
+
+camera:
+  model: perspective_pinhole
+  intrinsics:
+    fov_deg: 50.0                # 水平=垂直（正方形像面），lens 18mm 等效换算，sensor 36mm
+    image_size: [256, 256]
+    camera_distance: 2.6         # 到场景中心（世界原点）
+    camera_position: "+X 方向、仰角 30°（Blender Z-up 世界）look-at 原点"
+  coordinate_system: >
+    视空间（view space）：z 轴指向远离相机（深度增大方向），
+    x 向右、y 向下（图像坐标一致）；世界为 Blender Z-up。
+
+depth:
+  definition: 视空间 z 深度（相机到像素视线方向的距离）
+  unit: 世界单位（场景包围盒最长边归一化到 1.6，故物体深度跨度 ~1 量级）
+  valid_range: "[0, +inf)，前景内近大远小正值；背景像素由 mask 排除"
+  normalization: 不归一化，原始 float32 落盘
+  file: depth.npy [1,H,W] float32
+
+normal:
+  definition: >
+    depth-derived normal：由 depth.npy 经无边缘感知 Sobel 梯度计算
+    n = normalize([-dz/dx, -dz/dy, 1])（render_dataset.sobel_normal，
+    与 physics_renderer.DepthToNormal(use_edge_aware=False) 数值等价）。
+    数据集中不存在 mesh/render normal——normal.npy 本身就是深度导数定义，
+    故 "render normal vs depth normal" 对照在本数据集内按构造恒等（夹角 0°），
+    真实网格法线对照不可行，见 DATASET_CONTRACT.md §normal。
+  coordinate_system: 相机空间，单位向量，面朝相机（z>0）
+  source: depth.npy（唯一来源）
+  file: normal.npy [3,H,W] float32
+  known_conflict: >
+    训练渲染器默认 use_edge_aware=True（config.model.use_edge_aware），
+    在深度不连续处与 GT normal 定义存在系统性偏差；
+    PRE-0 probe 渲染监督统一使用 use_edge_aware=False 与数据定义对齐。
+
+albedo:
+  definition: >
+    无光照 base color 的 BT.709 luma（线性域）：BlenderProc diffuse pass 的
+    线性 RGB 三通道按 0.2126/0.7152/0.0722 加权后裁剪到 [0,1]。
+    注意这是彩色反照率的亮度标量，不是光谱反照率；彩色通道信息不在 GT 中。
+  valid_range: [0, 1]
+  color_space: 线性（无 gamma）
+  file: albedo.npy [1,H,W] float32
+  ambiguity: 反照率与光照强度存在全局乘积歧义，评估一律用 SI-MAE
+    （逐场景全局标量最小二乘尺度后 MAE，evaluate.albedo_metrics 定义）
+
+lighting:
+  representation: 二阶实球谐（9 系数/光）
+  sh_order: 2
+  basis_order: "[Y0, Y1^-1(y), Y1^0(z), Y1^1(x), Y2^-2(xy), Y2^-1(yz), Y2^0(3z^2-1), Y2^1(xz), Y2^2(x^2-y^2)]"
+  basis_constants: "C0=0.282095, C1=0.488603, C2=[1.092548,1.092548,0.315392,1.092548,0.546274]"
+  coordinate_system: 与 normal 同一相机空间（basis 输入即相机空间法线）
+  sh_coeffs_semantics: >
+    每光一盏点光源的远场方向光近似：c = I_eff * Y(d)，
+    I_eff = energy/(4πR²)，energy=100W，R=|光位|=2.99（cam_dist×1.15），
+    d 为光源指向场景中心的单位方向（相机空间）。
+    注意：磁盘图像由 Cycles 路径追踪真实渲染（近场点光+间接光），
+    sh_coeffs 是方向光近似——二者差异即核心 renderer mismatch，由 PRE-01 量化。
+  shading_equation: "s(n, c) = ReLU(Σ_i c_i Y_i(n))（physics_renderer 定义）"
+  rendering_equation: "I = A ⊙ s(n, c)（训练物理渲染器；无方向光项）"
+  calibrated_in_training: false    # 网络需自行从图像估计光照（sh_coeffs 不作为输入）
+  calibrated_in_evaluation: true   # PRE-05 held-out 评估器使用 GT L_q；PRE-01 oracle 使用 GT L
+  file: sh_coeffs.npy [K,9] float32
+
+dataset:
+  dataset_id: synthetic_v3
+  dataset_root: "D:/data/synthetic_v3"
+  scene_count: 620
+  lights_per_scene: 5
+  light_geometry: >
+    5 光方位角 72° 步进（az = 0,72,144,216,288°，世界系）、高度角 50°、
+    半径 2.99 固定。数据集内光照方向跨场景恒定——illumination diversity
+    只能通过 N 子集与解析补光变化（见 pre0/source/renderer/relight.py）。
+  scene_split_hash: "98e91fc5b549d82339518708e855b300c9451d83aecfc56a756ebe340e1c0e32"
+  split_manifest: protocol/split_manifest.json
+  split_counts: {train: 447, val: 49, test: 124}
+  split_rule: >
+    test = 旧版 80/20(seed=42) 划分的验证子集（未参与基线训练）冻结为正式测试集；
+    val = 旧训练子集 10%(seed=43)；train = 其余。来源：Phase1 验收裁决书 C1。
+    PRE-0 全程不改 split；PRE-02 的 N>5 解析补光不改 scene split。
+  generation:
+    renderer_id: blenderproc_cycles_v3
+    samples: 128                  # Cycles 采样数 → 图像含路径追踪噪声
+    light_type: point (energy 100W, radius 2.99, 每帧单光, 纯黑环境)
+    world: 纯黑（无环境光）
+    masks: instance_segmaps != 0
+
+renderer:
+  renderer_id: physics_renderer_v1   # 训练/评估可微渲染器（physics_renderer.py）
+  equation: "I = A ⊙ ReLU(Σ_i c_i Y_i(n))，n = normalize([-∂z/∂x, -∂z/∂y, 1])（Sobel，可选 edge-aware）"
+  known_semantic_gaps:              # PRE-01 实验对象，逐一量化
+    - Cycles 近场点光 vs 远场方向光 SH 近似
+    - Cycles 路径追踪间接光/阴影 vs 单次直接漫反射近似
+    - 彩色 diffuse luma 组合 vs 灰度 luma 渲染路径差异
+    - sRGB 编码域 luma + ^(1/2.2) 近似解码 vs 线性域乘法
+    - Sobel 深度导数法线（数据/协议） vs Cycles 平滑着色法线（真实成像用）
+    - 训练默认 edge-aware=True vs 数据生成 edge-aware=False
+    - ReLU 阴影截断 vs 物理阴影（点光被几何自遮挡）
+
+pre0_scope:
+  n_grid_analytic: [1, 2, 3, 5, 7, 10, 15]
+  n_grid_real: [1, 2, 3, 5]        # 真实 Cycles 图像只有 5 光/场景
+  analytic_relight: >
+    N>5 的子集使用解析模型重打光：I = A^GT ⊙ ReLU(SH(n^GT, c_new))，
+    15 个方向光（Fibonacci 球面，el∈[20°,70°]，seed=20260829，I_eff 同协议），
+    仅用于 PRE-02 GT 信息量实验；结论限定于解析协议模型，
+    不含 Cycles 特有效应。不重划 scene split。
+  probes: {A: MeanSpatial, B: MeanVarSpatial, C: GlobalSet}
+  probe_budget: "三 probe 统一预算：同 encoder/decoder、~2M 参数、40 epoch、同数据同 loss，不调参"
+  heldout_protocol: oracle-query-light（主指标）；predicted-query-light 只允许单独报告，禁止混入
