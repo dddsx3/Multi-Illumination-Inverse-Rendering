@@ -142,7 +142,8 @@ def evaluate(model, batcher, device, max_scenes=0, every=1, epoch=0):
         si += si_mae_torch(albedo_p, albedo, mask)
         dl1.append(float((depth_p - depth).abs()[m].mean()))
         sherr.append(float(((sh_p - sh) ** 2).mean() ** 0.5))
-        mse = float((((recon - imgs) * mask) ** 2).sum() / mask.sum())
+        imgs_k = imgs[:, :, 0]          # [B,K,H,W]（与 recon 同形）
+        mse = float((((recon - imgs_k) * mask) ** 2).sum() / mask.sum())
         psnrs.append(10 * math.log10(1.0 / max(mse, 1e-12)))
         dot = (n_p * normal).sum(1).clamp(-1, 1)[m[:, 0]]
         nang.append(float(torch.rad2deg(torch.acos(dot)).mean()))

@@ -129,7 +129,7 @@ class ProbeC(ProbeBase):
     """GlobalSet：z = mean_k GAP(F_k)，空间广播 -> decoder"""
 
     def _aggregate(self, feats_bnc):
-        z = feats_bnc.flatten(2).mean(-1).mean(1)        # [B,C]
+        z = feats_bnc.mean(dim=(3, 4)).mean(1)           # [B,C]
         return z[..., None, None].expand(-1, -1, *feats_bnc.shape[-2:])
 
 
