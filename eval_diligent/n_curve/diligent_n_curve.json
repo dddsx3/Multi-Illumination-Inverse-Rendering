@@ -1,0 +1,70 @@
+{
+ "n_curve": {
+  "1": {
+   "mae_mean": 39.8845,
+   "mae_std": 2.6122,
+   "median_mean": 38.7883,
+   "acc_11_25_mean": 0.0571,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "2": {
+   "mae_mean": 39.803,
+   "mae_std": 2.6935,
+   "median_mean": 38.5913,
+   "acc_11_25_mean": 0.0569,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "3": {
+   "mae_mean": 39.6656,
+   "mae_std": 2.7656,
+   "median_mean": 38.7072,
+   "acc_11_25_mean": 0.06,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "5": {
+   "mae_mean": 39.6712,
+   "mae_std": 2.7469,
+   "median_mean": 38.6199,
+   "acc_11_25_mean": 0.059,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "7": {
+   "mae_mean": 39.5515,
+   "mae_std": 2.7064,
+   "median_mean": 38.4818,
+   "acc_11_25_mean": 0.0617,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "10": {
+   "mae_mean": 39.6057,
+   "mae_std": 2.6771,
+   "median_mean": 38.4593,
+   "acc_11_25_mean": 0.0599,
+   "n_objects": 10,
+   "n_subsets": 3
+  },
+  "15": {
+   "mae_mean": 39.5564,
+   "mae_std": 2.6704,
+   "median_mean": 38.3712,
+   "acc_11_25_mean": 0.0594,
+   "n_objects": 10,
+   "n_subsets": 3
+  }
+ },
+ "ns_evaluated": [
+  1,
+  2,
+  3,
+  5,
+  7,
+  10,
+  15
+ ],
+ "m_per_n": 3
+}

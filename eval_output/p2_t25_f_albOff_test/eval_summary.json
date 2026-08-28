@@ -1,0 +1,74 @@
+{
+ "checkpoint": "D:\\Multi-Illumination Inverse Rendering\\checkpoints\\p2_t25_f_albOff\\best_model.pth",
+ "data_root": "D:/data/synthetic_v3",
+ "split": "test",
+ "split_manifest": "D:\\Multi-Illumination Inverse Rendering\\repo\\splits\\synthetic_v3.json",
+ "architecture": "fusion",
+ "modality": "gray",
+ "sh_constraint": "clamp",
+ "res_hidden": 64,
+ "residual_off": false,
+ "scenes": 124,
+ "metrics_mean_std": {
+  "albedo_mae": {
+   "mean": 0.24198244968729635,
+   "std": 0.07663564362026228
+  },
+  "albedo_mse": {
+   "mean": 0.0892963310283038,
+   "std": 0.04570058552754763
+  },
+  "albedo_si_mae": {
+   "mean": 0.13681568181322468,
+   "std": 0.03679113463153431
+  },
+  "depth_mae": {
+   "mean": 0.34817704510304237,
+   "std": 0.06399290190504976
+  },
+  "depth_mae_aligned": {
+   "mean": 0.27351843060985687,
+   "std": 0.055209626472027186
+  },
+  "depth_rmse": {
+   "mean": 0.4605095309595908,
+   "std": 0.08588612589359688
+  },
+  "depth_rmse_aligned": {
+   "mean": 0.3402666829286083,
+   "std": 0.06535560041070591
+  },
+  "depth_si_rmse": {
+   "mean": 0.6399942761467349,
+   "std": 0.6420217452222666
+  },
+  "image_psnr": {
+   "mean": 35.68594611383255,
+   "std": 1.7081940026664926
+  },
+  "image_ssim": {
+   "mean": 0.9644410721717341,
+   "std": 0.02623848508454734
+  },
+  "normal_acc_11_25": {
+   "mean": 0.8773112931559163,
+   "std": 0.04056544263903074
+  },
+  "normal_acc_22_5": {
+   "mean": 0.9227433743015412,
+   "std": 0.03117511412556898
+  },
+  "normal_acc_30": {
+   "mean": 0.9327648858870229,
+   "std": 0.030090428329024727
+  },
+  "normal_mae_deg": {
+   "mean": 8.516540142797655,
+   "std": 2.6356068266930115
+  },
+  "normal_median_deg": {
+   "mean": 1.7643519447695823,
+   "std": 0.43637072850080055
+  }
+ }
+}

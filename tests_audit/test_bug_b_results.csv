@@ -1,0 +1,11 @@
+case,modality,old_ratio,new_ratio,old_finite,new_finite,new_in_unit,expectation,sample_pass
+perfect,gray,1.0,1.0,True,True,True,old~1 new=1,True
+perfect,rgb,1.0,1.0,True,True,True,old~1 new=1,True
+collapse,gray,0.0,1.8477439880371094e-06,True,True,True,"old=0 new in [0,1]",True
+collapse,rgb,0.0,1.8477439880371094e-06,True,True,True,"old=0 new in [0,1]",True
+explode,gray,100.00000103618022,0.0,True,True,True,old>>1 new clipped to 0,True
+explode,rgb,99.99999859096236,0.0,True,True,True,old>>1 new clipped to 0,True
+channel_imbalance,gray,0.0,1.8477439880371094e-06,True,True,True,old=0 new~0,True
+channel_imbalance,rgb,1.6578541343101723,0.3333345651626587,True,True,True,new~1/3 (0.3333),True
+zero_image,gray,nan,0.0,False,True,True,old=NaN new=0 (eps keeps new finite),True
+zero_image,rgb,nan,0.0,False,True,True,old=NaN new=0 (eps keeps new finite),True

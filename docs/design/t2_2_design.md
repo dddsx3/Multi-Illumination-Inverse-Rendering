@@ -168,3 +168,78 @@ while True:
 - 后续 A3-bis 训练日志中仍可能观察到 trainer 早停 return + run_arms 继续 spawn 的协作模式
   （属预期行为，不算异常）
 
+---
+
+## 10. 物理约束补建（INC-0012，2026-08-28 后期，决策 1 重定义版）
+
+> **章节编号说明**：v3 §4 整改要求"按 v3 §3 A1-A8 + §4 放行条件 #1 整改"（决策 2 重定义）。
+> 本节作为 v3 之后的独立修复，与 §8（v2 A7 加注）和 §9（v3 A7 补段）并列为 T2.2 设计文档第三段增补。
+
+### 10.1 背景：决策 1 重定义
+
+中期审计 v2 §2-P2 原始叙事为"fusion_unet.py 重构时丢失 Phase 0 Sigmoid 约束"。
+经代码级核实（2026-08-28 23:00 只读检查阶段）：
+
+- Phase 0 `unet_model.py:226` 注释显式记录"`# 移除 Sigmoid，让 Albedo 输出线性值`"——Phase 0 历史上**已显式移除 Sigmoid**
+- `unet_model.py:549-551` `__main__` 打印字符串仍写"+ Sigmoid"（**文档 vs 代码漂移**）
+- fusion_unet.py 复刻 Phase 0 同样的"无 Sigmoid"模式（值域期望 [0, 2] 但无显式激活）
+
+**决策 1** 将修复路径重定义为"补建新约束 + 验证 albedo_smooth 二次风险"（**不是**"恢复丢失约束"），
+理由：Phase 0 历史上就不存在该约束，恢复路径叙述与代码事实不符。
+
+### 10.2 修复内容
+
+| 修复项 | 代码位置 | 变更 | key 兼容性 |
+|---|---|---|---|
+| albedo 头 Sigmoid | `fusion_unet.py:120-130` `head_albedo()` 末层 | `nn.Conv2d(bc//2, 1, 1)` 后接 `nn.Sigmoid()` | 与旧 checkpoint 严格兼容（`albedo_head.0/1/3.*` key 路径不变）|
+| depth 头 Softplus | `fusion_unet.py:135-145` `head_depth()` 末层 | `nn.Conv2d(bc//2, 1, 1)` 后接 `nn.Softplus()` | 与旧 checkpoint 严格兼容（`depth_head.0/1/3.*` key 路径不变）|
+| 评估物理断言 | `evaluate_model.py` `assert_physical()` | albedo∈[0,1] / depth>0 违规像素占比统计入 `eval_summary.json` | 不影响现有 ckpt |
+| T-PHYS 冒烟 | `_smoke_phys_constraints.py` | albedo10 vs albedo1 双轨 3 epoch 冒烟 | 仅冒烟用，D12 物理隔离 |
+
+**关键设计点**：把激活接在 head() 工厂末层 Conv 之后，并保持单 Sequential 结构。
+PyTorch 对无参数模块（Sigmoid/Softplus）跳过索引编号，所以新 key 路径与旧 checkpoint
+完全一致（`albedo_head.{0,1,3}.*`），可严格 `load_state_dict(strict=False)` 加载 v2 best_model。
+
+### 10.3 二次风险验证（T-PHYS 冒烟，3 epoch × 50 场景）
+
+| 维度 | albedo_smooth=10.0（默认）| albedo_smooth=1.0（对照）| 结论 |
+|---|---|---|---|
+| albedo violation ratio | 0.0000% | 0.0000% | Sigmoid 头完全生效 |
+| depth violation ratio | 0.0000% | 0.0000% | Softplus 头完全生效 |
+| 0.5 退化（`abs(mean-0.5)<0.05 AND std<0.1`）| False（std=0.093）| False（std=0.091）| 两种权重均未触发 |
+
+**结论**：在 v2 best warm-start + 3 epoch 训练下，`albedo_smooth=10.0` **未触发 0.5 退化**。
+**维持 albedo_smooth=10.0 不下调**（与 INC-0010 早期"降至 10 保持主导正则地位"决策一致）。
+
+为什么 Sigmoid 头下不会触发 0.5 退化：
+- Sigmoid 把 albedo 值域锁在 [0,1]，模型不再需要靠"压向 0.5" 来满足范围约束
+- albedo_smooth=10.0 的作用现在是"鼓励空间平滑"（梯度 L1），而不是"压值域"（已由 Sigmoid 保证）
+- v2 模型在无 Sigmoid 时被压向 0.5 是因为它是"达到 [0,2] 值域 + 满足平滑"的折中；现在有 Sigmoid 后这个折中消失
+
+### 10.4 论文叙事（中期审计 v2.1 §10 约束第 6 条执行）
+
+按 v2.1 §10 约束第 6 条"反照率退化修复（P2/P3）必须在方法节或补充材料中如实描述（约束丢失 + 修复），
+这是工程严谨性证据，不是污点"——论文方法节须包含：
+
+1. **物理约束的"设计意图"**：[0,1] 范围 + 正深度是物理可解释的先验（retroreflective 假设 / 朗伯假设），
+   不是"重构时丢失的 bug"——v2 模型在无约束时是被训练压力推向值域边缘，而非表达错误
+2. **修复路径**：在 fusion_unet.py 主干 head 层显式接 Sigmoid/Softplus 激活；这是**新增**的物理约束，
+   不应叙述为"恢复"
+3. **二次风险评估**：在引入 Sigmoid 后重新评估 `albedo_smooth` 权重的兼容性（防止压向 0.5），
+   验证结论"维持 10.0 不下调"——这是工程严谨性证据
+
+### 10.5 实施产物（D3 数字入库）
+
+- 冒烟产物：`D:\Multi-Illumination Inverse Rendering\_SMOKE_phys_constraints\{albedo10,albedo1}\*.json`
+- 物理断言：每次 `evaluate_model.py` / `eval_n_curve.py` / `evaluate_diligent.py` 推理都执行
+- INC-0012 文档：`docs/incidents/INC-0012_物理约束补建与albedo_smooth二次风险验证.md`
+- 决策链路：本节 → INC-0012 → 中期审计 v2 §2-P2/P3 → 顶层设计 v2.1 任务卡 T2.2 物理约束修复段
+
+### 10.6 引用关系
+
+- 承接：中期审计 v2 §2-P2/P3 + 顶层设计 v2.1 T2.2 物理约束修复段
+- 决策 1：原始"恢复丢失"叙事 → "补建新约束 + 验证二次风险" 重定义
+- 不冲突：INC-0011（F-resA 1 run 反转方法论沉淀）
+- 配套：evaluate_model.py / eval_n_curve.py / evaluate_diligent.py 评估脚本物理断言
+- 后续：等 A3-bis 3-seed 完成后，重训 v2 时**保留**本节 Sigmoid/Softplus 约束（不再回退）
+

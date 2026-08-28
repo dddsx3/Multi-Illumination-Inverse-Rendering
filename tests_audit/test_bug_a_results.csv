@@ -1,0 +1,11 @@
+seed,corr_A_I,corr_A_Iperm,old_correct_True,old_perm_True,new_correct_True,new_perm_True,old_is_buggy,new_is_correct,sample_pass
+42,0.922009,0.003701,False,True,True,False,True,True,True
+49,0.862075,0.003801,False,True,True,False,True,True,True
+56,0.903566,0.003945,False,True,True,False,True,True,True
+63,0.853269,0.006638,False,True,True,False,True,True,True
+70,0.847534,-0.000437,False,True,True,False,True,True,True
+77,0.830731,0.002661,False,True,True,False,True,True,True
+84,0.815863,0.002512,False,True,True,False,True,True,True
+91,0.815322,0.000238,False,True,True,False,True,True,True
+98,0.860975,-0.000884,False,True,True,False,True,True,True
+105,0.84788,-0.003296,False,True,True,False,True,True,True

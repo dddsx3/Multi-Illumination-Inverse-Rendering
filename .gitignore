@@ -1,3 +1,9 @@
+# ============================================
+# Multi-Illumination Inverse Rendering
+# 入库原则：代码 + 文档 + 指标证据(json/csv/图) 入库；
+#          训练日志 / checkpoint / 运行时状态 / 冒烟产物 仅存本地
+# ============================================
+
 # Python
 __pycache__/
 *.py[cod]
@@ -12,29 +18,52 @@ venv/
 .venv/
 env/
 
-# Model checkpoints / weights
+# Model checkpoints / weights（大文件不入库）
 *.pth
 *.pt
 *.ckpt
 checkpoints/
 
-# Logs and outputs
-*.log
+# TensorBoard / 训练日志目录
 logs/
+events.out.tfevents.*
 health_reports/
 diagnosis_output/
 diagnostics_report.*
 visualizations/
 
-# IDE
+# 运行日志（_ 前缀 txt = 本地运行证据，审计时按需拷贝）
+_*.txt
+_*.log
+
+# 编排器运行时状态（run_arms.py / run_phase2_all.py 生成）
+progress.json
+arms_progress.json
+arms_plan.json
+_arms_bench.json
+
+# 冒烟产物（D12 物理隔离，禁止入库与进对比矩阵）
+_SMOKE_/
+_SMOKE_*
+smoke_artifacts/
+_smoke_models/
+archive/
+
+# 本地实验归档（不入库）
+
+# 数据（大文件不入库）
+processed_data/
+data/
+datasets/
+
+# IDE / OS
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# OS generated
 .DS_Store
 Thumbs.db
+nul
 
 # Jupyter
 .ipynb_checkpoints/
@@ -47,42 +76,11 @@ Thumbs.db
 *.tar
 *.gz
 
-# Data (large files)
-processed_data/
-data/
-# local smoke artifacts
-_smoke_models/
+# Blender / 渲染中间产物
+*.blend
+*.blend1
+obj_models/
+
+# 资产下载清单（download_objaverse.py 运行时生成）
 models_list.txt
-_debug*
-_render_smoke_log.txt
-_smoke_log.txt
-_pip_blender_log.txt
-_cm_*.txt
-
-_dl_log.txt
-_render_obj_log.txt
-_stress_log.txt
 obj_models_list.txt
-
-_dl_log.txt
-_pipeline_log.txt
-_run_pipeline.ps1.bak
-
-_render_full_log.txt
-_validate_log.txt
-_chunks_log.txt
-_chunk_list.txt
-_poison_list.txt
-
-_eval_run_log.txt
-_train_fp32_log.txt
-_smoke_bf16_log.txt
-_train_bf16_log.txt
-
-_diligent_log.txt
-
-_smoke_manifest_log.txt
-
-_smoke_t21_fp32_log.txt
-_smoke_t21_bf16_log.txt
-_tests_log.txt

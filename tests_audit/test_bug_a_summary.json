@@ -1,0 +1,129 @@
+{
+  "all_pass": true,
+  "n_samples": 10,
+  "n_pass": 10,
+  "rows": [
+    {
+      "seed": 42,
+      "corr_A_I": 0.922009,
+      "corr_A_Iperm": 0.003701,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 49,
+      "corr_A_I": 0.862075,
+      "corr_A_Iperm": 0.003801,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 56,
+      "corr_A_I": 0.903566,
+      "corr_A_Iperm": 0.003945,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 63,
+      "corr_A_I": 0.853269,
+      "corr_A_Iperm": 0.006638,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 70,
+      "corr_A_I": 0.847534,
+      "corr_A_Iperm": -0.000437,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 77,
+      "corr_A_I": 0.830731,
+      "corr_A_Iperm": 0.002661,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 84,
+      "corr_A_I": 0.815863,
+      "corr_A_Iperm": 0.002512,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 91,
+      "corr_A_I": 0.815322,
+      "corr_A_Iperm": 0.000238,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 98,
+      "corr_A_I": 0.860975,
+      "corr_A_Iperm": -0.000884,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    },
+    {
+      "seed": 105,
+      "corr_A_I": 0.84788,
+      "corr_A_Iperm": -0.003296,
+      "old_correct_True": false,
+      "old_perm_True": true,
+      "new_correct_True": true,
+      "new_perm_True": false,
+      "old_is_buggy": true,
+      "new_is_correct": true,
+      "sample_pass": true
+    }
+  ],
+  "script_sha256": "e71bccaad9937e039e3ad28b544b0b74e4d22b0f7008c57cbbf3a118969a17dd",
+  "trainer_sha256": "82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95"
+}

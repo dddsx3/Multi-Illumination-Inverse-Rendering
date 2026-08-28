@@ -24,7 +24,8 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from data_loader import MultiLightingDataset, load_split
+from data_loader import MultiLightingDataset
+from split_manifest import load_split
 from unet_model import IntrinsicUNet
 from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
@@ -50,8 +51,17 @@ def main():
     tcfg = ckpt.get("config", {})
     num_images = int(tcfg.get("num_lights", 5))
     base_channels = int(tcfg.get("base_channels", 32))
-
-    model = IntrinsicUNet(num_images=num_images, base_channels=base_channels)
+    msd = ckpt["model_state_dict"]
+    is_fusion = "aggregator.proj.weight" in msd
+    if is_fusion:
+        from fusion_unet import FusionUNet
+        in_channels = int(msd["stem.net.0.weight"].shape[1])
+        use_pl_alb = "delta_head.0.weight" in msd
+        model = FusionUNet(num_images=num_images, in_channels=in_channels,
+                           base_channels=base_channels,
+                           use_per_light_albedo=use_pl_alb)
+    else:
+        model = IntrinsicUNet(num_images=num_images, base_channels=base_channels)
     renderer = PhysicsRenderer()
     residual = HierarchicalResidual(use_local_residual=True,
                                     num_images=num_images,
@@ -63,9 +73,16 @@ def main():
     model.to(device).eval(); renderer.to(device).eval(); residual.to(device).eval()
 
     test_names = sorted(load_split(args.split_manifest, "test"))
+    # 自动探测 modality（与 evaluate_model.py 保持一致）
+    if tcfg.get("modality"):
+        modality = str(tcfg["modality"])
+    elif is_fusion:
+        modality = "rgb" if msd["stem.net.0.weight"].shape[1] == 3 else "gray"
+    else:
+        modality = "gray"
     ds = MultiLightingDataset(root_dir=args.data_root, num_lights=num_images,
                               image_size=(256, 256), is_training=False,
-                              scene_subset=test_names, modality="gray",
+                              scene_subset=test_names, modality=modality,
                               load_gt=True)
     rng = np.random.default_rng(args.seed)
 
@@ -81,6 +98,16 @@ def main():
             if gt is not None else None
         if gt_dev is None:
             continue
+        # 重建目标用 BT.709 luma（与 evaluate_model.py 保持一致）
+        recon_target = images
+        if images.dim() == 5:
+            if "image_luma" in gt_dev:
+                recon_target = gt_dev["image_luma"]
+            else:
+                recon_target = (0.2126 * images[:, :, 0]
+                                + 0.7152 * images[:, :, 1]
+                                + 0.0722 * images[:, :, 2])
+            gt_dev.pop("image_luma", None)
 
         for N in ns:
             if N > num_images:
@@ -96,7 +123,11 @@ def main():
                 sel = list(combo) + [combo[0]] * (num_images - N)
                 x = images[:, sel]                        # [1,N,H,W]
                 with torch.no_grad():
-                    depth, albedo, sh, wm, feats = model(x)
+                    out = model(x)
+                    if len(out) == 6:
+                        depth, albedo, sh, wm, feats, _alb_pl = out
+                    else:
+                        depth, albedo, sh, wm, feats = out
                     rendered, normal, shading = renderer(depth, albedo, sh)
                     fr, gr, lr = residual(albedo, shading, normal, sh,
                                           stage="stage3", features=feats)
@@ -104,7 +135,8 @@ def main():
                     pred={"normal": normal, "depth": depth, "albedo": albedo,
                           "image": fr},
                     gt={"normal": gt_dev["normal"], "depth": gt_dev["depth"],
-                        "albedo": gt_dev["albedo"], "image": images},
+                        "albedo": gt_dev["albedo"],
+                        "image": recon_target},
                     mask=gt_dev["mask"])
                 m["subset_indices"] = list(combo)
                 m["scene"] = sname

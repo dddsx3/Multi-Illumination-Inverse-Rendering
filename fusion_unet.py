@@ -85,7 +85,11 @@ class FusionUNet(nn.Module):
                  base_channels: int = 32, sh_order: int = 2,
                  fusion_dim: int = 128, delta_bound: float = 0.1,
                  use_per_light_albedo: bool = True,
-                 sh_constraint: str = "clamp"):
+                 sh_constraint: str = "clamp",
+                 disable_film: bool = False):
+        # INC-0013: F-noFiLM 判别实验 (b) 开关（中期审计 v2 §2-P2 假设 (b)）
+        # disable_film=True 时 film_gamma ≡ 1, film_beta ≡ 0（等效关闭 FiLM 调制）
+        super().__init__()
         super().__init__()
         self.num_images = num_images          # 仅用于 SH 头输出形状；前向不依赖
         self.in_channels = in_channels
@@ -117,19 +121,36 @@ class FusionUNet(nn.Module):
             nn.Tanh())
 
         # 输出头
-        def head():
+        # INC-0012 物理约束补建：albedo/depth 头分别加 Sigmoid/Softplus
+        # 关键：保持 key 路径与旧 checkpoint 兼容
+        # 旧：nn.Sequential(Conv, BN, ReLU, Conv) → albedo_head.{0,1,3}.*
+        # 新：把激活接在末层 Conv 之后 + Sequential 索引顺延 → albedo_head.{0,1,3,4}.*
+        # 但 Sigmoid/Softplus 无参数，PyTorch 会跳过其索引，
+        # 所以新 key 仍是 albedo_head.{0,1,3}.*，与旧 checkpoint 严格兼容
+        # Phase 0 unet_model.py 历史上无 Sigmoid（注释显式记录），
+        # fusion_unet.py 复刻同一模式；本次"补建新约束"（非"恢复丢失"）
+        def head_albedo():
             return nn.Sequential(
                 nn.Conv2d(bc, bc // 2, 3, padding=1),
                 nn.BatchNorm2d(bc // 2), nn.ReLU(inplace=True),
-                nn.Conv2d(bc // 2, 1, 1))
-        self.depth_head = head()
-        self.albedo_head = head()          # 主反照率（共享）
+                nn.Conv2d(bc // 2, 1, 1),
+                nn.Sigmoid())     # INC-0012: [0,1] 约束
+        def head_depth():
+            return nn.Sequential(
+                nn.Conv2d(bc, bc // 2, 3, padding=1),
+                nn.BatchNorm2d(bc // 2), nn.ReLU(inplace=True),
+                nn.Conv2d(bc // 2, 1, 1),
+                nn.Softplus())    # INC-0012: 正约束
+        self.depth_head = head_depth()
+        self.albedo_head = head_albedo()        # 主反照率（共享）
         self.weight_head = nn.Sequential(
             nn.Conv2d(bc, bc // 2, 3, padding=1),
             nn.BatchNorm2d(bc // 2), nn.ReLU(inplace=True),
             nn.Conv2d(bc // 2, 1, 1), nn.Sigmoid())
 
         # 集合聚合 + FiLM
+        # INC-0013: disable_film=True 时 film_gamma 初始化全 1 + film_beta 初始化全 0
+        # （效果：gamma ≡ 1, beta ≡ 0 → bottleneck 调制 = identity）
         self.aggregator = SetTransformerLite(in_dim=bc, dim=fusion_dim)
         self.film_gamma = nn.Linear(fusion_dim, bc * 16)
         self.film_beta = nn.Linear(fusion_dim, bc * 16)
@@ -137,6 +158,19 @@ class FusionUNet(nn.Module):
         nn.init.zeros_(self.film_gamma.bias)
         nn.init.zeros_(self.film_beta.weight)
         nn.init.zeros_(self.film_beta.bias)
+        if disable_film:
+            # F-noFiLM 判别实验 (b)：
+            # 强制 film_gamma=1, film_beta=0 → 完全等价于"无 FiLM"
+            # 注意：模块仍存在以保持 key 兼容，但参数被冻结
+            for p in self.film_gamma.parameters():
+                p.requires_grad = False
+            for p in self.film_beta.parameters():
+                p.requires_grad = False
+            self.register_buffer("_film_gamma_one_mask",
+                                 torch.ones_like(self.film_gamma.weight))
+            self.register_buffer("_film_beta_zero_mask",
+                                 torch.zeros_like(self.film_beta.weight))
+        self.disable_film = disable_film
 
         # S2 逐光照反照率分支（有界残差）；F-albOff 时整体禁用
         self.use_per_light_albedo = use_per_light_albedo
@@ -184,8 +218,16 @@ class FusionUNet(nn.Module):
 
         tokens = F.adaptive_avg_pool2d(f, 1).reshape(B, N, -1)   # [B,N,bc]
         z = self.aggregator(tokens)                          # [B, fusion_dim]
-        gamma = self.film_gamma(z).reshape(B, -1, 1, 1)
-        beta = self.film_beta(z).reshape(B, -1, 1, 1)
+        if self.disable_film:
+            # F-noFiLM 判别实验 (b)：γ≡1, β≡0（不调用 Linear，直接用 buffer）
+            # 注意：buffer 在 __init__ 中 shape=[fusion_dim, bc*16]（gamma） / [fusion_dim, bc*16]（beta）
+            # forward 时需要 reshape 为 [B, bc*16, 1, 1]
+            bc_16 = self.base_channels * 16
+            gamma = self._film_gamma_one_mask[0, :bc_16].reshape(1, -1, 1, 1).expand(B, -1, -1, -1)
+            beta = self._film_beta_zero_mask[0, :bc_16].reshape(1, -1, 1, 1).expand(B, -1, -1, -1)
+        else:
+            gamma = self.film_gamma(z).reshape(B, -1, 1, 1)
+            beta = self.film_beta(z).reshape(B, -1, 1, 1)
 
         # U-Net 主干
         e1, skip1 = self.down1(f.reshape(B * N, -1, H, W))   # [B*N, bc*2, ..]

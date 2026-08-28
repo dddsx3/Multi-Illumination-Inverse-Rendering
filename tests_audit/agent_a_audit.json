@@ -1,0 +1,74 @@
+{
+  "agent": "A",
+  "experiments": {
+    "M1": {
+      "script_path": "tests_audit/test_bug_a_repro.py",
+      "script_hash": "sha256:e71bccaad9937e039e3ad28b544b0b74e4d22b0f7008c57cbbf3a118969a17dd",
+      "csv_path": "tests_audit/test_bug_a_results.csv",
+      "trainer_sha256": "82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95",
+      "result_table": "tests_audit/test_bug_a_results.csv",
+      "pass": true,
+      "samples": "10/10",
+      "key_numbers": {
+        "corr_A_I_min": 0.815322,
+        "corr_A_I_max": 0.922009,
+        "corr_A_Iperm_min": -0.0033,
+        "corr_A_Iperm_max": 0.006638,
+        "old_threshold_0.4": "on all 10: old_perm_True=True, old_correct_True=False (bug confirmed)",
+        "new_threshold_0.7": "on all 10: new_correct_True=True, new_perm_True=False (fix confirmed)"
+      },
+      "falsifier": "If corr(A,I) ever falls below 0.7 on these 10 seeds, the fix is not as advertised. If corr(A,Iperm) ever rises above 0.4, the old threshold is not actually inverted on the bug domain (bug was cosmetic).",
+      "evidence": "trainer.py:1388-1398 (gate patch); trainer.py:1411 (consumer); trainer.py sha256=82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95"
+    },
+    "M2": {
+      "script_path": "tests_audit/test_bug_b_repro.py",
+      "script_hash": "sha256:c982e7ed0f8a7ad5a5625c1f1cad7e9e963b0ac979672895c8fd62ab43e40d68",
+      "csv_path": "tests_audit/test_bug_b_results.csv",
+      "trainer_sha256": "82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95",
+      "result_table": "tests_audit/test_bug_b_results.csv",
+      "pass": true,
+      "samples": "10/10",
+      "key_numbers": {
+        "perfect_old_gray": 1.0,
+        "perfect_new_gray": 1.0,
+        "collapse_old_gray": 0.0,
+        "collapse_new_gray": 2e-06,
+        "explode_old_gray": 100.000001,
+        "explode_new_gray": 0.0,
+        "explode_old_rgb": 99.999999,
+        "channel_imbalance_old_rgb": 1.6579,
+        "channel_imbalance_new_rgb": 0.333335,
+        "zero_image_old_gray": "NaN (BROKEN, old formula)",
+        "zero_image_new_gray": 0.0,
+        "zero_image_old_rgb": "NaN (BROKEN, old formula)",
+        "zero_image_new_rgb": 0.0,
+        "new_all_finite": true,
+        "new_all_in_unit_interval": true
+      },
+      "falsifier": "If new_ratio(perfect,*) deviates from 1.0 by more than 1e-5 the matched invariant is broken. If new_ratio is NaN/Inf on any case the eps is mis-tuned. If new_ratio exceeds 1.0 the clipping is wrong.",
+      "evidence": "trainer.py:987-994 (new formula); trainer.py:980-986 (docstring of old); trainer.py sha256=82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95"
+    },
+    "M3": {
+      "script_path": "tests_audit/test_bug_c_repro.py",
+      "script_hash": "sha256:efee0b6f9cdbfa3940b9352162dcf3ac3a9e43b192a21035893c5107289f4e66",
+      "csv_path": "tests_audit/test_bug_c_results.csv",
+      "trainer_sha256": "82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95",
+      "result_table": "tests_audit/test_bug_c_results.csv",
+      "pass": true,
+      "samples": "54/54 + 1 backward-compat",
+      "key_numbers": {
+        "total=10_default_branch_yields": "(s1_end, s2_end) = (30, 60) > total  -> must take compressed branch",
+        "total=10_compressed_all_9_cells": "(3, 7)",
+        "total=20_compressed_all_9_cells": "(7, 16)",
+        "total=30_compressed_all_8_cells": "(11, 25)",
+        "total=30_default_1_cell_s1=10_s2=10": "(10, 20)",
+        "total=100_default_s1=30_s2=30_backcompat": "(30, 60)  <- EXACT MATCH",
+        "all_cells_satisfy": "stage1_end < stage2_end < total AND stage3 >= 1"
+      },
+      "falsifier": "If s2_end == total for any cell, stage3 has 0 epochs (would mean (total-1)*9//10 == total, which is false for total>=2). If backward-compat (s1=30,s2=30,total=100) returns anything other than (30,60) the original semantic is broken. If the default branch is taken when s1+s2>=total the gate is missing.",
+      "evidence": "trainer.py:298-325 (branch); trainer.py:307-308 (s1_cfg/s2_cfg reads); trainer.py sha256=82876a2f30265908f303855a2e4edb3d7dea302c4a47e4145b0a3b8eb4defd95"
+    }
+  },
+  "summary": "All 3 bug fixes are reproducible on independent re-implementations. M1: corr(A,I) in [0.815,0.922] for 10 seeds, corr(A,Iperm) in [-0.003,0.007]; old <0.4 gate inverts to new >0.7 correctly. M2: new formula returns 1.0 on perfect, clips to 0 on explode/zero, hits 1/3 on RGB ch-imbalance; old formula returns 100 on explode and NaN on zero_image. M3: 54/54 cells (6 totals x 3 s1 x 3 s2) maintain stage1<stage2<total with stage3>=1, backward-compat (30,30,100)=(30,60) exact. trainer.py untouched. All evidence and falsifiers printed per script.",
+  "trust_grade": "A"
+}

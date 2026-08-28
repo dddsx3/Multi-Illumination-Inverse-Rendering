@@ -633,6 +633,12 @@ def parse_args():
                         help='LocalResidualNet 隐藏通道数（F-resC 用 32）')
     parser.add_argument('--no_per_light_albedo', action='store_true',
                         help='F-albOff：关闭逐光照反照率分支')
+    # INC-0013 判别实验变体开关（中期审计 v2 §2-P2 假设 (a)(b)(c)）
+    parser.add_argument('--disable_film', action='store_true',
+                        help='F-noFiLM 判别实验 (b)：FiLM 调制关闭（gamma≡1, beta≡0）')
+    parser.add_argument('--albedo_smooth_stage1', type=float, default=None,
+                        help='F-lowSmooth 判别实验 (c)：覆盖 Stage 1 albedo_smooth 权重（默认 10.0，'
+                             'F-lowSmooth 用 1.0 验证是否权重过高）')
 
     parser.add_argument('--run_id', type=str, default=None,
                         help='运行标识；缺省自动生成 run_YYYYMMDD_HHMMSS')
@@ -740,6 +746,11 @@ def main():
 
     # 是否启用反照率平滑激进疗法
     aggressive_albedo_smooth = args.aggressive_albedo_smooth
+
+    # INC-0013: F-lowSmooth 判别实验 (c) 权重覆盖
+    # 在构造 Trainer 之前保存，Trainer._setup_loss_calculator 之后由阶段表覆盖；
+    # 用 monkey-patch 阶段表方式（最稳）
+    low_smooth_override = args.albedo_smooth_stage1
 
     # ========================================
 

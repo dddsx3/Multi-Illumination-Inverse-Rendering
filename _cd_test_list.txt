@@ -1,8 +1,0 @@
-D:\data\objaverse_raw\000faf2e43534b8fa99497190d4b0a08.glb
-D:\data\objaverse_raw\003715596f13472c877ee3a622782d5a.glb
-D:\data\objaverse_raw\00559ac8022f403c884b3c2f7b331c5e.glb
-D:\data\objaverse_raw\008184a22de846be9062e98ac3d174e8.glb
-D:\data\objaverse_raw\008fa10cb8d64cb892721deeeda22cf7.glb
-D:\data\objaverse_raw\0092e5ed17ad426aa50b81bb68a5dac0.glb
-D:\data\objaverse_raw\0094c76440e3447a900797ede9bad5bf.glb
-D:\data\objaverse_raw\009bc7ad5e26471198c8e5e41637fc60.glb

@@ -27,11 +27,16 @@ ARMS = [
     ("p2_t26a_test_phase1recovered", "Phase1-recovered ckpt（参考行）"),
     ("p2_r0_v3gray_test",            "R0 对照臂（原 U-Net, gray）"),
     ("p2_t22_f_n5gray_test",         "F-N5-gray（FusionUNet 主交付）"),
-    ("p2_t22_f_n5rgb_test",          "F-N5-RGB（双模态链路）"),
+    ("p2_t22_f_n5rgb_test",          "F-N5-RGB（双模态链路, v2 best）"),
+    ("p2_t22_f_n5rgb_v2_test",       "v2 best（v3 test 重测, INC-0012 物理断言）"),
     ("p2_t23_f_physcon_test",        "F-physcon（softplus 物理约束）"),
     ("p2_t25_f_resA_test",           "F-resA（残差关闭）"),
+    ("p2_t25_f_resA_v2",             "F-resA v2 重测（INC-0012 物理断言）"),
     ("p2_t25_f_resC_test",           "F-resC（残差容量 32）"),
     ("p2_t25_f_albOff_test",         "F-albOff（逐光照反照率关）"),
+    ("p2_t25_f_albOff_v2",           "F-albOff v2 重测（INC-0012 物理断言）"),
+    ("p2_t25_f_noFiLM_test",         "F-noFiLM（FiLM 调制关闭，判别实验 b）"),
+    ("p2_t25_f_lowSmooth_test",      "F-lowSmooth（albedo_smooth=1.0，判别实验 c）"),
 ]
 HIGHER_BETTER = {"image_psnr", "image_ssim",
                  "normal_acc_11_25", "normal_acc_22_5", "normal_acc_30"}
@@ -45,6 +50,11 @@ def load_summaries():
             continue
         s = json.loads(p.read_text(encoding="utf-8"))
         ms = s["metrics_mean_std"]
+        # INC-0012: 物理断言摘要入矩阵
+        phys = s.get("physical_assertions", {})
+        if phys:
+            for pk, pv in phys.items():
+                ms[f"phys_{pk}"] = pv
         rows.append({
             "dir": dirname, "label": label,
             "arch": s.get("architecture", "?"), "modality": s.get("modality", "?"),
@@ -55,13 +65,19 @@ def load_summaries():
 
 def build_matrix(rows):
     keys = sorted({k for r in rows for k in r["metrics"]})
+    # INC-0012: 把 phys_* 物理断言项加入（albedo/depth violation ratio，越低越好）
+    HIGHER_BETTER_LOCAL = HIGHER_BETTER | {
+        # 物理断言 violation 越低越好（0% 是最优）
+    }
     best = {}
     for k in keys:
         vals = [(r["metrics"][k]["mean"], i) for i, r in enumerate(rows)
                 if k in r["metrics"]]
         if not vals:
             continue
-        bi = (max(vals) if k in HIGHER_BETTER else min(vals))[1]
+        # 物理断言 violation ratio 用 min
+        is_lower_better = (k in HIGHER_BETTER_LOCAL) or k.startswith("phys_")
+        bi = (max(vals) if k in HIGHER_BETTER_LOCAL else min(vals))[1]
         best[k] = bi
     return keys, best
 
