@@ -1,0 +1,68 @@
+{
+  "checkpoint": "D:/Multi-Illumination Inverse Rendering/checkpoints/p2_t22_f_n5rgb_v2/best_model.pth",
+  "val_loss": 0.015874334344906465,
+  "epoch": 96,
+  "num_scenes": 5,
+  "modality": "rgb",
+  "scene_legend": {
+    "scene_1_skull": "00f7c6d95b7d4c359681cc3b93f8a077 (skull/头骨) — L1 最低 0.0050，组会首选",
+    "scene_2_leaf": "00ff6c772dce4e84bf66544ada6093a0 (leaf/叶子) — 复杂拓扑",
+    "scene_3":       "0104f4b9bd3c476d949785e03f2ff7c6",
+    "scene_4":       "0109cde49c664b408e6a95a82d235070",
+    "scene_5":       "01f2d9c189f5404c97f696d022b0ad81"
+  },
+  "per_scene": [
+    {
+      "scene": "scene_1_skull",
+      "original_id": "00f7c6d95b7d4c359681cc3b93f8a077",
+      "description": "Skull (objaverse 模型)，单一曲面+L1 最低",
+      "L1_error_first_light": 0.005008212756365538,
+      "depth_min": -2.465108633041382,
+      "depth_max": 4.168985843658447,
+      "albedo_min": -0.19061212241649628,
+      "albedo_max": 0.5684546232223511
+    },
+    {
+      "scene": "scene_2_leaf",
+      "original_id": "00ff6c772dce4e84bf66544ada6093a0",
+      "description": "Leaf (objaverse 模型)，复杂拓扑（细长茎+多瓣叶）",
+      "L1_error_first_light": 0.00647663464769721,
+      "depth_min": -2.443704843521118,
+      "depth_max": 2.566490650177002,
+      "albedo_min": -0.071661077439785,
+      "albedo_max": 0.7389334440231323
+    },
+    {
+      "scene": "scene_3",
+      "original_id": "0104f4b9bd3c476d949785e03f2ff7c6",
+      "description": "test 集第 3 场景",
+      "L1_error_first_light": 0.011631015688180923,
+      "depth_min": -2.4181389808654785,
+      "depth_max": 2.561462163925171,
+      "albedo_min": -0.07237284630537033,
+      "albedo_max": 0.5850124359130859
+    },
+    {
+      "scene": "scene_4",
+      "original_id": "0109cde49c664b408e6a95a82d235070",
+      "description": "test 集第 4 场景",
+      "L1_error_first_light": 0.012860025279223919,
+      "depth_min": -2.522855043411255,
+      "depth_max": 4.0847015380859375,
+      "albedo_min": -0.25196078419685364,
+      "albedo_max": 0.6417773365974426
+    },
+    {
+      "scene": "scene_5",
+      "original_id": "01f2d9c189f5404c97f696d022b0ad81",
+      "description": "test 集第 5 场景",
+      "L1_error_first_light": 0.013119831681251526,
+      "depth_min": -2.445406913757324,
+      "depth_max": -2.445406913757324,
+      "depth_max": 2.5573983192443848,
+      "albedo_min": -0.06133972480893135,
+      "albedo_max": 0.7285857200622559
+    }
+  ],
+  "mean_l1": 0.009819144010543823
+}

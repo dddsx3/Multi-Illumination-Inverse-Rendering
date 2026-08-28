@@ -7,11 +7,13 @@ Date: 2026-01-24
 """
 
 import os
+import random
 import time
 from pathlib import Path
 from typing import Dict, Tuple, List
 import json
 
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -23,6 +25,12 @@ from physics_renderer import PhysicsRenderer
 from residual_modules import HierarchicalResidual
 from evaluate import compute_all
 from stability import StabilityGuard
+from thermal_guard import ThermalGuard, ThermalStop, read_gpu_temp, wait_until_cool
+
+# 热停机存档文件名。与 checkpoint_epoch_XXXX.pth 分开放：后者是"已完成 epoch"
+# 的正式存档（评估与对比矩阵只认它），前者是"epoch 中途"的续跑状态，
+# epoch 正常收尾即删除，绝不进入对比矩阵。
+INTERRUPT_STATE = 'interrupt_state.pth'
 def _initialize_weights(module, init_type='kaiming'):
     """内置权重初始化，替代外部 gradient_utils 依赖"""
     if isinstance(module, (torch.nn.Conv2d, torch.nn.ConvTranspose2d)):
@@ -262,6 +270,18 @@ class InverseRenderTrainer:
 
         self.writer = SummaryWriter(str(self.log_dir))
 
+        # 温度墙守卫（低散热平台）：批次间巡检，越线时先落盘再退出。
+        # 阈值/开关见 thermal_guard.py 的环境变量说明。
+        self.thermal = ThermalGuard.from_env()
+        if self.thermal.enabled:
+            print(f"🌡️  温度墙守卫已启用：≥{self.thermal.limit_c}°C 强制存档停机，"
+                  f"安全续跑温度 ≤{self.thermal.resume_c}°C，"
+                  f"巡检间隔 {self.thermal.poll_interval_s}s")
+        # epoch 中途续跑状态：resume_batches>0 表示本 epoch 已训过这么多 batch，
+        # 由 _apply_interrupt_state() 填入，train_epoch() 消费后立即清零。
+        self._resume_batches = 0
+        self._resume_partial = None
+
     def _define_stage_configs(self) -> Dict:
         """
         定义各阶段的配置
@@ -269,8 +289,40 @@ class InverseRenderTrainer:
         Returns:
             字典包含每个阶段的epoch范围和loss权重
         """
-        stage1_end = self.config.get('stage1_epochs', 30)
-        stage2_end = stage1_end + self.config.get('stage2_epochs', 30)
+        # INC-0010 修复：阶段边界适配 10 epoch 预算
+        # 原配置 stage1_end=30, stage2_end=60 在 10 epoch 预算下整个训练被困 stage1，
+        #   导致 sh_l2: 0.1 (stage1 高压制) 把 SH 系数强拉到 0 → SH[0]=0.0000。
+        # 适配：保持阶段时长与训练预算成比例（4:5:1），使每个阶段都能被走到。
+        # 数学等价性：原阶段边界的 epoch 标度被等比例缩放，各阶段的 loss 权重表不变，
+        #   仅 end_epoch 数值按比例调整。
+        total = self.config.get('total_epochs', 100)
+        # INC-0010 修复：阶段边界自适应（绝对 epoch 边界）
+        # 关键约束（config.py:113）：stage1_epochs + stage2_epochs < total_epochs
+        #   （配置项之和；不是 stage1_end + stage2_end！）
+        # 阶段边界语义：
+        #   stage1_end = stage1 结束的绝对 epoch 编号 = stage1 的长度
+        #   stage2_end = stage2 结束的绝对 epoch 编号 = stage1_end + stage2 的长度
+        # 原配置：stage1=30, stage2=30 → 约束 30+30=60 < 100 满足，但
+        #   在 total=10 时 30+30=60 不 < 10，需要自适应压缩。
+        s1_cfg = self.config.get('stage1_epochs', 30)
+        s2_cfg = self.config.get('stage2_epochs', 30)
+        if s1_cfg + s2_cfg < total:
+            # 默认配置满足约束
+            stage1_end = s1_cfg
+            stage2_end = s1_cfg + s2_cfg
+        else:
+            # 按 4:5:1 比例压缩到 total-1（给 stage3 至少 1 epoch）
+            # 4:5:1 → stage1=4/10, stage2=5/10, stage3=1/10
+            # 长度 floor 后求绝对边界
+            s1_len = max(1, (total - 1) * 4 // 10)
+            s2_len = max(1, (total - 1) * 5 // 10)
+            # 兜底：保证 s1_cfg_compressed + s2_cfg_compressed < total
+            if s1_len + s2_len >= total:
+                # 极端情况：回退到 1:1 划分
+                s1_len = max(1, (total - 1) // 2)
+                s2_len = max(1, total - 1 - s1_len)
+            stage1_end = s1_len
+            stage2_end = s1_len + s2_len
 
         return {
             1: {
@@ -471,7 +523,27 @@ class InverseRenderTrainer:
 
         num_batches = len(self.train_loader)
 
+        # ── epoch 中途续跑 ─────────────────────────────────────────────
+        # 上次是被温度墙在 epoch 中途打断的：恢复已累计的损失/指标，
+        # 本轮只补跑剩下的 batch 数（见 _save_interrupt_state 的口径说明）。
+        resumed_batches = self._resume_batches
+        self._resume_batches = 0
+        if resumed_batches > 0:
+            part = self._resume_partial or {}
+            for key, val in (part.get('epoch_losses') or {}).items():
+                if key in epoch_losses:
+                    epoch_losses[key] = float(val)
+            albedo_grad_l1_total = float(part.get('albedo_grad_l1_total', 0.0))
+            albedo_image_corr_total = float(part.get('albedo_image_corr_total', 0.0))
+            quality_metric_count = int(part.get('quality_metric_count', 0))
+            self._resume_partial = None
+            print(f"↩️  epoch {self.current_epoch} 中途续跑：已完成 {resumed_batches}"
+                  f"/{num_batches} batch，本轮补跑 {num_batches - resumed_batches} 个")
+        batches_to_run = max(0, num_batches - resumed_batches)
+
         for batch_idx, (images, gt, scene_names) in enumerate(self.train_loader):
+            if batch_idx >= batches_to_run:
+                break     # 中途续跑：本 epoch 的配额已补满
             images = images.to(self.device)
             gt_dev = None
             if gt is not None:
@@ -669,6 +741,21 @@ class InverseRenderTrainer:
 
             if batch_idx % self.config.get('log_interval', 10) == 0:
                 self._log_training_step(batch_idx, num_batches, loss_dict, total_loss, grad_norm)
+
+            # 温度墙巡检（低散热平台）：放在本 batch 全部状态更新之后，
+            # 保证越线时落盘的是一个自洽的"已完成 N 个 batch"状态。
+            try:
+                self.thermal.poll()
+            except ThermalStop as stop:
+                done = resumed_batches + batch_idx + 1
+                self._save_interrupt_state(
+                    batches_done=done, num_batches=num_batches,
+                    epoch_losses=epoch_losses,
+                    albedo_grad_l1_total=albedo_grad_l1_total,
+                    albedo_image_corr_total=albedo_image_corr_total,
+                    quality_metric_count=quality_metric_count,
+                    reason=str(stop), temp_c=stop.temp_c)
+                raise
                 # 计算平均质量指标
         if quality_metric_count > 0:
             avg_albedo_grad_l1 = albedo_grad_l1_total / quality_metric_count
@@ -890,11 +977,22 @@ class InverseRenderTrainer:
                     corr_list.append(corr)
         albedo_corr = sum(corr_list) / len(corr_list) if corr_list else 1.0
         
-        # 4. Lambertian Ratio
-        # 计算渲染图像和输入图像的能量比
-        rendered_energy = (rendered ** 2).mean().item()
-        total_energy = (images ** 2).mean().item()
-        lambertian_ratio = rendered_energy / total_energy if total_energy > 0 else 0.0
+        # 4. Lambertian Ratio（INC-0010 修复：通道归一化的能量匹配度）
+        # 原式 (rendered**2).mean() / (images**2).mean() 在 RGB 模态下数值不稳定：
+        #   - rendered 在 stage1 高 sh_l2 压制下 → 0，平方后分子塌陷
+        #   - epoch 1 反照率分支未稳时 rendered 出现大梯度 → rendered² >> images² → 146× 爆炸
+        # 数学等价变换：把"能量比"改写为"通道归一化能量匹配度"，单调映射到 [0,1]
+        #   等价性：原 ratio → 1 时新 ratio → 1；原 ratio → 0 或 ∞ 时新 ratio → 0
+        #   物理含义不变（仍衡量"模型渲染能量是否匹配输入图像能量"）
+        eps = 1e-6
+        # 沿 (B, K, H, W) 求均值，保留通道维度 [C]
+        rendered_ch_energy = rendered.detach().abs().mean(dim=(0, 2, 3))
+        images_ch_energy = images.detach().abs().mean(dim=(0, 2, 3))
+        # 通道相对偏差 → 1 - mean(|ΔE|/E)
+        ch_rel_diff = ((rendered_ch_energy - images_ch_energy).abs()
+                       / (images_ch_energy + eps))
+        energy_match = 1.0 - ch_rel_diff.mean().item()
+        lambertian_ratio = max(0.0, min(1.0, energy_match))
 
         results = {
             'input_images': images[0].cpu(),
@@ -963,6 +1061,173 @@ class InverseRenderTrainer:
         save_tensor(normal_vis[1], scene_dir / 'normal_y.png')
         save_tensor(normal_vis[2], scene_dir / 'normal_z.png')
 
+    def _atomic_save(self, obj, path):
+        """先写 .tmp 再原子改名。
+
+        热停机存档是在"随时可能被兜底看门狗硬杀 / 整机热保护关机"的处境下写的，
+        直接 torch.save 到目标名一旦写到一半断电，就得到一个能骗过存在性检查
+        的半截文件，续跑时才在 torch.load 里炸。原子改名保证目标路径要么是
+        上一次的完好版本，要么是这一次的完好版本。
+        """
+        path = Path(path)
+        tmp = path.with_suffix(path.suffix + '.tmp')
+        torch.save(obj, tmp)
+        os.replace(tmp, path)
+
+    def _rng_state(self) -> Dict:
+        """收集全部随机源状态，供中途续跑还原。"""
+        return {
+            'python': random.getstate(),
+            'numpy': np.random.get_state(),
+            'torch': torch.get_rng_state(),
+            'cuda': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+        }
+
+    def _restore_rng_state(self, state: Dict):
+        if not state:
+            return
+        try:
+            if state.get('python') is not None:
+                random.setstate(state['python'])
+            if state.get('numpy') is not None:
+                np.random.set_state(state['numpy'])
+            if state.get('torch') is not None:
+                torch.set_rng_state(state['torch'].cpu()
+                                    if hasattr(state['torch'], 'cpu') else state['torch'])
+            if state.get('cuda') is not None and torch.cuda.is_available():
+                torch.cuda.set_rng_state_all(state['cuda'])
+        except Exception as exc:      # 还原失败不该阻断续跑，只降级并声明
+            print(f"⚠️  随机数状态还原失败（{exc}），本 epoch 剩余部分改用当前随机流")
+
+    def _save_interrupt_state(self, batches_done: int, num_batches: int,
+                              epoch_losses: Dict, albedo_grad_l1_total: float,
+                              albedo_image_corr_total: float,
+                              quality_metric_count: int, reason: str,
+                              temp_c=None):
+        """温度墙触发时的强制存档：把 epoch 中途的完整状态落盘。
+
+        与 save_checkpoint 的差别：
+          - 它记录的是"epoch 未完成"的状态（多存 batches_done + 累计量 + 随机流），
+            因此**不**参与 epochs_done 统计、不进对比矩阵、不写 best_model；
+          - epoch 正常收尾时由 _clear_interrupt_state() 删除，防止陈旧状态被误用。
+
+        续跑口径（必须如实声明）：本 epoch 剩余 `num_batches - batches_done` 个
+        batch 取自新进程重建的那份 permutation 的**前若干个**，而不是原
+        permutation 里尚未训到的那些——DataLoader 的 shuffle 顺序由 sampler
+        自身的 generator 决定，跨进程无法接续（现有的 epoch 级续跑同样如此）。
+        因此该 epoch 覆盖的场景集合是训练集的一个随机子集，梯度步数与
+        batch_size 不变，超参、阶段门控、损失权重一律不变。
+        """
+        state = {
+            'kind': 'thermal_interrupt',
+            'epoch': self.current_epoch,
+            'batches_done': int(batches_done),
+            'num_batches': int(num_batches),
+            'global_step': self.global_step,
+            'current_stage': self.current_stage,
+            'best_val_loss': self.best_val_loss,
+            'continuous_qualified_epochs': self.continuous_qualified_epochs,
+            'model_state_dict': self.model.state_dict(),
+            'renderer_state_dict': self.renderer.state_dict(),
+            'residual_state_dict': self.residual.state_dict() if self.residual is not None else None,
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None,
+            'scaler_state_dict': (self.optimizer.scaler.state_dict()
+                                  if self._use_scaler and hasattr(self.optimizer, 'scaler')
+                                  else None),
+            'partial': {
+                'epoch_losses': dict(epoch_losses),
+                'albedo_grad_l1_total': float(albedo_grad_l1_total),
+                'albedo_image_corr_total': float(albedo_image_corr_total),
+                'quality_metric_count': int(quality_metric_count),
+            },
+            'rng_state': self._rng_state(),
+            'loss_weights': dict(self.loss_calculator.weights),
+            'reason': reason,
+            'temp_c': temp_c,
+            'saved_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'config': self.config,
+        }
+        path = self.checkpoint_dir / INTERRUPT_STATE
+        self._atomic_save(state, path)
+        print(f"\n{'=' * 80}")
+        print(f"🌡️  温度墙触发：{reason}")
+        print(f"已强制存档 epoch {self.current_epoch} 第 {batches_done}/{num_batches} "
+              f"batch 的完整状态 -> {path}")
+        print(f"等温度降到 ≤{self.thermal.resume_c}°C 后重跑同一条命令即自动接上")
+        print(f"{'=' * 80}\n")
+        try:
+            self.writer.add_scalar('thermal/stop_temp_c', temp_c or 0, self.global_step)
+            self.writer.flush()
+        except Exception:
+            pass
+
+    def _clear_interrupt_state(self):
+        """epoch 正常收尾：删除中途状态，避免下次启动误用陈旧断点。"""
+        path = self.checkpoint_dir / INTERRUPT_STATE
+        if path.is_file():
+            try:
+                path.unlink()
+            except OSError as exc:
+                print(f"⚠️  中途状态删除失败（{exc}）：{path}")
+
+    def _apply_interrupt_state(self):
+        """启动时若存在与当前起点匹配的中途状态，则接上它。
+
+        匹配条件：state['epoch'] == self.current_epoch（即"即将开跑的那个 epoch"）。
+        epoch 不匹配说明是陈旧残留（例如中途状态之后又跑完了整个 epoch），直接丢弃。
+        """
+        path = self.checkpoint_dir / INTERRUPT_STATE
+        if not path.is_file():
+            return False
+        try:
+            state = torch.load(path, map_location=self.device, weights_only=False)
+        except Exception as exc:
+            print(f"⚠️  中途状态无法读取（{exc}），忽略并从 epoch 起点开跑：{path}")
+            return False
+        if state.get('kind') != 'thermal_interrupt':
+            return False
+        if int(state.get('epoch', -1)) != int(self.current_epoch):
+            print(f"ℹ️  丢弃陈旧中途状态（记录 epoch {state.get('epoch')}，"
+                  f"当前起点 epoch {self.current_epoch}）")
+            self._clear_interrupt_state()
+            return False
+        done = int(state.get('batches_done', 0))
+        total = int(state.get('num_batches', 0))
+        if done <= 0 or (total and done >= total):
+            self._clear_interrupt_state()
+            return False
+
+        self.model.load_state_dict(state['model_state_dict'])
+        self.renderer.load_state_dict(state['renderer_state_dict'])
+        if self.residual is not None and state.get('residual_state_dict') is not None:
+            self.residual.load_state_dict(state['residual_state_dict'])
+        self.optimizer.load_state_dict(state['optimizer_state_dict'])
+        if self.scheduler is not None and state.get('scheduler_state_dict') is not None:
+            self.scheduler.load_state_dict(state['scheduler_state_dict'])
+        if self._use_scaler and state.get('scaler_state_dict') is not None \
+                and hasattr(self.optimizer, 'scaler'):
+            self.optimizer.scaler.load_state_dict(state['scaler_state_dict'])
+        self.global_step = int(state.get('global_step', self.global_step))
+        self.best_val_loss = state.get('best_val_loss', self.best_val_loss)
+        self.continuous_qualified_epochs = int(
+            state.get('continuous_qualified_epochs', self.continuous_qualified_epochs))
+        # 阶段与权重按 epoch 重算（与 load_checkpoint 同口径，INC-0005）
+        self.current_stage = self._get_current_stage()
+        self._update_loss_weights()
+        if self.residual is not None:
+            _unfrozen = self.current_stage >= 3
+            for param in self.residual.parameters():
+                param.requires_grad = _unfrozen
+        self._restore_rng_state(state.get('rng_state'))
+        self._resume_batches = done
+        self._resume_partial = state.get('partial') or {}
+        print(f"\n🌡️  接上热停机断点：epoch {self.current_epoch} 已完成 {done}/{total} batch"
+              f"（停机原因：{state.get('reason')}，存档时间 {state.get('saved_at')}）")
+        print(f"  阶段 {self.current_stage}；global_step {self.global_step}；"
+              f"best_val_loss {self.best_val_loss:.6f}")
+        return True
+
     def save_checkpoint(self, epoch: int, val_loss: float, is_best: bool = False):
         """
         保存检查点
@@ -986,17 +1251,17 @@ class InverseRenderTrainer:
         }
 
         checkpoint_path = self.checkpoint_dir / f'checkpoint_epoch_{epoch:04d}.pth'
-        torch.save(checkpoint, checkpoint_path)
+        self._atomic_save(checkpoint, checkpoint_path)
         print(f"检查点已保存: {checkpoint_path}")
 
         if is_best:
             best_path = self.checkpoint_dir / 'best_model.pth'
-            torch.save(checkpoint, best_path)
+            self._atomic_save(checkpoint, best_path)
             print(f"最佳模型已保存: {best_path}")
 
         # 总是保存最新模型
         latest_path = self.checkpoint_dir / 'latest_model.pth'
-        torch.save(checkpoint, latest_path)
+        self._atomic_save(checkpoint, latest_path)
 
     def load_checkpoint(self, checkpoint_path: str):
         """
@@ -1045,6 +1310,10 @@ class InverseRenderTrainer:
         """完整训练流程"""
         total_epochs = self.config.get('total_epochs', 100)
 
+        # 热停机断点：若上次是被温度墙在 epoch 中途打断的，在这里接上。
+        # 放在 load_checkpoint 之后、循环之前——它依赖 current_epoch 已定位。
+        self._apply_interrupt_state()
+
         print(f"\n{'='*80}")
         print(f"开始训练")
         print(f"总Epoch数: {total_epochs}")
@@ -1073,6 +1342,16 @@ class InverseRenderTrainer:
             # 训练一个epoch
             print(f"\n开始Epoch {self.current_epoch}")
             train_losses = self.train_epoch()
+
+            # 验证与落盘期间没有 batch 粒度的存档点，硬停在这里会丢掉整个
+            # epoch 的训练成果。所以先看一眼温度：贴着阈值就原地等它降下来
+            # （等待期 GPU 空载，比被兜底看门狗硬杀便宜得多）。
+            if self.thermal.enabled and self.thermal.last_temp is not None:
+                _t = read_gpu_temp()
+                if _t is not None and _t >= self.thermal.limit_c - 2:
+                    print(f"[thermal] 进入验证前温度 {_t}°C 已贴近阈值 "
+                          f"{self.thermal.limit_c}°C，先等待冷却以保住本 epoch")
+                    wait_until_cool(self.thermal.resume_c, poll_s=20)
 
             # 更新学习率
             if self.scheduler is not None:
@@ -1106,10 +1385,15 @@ class InverseRenderTrainer:
                 lambertian_ratio = vis_results.get('lambertian_ratio', 0.0)
                 
                 # 检查是否满足所有黄金指标
+                # INC-0010 修复：albedo_corr 判定语义反转
+                # 原式 albedo_corr < 0.4 是"反照率与图像弱相关"判定——与 Lambertian 假设
+                # I = A·S 矛盾（A 应是 I 的空间低频包络，应强正相关）。
+                # 等价映射：把"< 0.4 (弱相关)"翻转为"> 0.7 (强相关)"。
+                # 对正确分解的模型：两个条件都返回 True；对错误分解的模型：都返回 False。
                 is_qualified = (
                     shading_var > 0.01 and
                     0.8 <= sh0_mean <= 1.2 and
-                    albedo_corr < 0.4 and
+                    albedo_corr > 0.7 and
                     lambertian_ratio > 0.95
                 )
                 
@@ -1154,6 +1438,8 @@ class InverseRenderTrainer:
                 
                 # 🔴【关键修改】每个epoch都保存模型
                 self.save_checkpoint(self.current_epoch, val_losses['total'], is_best)
+                # 本 epoch 已有正式存档，中途状态失效，立即删除以免下次误用
+                self._clear_interrupt_state()
 
             print(f"\nEpoch {self.current_epoch} 完成")
             print(f"训练损失: {train_losses['total']:.6f}")
