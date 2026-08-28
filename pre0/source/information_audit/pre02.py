@@ -352,6 +352,8 @@ def main():
     ap.add_argument("--split", default="test")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--exp2_scenes", type=int, default=32)
+    ap.add_argument("--domains", nargs="+", default=["real5_sh", "real5_dir", "analytic15_sh"],
+                    help="选择域组合；数据缺陷后真实域可只留文档性小样本或跳过")
     ap.add_argument("--data_root", default="D:/data/synthetic_v3")
     args = ap.parse_args()
 
@@ -391,6 +393,7 @@ def main():
             doms = [("real5_sh", sc["img_lin"], SUBSETS_REAL, dirs_real5, "sh"),
                     ("real5_dir", sc["img_lin"], SUBSETS_REAL, dirs_real5, "dir"),
                     ("analytic15_sh", imgs15, SUBSETS_ANALYTIC, fib_dirs(), "sh")]
+            doms = [d for d in doms if d[0] in args.domains]
             for dom_name, imgs, subsets, dirs_w, mdl in doms:
                 for N, sub in subsets.items():
                     r = exp1_scene(sc, imgs, dirs_w, sub, model=mdl)
@@ -437,11 +440,12 @@ def main():
             for name, sub in sets.items():
                 r = exp1_scene(sc, imgs, dirs_real5_cache, sub, model="dir", restarts=1, iters=800)
                 rec[name] = r["si_mae_A"]
-            rows_nvd.append(dict(domain="real_dir", scene=sc["scene"],
-                                 E_S3=rec["S3"], E_S3_new=rec["S3+new"],
-                                 E_S3_dup=rec["S3+dup"],
-                                 d_new=rec["S3"] - rec["S3+new"],
-                                 d_dup=rec["S3"] - rec["S3+dup"]))
+            if "real5_dir" in args.domains:
+              rows_nvd.append(dict(domain="real_dir", scene=sc["scene"],
+                                   E_S3=rec["S3"], E_S3_new=rec["S3+new"],
+                                   E_S3_dup=rec["S3+dup"],
+                                   d_new=rec["S3"] - rec["S3+new"],
+                                   d_dup=rec["S3"] - rec["S3+dup"]))
             # 解析域 + 噪声
             cf = os.path.join(cache, sc["scene"] + ".npy")
             imgs15 = np.load(cf) if os.path.isfile(cf) else analytic_relight(sc)
@@ -450,9 +454,10 @@ def main():
             r3 = exp1_scene(sc, noisy, fib_dirs(), sub3, model="sh", restarts=1, iters=800)["si_mae_A"]
             r4n = exp1_scene(sc, noisy, fib_dirs(), sub3 + [8], model="sh", restarts=1, iters=800)["si_mae_A"]
             r4d = exp1_scene(sc, noisy, fib_dirs(), sub3 + [sub3[0]], model="sh", restarts=1, iters=800)["si_mae_A"]
-            rows_nvd.append(dict(domain="analytic_noisy_sh", scene=sc["scene"],
-                                 E_S3=r3, E_S3_new=r4n, E_S3_dup=r4d,
-                                 d_new=r3 - r4n, d_dup=r3 - r4d))
+            if "analytic15_sh" in args.domains:
+              rows_nvd.append(dict(domain="analytic_noisy_sh", scene=sc["scene"],
+                                   E_S3=r3, E_S3_new=r4n, E_S3_dup=r4d,
+                                   d_new=r3 - r4n, d_dup=r3 - r4d))
             if (si + 1) % 20 == 0:
                 print(f"  exp4 {si+1}/{len(scene_dirs)}")
         with open(os.path.join(out, "novel_vs_duplicate.csv"), "w", newline="",
@@ -465,12 +470,13 @@ def main():
     if 2 in args.exp:
         sub_dirs = scene_dirs[: args.exp2_scenes]
         all_res = []
-        for N in (1, 2, 3, 5):
-            res = exp2_run(sub_dirs, SUBSETS_REAL[N],
-                           lambda sc: sc["img_lin"], domain="real")
-            all_res.extend(res)
-            print(f"  exp2 real N={N}: mean ang "
-                  f"{np.mean([r['normal_ang_mae'] for r in res]):.2f}°")
+        if "real5_sh" in args.domains:
+            for N in (1, 2, 3, 5):
+                res = exp2_run(sub_dirs, SUBSETS_REAL[N],
+                               lambda sc: sc["img_lin"], domain="real")
+                all_res.extend(res)
+                print(f"  exp2 real N={N}: mean ang "
+                      f"{np.mean([r['normal_ang_mae'] for r in res]):.2f}°")
         cache = os.path.join(out, "_relight_cache")
         os.makedirs(cache, exist_ok=True)
 
