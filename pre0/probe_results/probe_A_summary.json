@@ -7,7 +7,8 @@
     "si_mae": 0.054468349440632606,
     "depth_l1": 0.298487878915283,
     "sh_rmse": 0.27995564331931455,
-    "recon_psnr": 1.5419025548340215,
+    "recon_psnr": 8.531537801326355,
     "normal_ang": 9.559825164656486
-  }
+  },
+  "note": "recon_psnr \u4fee\u590d\u5e7f\u64ad\u540e\u91cd\u7b97\uff1b\u8bc4\u4f30\u57df=linear"
 }

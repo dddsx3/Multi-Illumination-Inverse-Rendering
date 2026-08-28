@@ -1,0 +1,14 @@
+{
+  "probe": "C",
+  "params": 711435,
+  "best_epoch": 30,
+  "best_val_si_mae": 0.05792873619392761,
+  "test": {
+    "si_mae": 0.05472122370068269,
+    "depth_l1": 0.2917071071964118,
+    "sh_rmse": 0.283589712073726,
+    "recon_psnr": 10.900285539316885,
+    "normal_ang": 9.551495207894233
+  },
+  "note": "recon_psnr \u4fee\u590d\u5e7f\u64ad\u540e\u91cd\u7b97\uff1b\u8bc4\u4f30\u57df=linear"
+}

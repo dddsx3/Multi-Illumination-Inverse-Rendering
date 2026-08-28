@@ -72,7 +72,7 @@ def predict(model, sc, subset, device):
     sh = sh[0].cpu().numpy()
     mask = sc["mask"][0:1].astype(np.float32)
     n = depth_to_normal(torch.from_numpy(depth[None, None]).float().to(device),
-                        torch.from_numpy(mask).float().to(device))[0].cpu().numpy()
+                        torch.from_numpy(mask[None]).float().to(device))[0].cpu().numpy()
     return albedo, depth, n, sh
 
 
