@@ -57,8 +57,8 @@ class SharedDecoder(nn.Module):
             nn.Upsample(scale_factor=2, mode="nearest"),            # 256
             nn.Conv2d(96, 96, 3, padding=1), nn.SiLU(),
         )
-        self.head_depth = nn.Conv2d(64, 1, 3, padding=1)
-        self.head_albedo = nn.Conv2d(64, 1, 3, padding=1)
+        self.head_depth = nn.Conv2d(96, 1, 3, padding=1)
+        self.head_albedo = nn.Conv2d(96, 1, 3, padding=1)
 
     def forward(self, f):            # [B,C,h,w] -> (depth [B,1,H,W], albedo [B,1,H,W] sigmoid)
         h = self.net(f)
