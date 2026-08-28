@@ -126,7 +126,9 @@ def si_mae_torch(pred, gt, mask):
 
 
 @torch.no_grad()
-def evaluate(model, batcher, device, max_scenes=0):
+def evaluate(model, batcher, device, max_scenes=0, every=1, epoch=0):
+    if every > 1 and epoch % every != 0 and epoch != -1:
+        return None
     model.eval()
     dirs = batcher.dirs[: max_scenes] if max_scenes else batcher.dirs
     single = SceneBatcher(dirs, 1, False, device)
@@ -187,22 +189,27 @@ def main():
         ep_loss, nb = 0.0, 0
         for imgs, albedo, depth, mask, sh, normal in train_b:
             opt.zero_grad()
-            depth_p, albedo_p, sh_p = model(imgs)
-            n_p = depth_to_normal(depth_p, mask)
-            shading = sh_shading(n_p, sh_p)
-            recon = albedo_p * shading                 # [B,K,H,W]
-            imgs_k = imgs[:, :, 0]                     # [B,K,H,W]
-            m = mask
-            l_recon = charbonnier(recon * m, imgs_k * m)
-            l_alb = (albedo_p - albedo).abs()[m > 0.5].mean()
-            l_dep = (depth_p - depth).abs()[m > 0.5].mean()
-            l_sh = F.mse_loss(sh_p, sh)
-            loss = W_RECON * l_recon + W_ALB * l_alb + W_DEPTH * l_dep + W_SH * l_sh
+            with torch.autocast("cuda", dtype=torch.bfloat16,
+                                enabled=(device.type == "cuda")):
+                depth_p, albedo_p, sh_p = model(imgs)
+                n_p = depth_to_normal(depth_p.float(), mask)
+                shading = sh_shading(n_p, sh_p.float())
+                recon = albedo_p.float() * shading             # [B,K,H,W]
+                imgs_k = imgs[:, :, 0]                         # [B,K,H,W]
+                m = mask
+                l_recon = charbonnier(recon * m, imgs_k * m)
+                l_alb = (albedo_p.float() - albedo).abs()[m > 0.5].mean()
+                l_dep = (depth_p.float() - depth).abs()[m > 0.5].mean()
+                l_sh = F.mse_loss(sh_p.float(), sh)
+                loss = W_RECON * l_recon + W_ALB * l_alb + W_DEPTH * l_dep + W_SH * l_sh
             loss.backward()
             opt.step()
-            ep_loss += float(loss)
+            ep_loss += float(loss.detach())
             nb += 1
-        met = evaluate(model, val_b, device)
+        met = evaluate(model, val_b, device, every=2, epoch=ep)
+        if met is None:
+            continue
+
         row = dict(probe=args.probe, epoch=ep, loss=ep_loss / max(nb, 1),
                    seconds=round(time.time() - t0, 1), **met)
         log_rows.append(row)

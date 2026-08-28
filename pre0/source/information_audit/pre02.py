@@ -84,7 +84,7 @@ def _torch_sh_basis(n):
 
 
 def exp1_scene(scene: dict, imgs_lin: np.ndarray, light_dirs_w: np.ndarray,
-               subset: list, iters=800, lr=1e-2, lam_tv=0.03, device="cuda",
+               subset: list, iters=500, lr=1e-2, lam_tv=0.03, device="cuda",
                model: str = "sh", restarts: int = 1) -> dict:
     """固定 n=n^GT，用真实协议模型（I = A⊙ReLU(Y c)，含 ReLU）联合优化 A 与 {c_k}。
 
@@ -435,7 +435,7 @@ def main():
             sets = {"S3": S, "S3+new": S + [1], "S3+dup": S + [0]}
             rec = {}
             for name, sub in sets.items():
-                r = exp1_scene(sc, imgs, dirs_real5_cache, sub, model="dir", restarts=2, iters=1200)
+                r = exp1_scene(sc, imgs, dirs_real5_cache, sub, model="dir", restarts=1, iters=800)
                 rec[name] = r["si_mae_A"]
             rows_nvd.append(dict(domain="real_dir", scene=sc["scene"],
                                  E_S3=rec["S3"], E_S3_new=rec["S3+new"],
@@ -447,9 +447,9 @@ def main():
             imgs15 = np.load(cf) if os.path.isfile(cf) else analytic_relight(sc)
             noisy = imgs15 + rng.normal(0, 0.005, imgs15.shape).astype(np.float32)
             sub3 = SUBSETS_ANALYTIC[3]
-            r3 = exp1_scene(sc, noisy, fib_dirs(), sub3, model="sh", restarts=2, iters=1200)["si_mae_A"]
-            r4n = exp1_scene(sc, noisy, fib_dirs(), sub3 + [8], model="sh", restarts=2, iters=1200)["si_mae_A"]
-            r4d = exp1_scene(sc, noisy, fib_dirs(), sub3 + [sub3[0]], model="sh", restarts=2, iters=1200)["si_mae_A"]
+            r3 = exp1_scene(sc, noisy, fib_dirs(), sub3, model="sh", restarts=1, iters=800)["si_mae_A"]
+            r4n = exp1_scene(sc, noisy, fib_dirs(), sub3 + [8], model="sh", restarts=1, iters=800)["si_mae_A"]
+            r4d = exp1_scene(sc, noisy, fib_dirs(), sub3 + [sub3[0]], model="sh", restarts=1, iters=800)["si_mae_A"]
             rows_nvd.append(dict(domain="analytic_noisy_sh", scene=sc["scene"],
                                  E_S3=r3, E_S3_new=r4n, E_S3_dup=r4d,
                                  d_new=r3 - r4n, d_dup=r3 - r4d))
