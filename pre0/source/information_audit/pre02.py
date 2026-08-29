@@ -220,7 +220,15 @@ def exp1_scene(scene: dict, imgs_lin: np.ndarray, light_dirs_w: np.ndarray,
 
 
 # ---------------- 实验 2：固定 A，Adam 优化 n 与 {L} ----------------
-def _sh_basis_torch(n):
+try:
+    from p1.source.physics.sh_torch import sh_basis_torch as _sh_basis_torch
+except ImportError:
+    def _sh_basis_torch(n):  # fallback pure-torch
+        import torch
+        C0, C1 = 0.282095, 0.488603
+        C2 = [1.092548, 1.092548, 0.315392, 1.092548, 0.546274]
+        x, y, z = n[..., 0], n[..., 1], n[..., 2]
+        return torch.stack([torch.full_like(x, C0), C1*y, C1*z, C1*x, C2[0]*x*y, C2[1]*y*z, C2[2]*(3*z*z-1), C2[3]*x*z, C2[4]*(x*x-y*y)], dim=-1)
     """n: [B,3] -> [B,9]，与 numpy 版同阶同序"""
     import torch
     x, y, z = n[:, 0], n[:, 1], n[:, 2]

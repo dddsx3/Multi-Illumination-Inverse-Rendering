@@ -8,7 +8,6 @@
 import math
 
 import numpy as np
-import torch
 
 C0 = 0.282095                                # 0.5*sqrt(1/pi)
 C1 = 0.488603                                # sqrt(3/(4*pi))
@@ -27,16 +26,6 @@ def sh_basis_npy(n: np.ndarray) -> np.ndarray:
     ], axis=-1)
 
 
-def sh_basis_torch(n: torch.Tensor) -> torch.Tensor:
-    x, y, z = n[..., 0], n[..., 1], n[..., 2]
-    C0t, C1t = torch.tensor(C0, device=n.device), torch.tensor(C1, device=n.device)
-    C2t = [torch.tensor(c, device=n.device) for c in C2]
-    return torch.stack([
-        C0t * torch.ones_like(x),
-        C1t * y, C1t * z, C1t * x,
-        C2t[0] * x * y, C2t[1] * y * z, C2t[2] * (3.0 * z * z - 1.0),
-        C2t[3] * x * z, C2t[4] * (x * x - y * y),
-    ], dim=-1)
 
 
 def sh_directional_irradiance(direction: np.ndarray, intensity: float = 1.0) -> np.ndarray:

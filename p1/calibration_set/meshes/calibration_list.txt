@@ -1,0 +1,6 @@
+p1/calibration_set/meshes\sphere.obj
+p1/calibration_set/meshes\plane.obj
+p1/calibration_set/meshes\hemisphere.obj
+p1/calibration_set/meshes\cube.obj
+p1/calibration_set/meshes\cylinder.obj
+p1/calibration_set/meshes\cone.obj
