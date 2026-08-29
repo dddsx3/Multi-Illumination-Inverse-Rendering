@@ -132,7 +132,7 @@ def joint_solve(sc, subset, restarts=3, base_iters=800, lr=1e-2, lam_tv=0.03,
             grad_norm = math.sqrt(a_grad ** 2 + c_grad ** 2)
             final_loss = losses[-1]
         success = converged and grad_norm < 1e-3
-        A_hat = torch.nn.functional.softplus(a_raw).detach().cpu().numpy()[0] * mask
+        A_hat = torch.nn.functional.softplus(a_raw).detach().cpu().numpy()[0, 0] * mask
         c_hat = c.detach().cpu().numpy()
         if best is None or final_loss < best[0]:
             best = (final_loss, A_hat, c_hat, success, grad_norm, max_iters)
