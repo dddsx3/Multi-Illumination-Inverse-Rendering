@@ -1,3 +1,14 @@
+<!--
+```yaml
+protocol_status: superseded
+valid_for_multi_illumination_claims: false
+reason: duplicated illumination frames
+supersedes: synthetic_v3 (commit 2c23026, before 2026-08-29)
+verdict: docs/verdicts/PRE0_VERDICT.md
+next_valid_artifact: p1/calibration_set/, p1/physics_clean/
+```
+-->
+
 # CLOSEST PRIOR WORK — 最接近工作与 Novelty 风险地图（PRE-06）
 
 配套文件：`literature_matrix.csv`（43 行文献矩阵）。本文件回答 PRE-0 Gate D 的核心问题：

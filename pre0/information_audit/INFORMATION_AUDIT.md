@@ -1,3 +1,14 @@
+<!--
+```yaml
+protocol_status: superseded
+valid_for_multi_illumination_claims: false
+reason: duplicated illumination frames
+supersedes: synthetic_v3 (commit 2c23026, before 2026-08-29)
+verdict: docs/verdicts/PRE0_VERDICT.md
+next_valid_artifact: p1/calibration_set/, p1/physics_clean/
+```
+-->
+
 # INFORMATION_AUDIT · PRE-02 不依赖神经网络的 N 信息量实验
 
 > 复现：`python pre0/source/information_audit/pre02.py --exp 1 3 4 [--domains …]`

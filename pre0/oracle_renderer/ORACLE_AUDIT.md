@@ -1,3 +1,14 @@
+<!--
+```yaml
+protocol_status: superseded
+valid_for_multi_illumination_claims: false
+reason: duplicated illumination frames
+supersedes: synthetic_v3 (commit 2c23026, before 2026-08-29)
+verdict: docs/verdicts/PRE0_VERDICT.md
+next_valid_artifact: p1/calibration_set/, p1/physics_clean/
+```
+-->
+
 # ORACLE_AUDIT · PRE-01 GT 物理一致性审计报告
 
 > 数据：synthetic_v3 test split 全部 124 场景 × 5 光（split hash `98e91fc5…`）。

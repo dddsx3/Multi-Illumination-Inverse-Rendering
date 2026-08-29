@@ -1,3 +1,14 @@
+<!--
+```yaml
+protocol_status: superseded
+valid_for_multi_illumination_claims: false
+reason: duplicated illumination frames
+supersedes: synthetic_v3 (commit 2c23026, before 2026-08-29)
+verdict: docs/verdicts/PRE0_VERDICT.md
+next_valid_artifact: p1/calibration_set/, p1/physics_clean/
+```
+-->
+
 # PRE-0 HANDOFF · 前置证据获取任务交付（2026-08-29）
 
 > 交付 commit：见仓库最新 commit（本文件所在版本）。
