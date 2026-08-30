@@ -223,6 +223,10 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     irradiance_coeffs = np.zeros((num_lights, 9), dtype=np.float32)
     light_meta = []
     img_raw_list = []
+    # INC-001 帧校验用解析期望（一次性预计算：L2 SH 单灯模型，无自阴影）
+    mask_bool = mask.astype(bool)
+    a_masked = alb_gray[mask_bool]                                  # [P]
+    Y_masked = sh_basis_npy(n_cam[mask_bool])                       # [P,9]
 
     for k in range(num_lights):
         d_w = light_dirs_w[k]
@@ -238,22 +242,47 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
             loc = np.array(d_w) / np.linalg.norm(d_w) * 2.99
             light.set_location(loc.tolist())
             light.set_energy(light_energy)
-        d_kimg = bproc.renderer.render(return_data=True)["colors"][0][:, :, :3]
-        light.delete()
-        set_world_black()
-        # 渲染输出按 bproc 默认走 PNG sRGB 编码（uint8），或 EXR 浮点。
-        # 自动检测：d_kimg.dtype == uint8 → sRGB 编码 → 必须 sRGB 反变换到线性
-        # d_kimg.dtype == float → 已是线性 → 直接用
-        if d_kimg.dtype == np.uint8:
-            u = d_kimg.astype(np.float32) / 255.0
-            lin = srgb_to_linear(np.clip(u, 0, 1))
-        else:
-            lin = np.clip(d_kimg.astype(np.float32), 0, 1)  # 已是 linear
-        gray = 0.2126 * lin[..., 0] + 0.7152 * lin[..., 1] + 0.0722 * lin[..., 2]
+        # ---- INC-001 帧级完整性（R4'-C canary 发现）：新建灯偶发未同步进
+        # Cycles depsgraph → 整帧丢光（黑帧）或残留上一帧伪影（亮带）。
+        # 修复：渲染前强制 view_layer 同步；渲染后对照解析 shading 校验，
+        # 坏帧重试（≤3 次），仍坏则 raise 干净失败。物理语义零改动。
+        # 阈值标定（discovery 4 scene ×32 = 128 健康帧）：ratio∈[0.86,1.69]，
+        # bg≤0.0074；坏帧实测 ratio≈0.001 / bg≈0.10。取宽安全带（复合 mesh
+        # 自阴影留余量）：ratio∈[0.15,3.5]，bg≤0.05。
+        c_k = irradiance_sh_coeffs_camera(d_w, I_eff, R_cw)
+        expected_mean = float((a_masked * np.maximum(Y_masked @ c_k, 0.0)).mean())
+        bpy.context.view_layer.update()
+        attempt = 0
+        while True:
+            d_kimg = bproc.renderer.render(return_data=True)["colors"][0][:, :, :3]
+            light.delete()
+            set_world_black()
+            # 渲染输出按 bproc 默认走 PNG sRGB 编码（uint8），或 EXR 浮点。
+            # 自动检测：d_kimg.dtype == uint8 → sRGB 编码 → 必须 sRGB 反变换到线性
+            # d_kimg.dtype == float → 已是线性 → 直接用
+            if d_kimg.dtype == np.uint8:
+                u = d_kimg.astype(np.float32) / 255.0
+                lin = srgb_to_linear(np.clip(u, 0, 1))
+            else:
+                lin = np.clip(d_kimg.astype(np.float32), 0, 1)  # 已是 linear
+            gray = 0.2126 * lin[..., 0] + 0.7152 * lin[..., 1] + 0.0722 * lin[..., 2]
+            fg_mean = float(gray[mask_bool].mean())
+            bg_mean = float(gray[~mask_bool].mean())
+            ratio = fg_mean / max(expected_mean, 1e-9)
+            if 0.15 <= ratio <= 3.5 and bg_mean <= 0.05:
+                break
+            attempt += 1
+            if attempt >= 3:
+                raise RuntimeError(
+                    f"INC-001 frame {k} integrity fail after {attempt} renders: "
+                    f"ratio={ratio:.4f} bg_mean={bg_mean:.4f} expected={expected_mean:.5f}")
+            print(f"    [INC-001] frame {k} bad (ratio={ratio:.4f} bg={bg_mean:.4f}) "
+                  f"→ resync + re-render (attempt {attempt})", flush=True)
+            bpy.context.view_layer.update()
         np.save(os.path.join(scene_dir, f"light_{k + 1:03d}_lin.npy"), gray.astype(np.float32))
         img_raw_list.append(gray.astype(np.float32))
         # 相机系 SH（Route A irradiance coefficients）
-        irradiance_coeffs[k] = irradiance_sh_coeffs_camera(d_w, I_eff, R_cw)
+        irradiance_coeffs[k] = c_k
         light_meta.append(dict(idx=k, dir_world=d_w.tolist(), dir_camera=(R_cw @ d_w).tolist(),
                                I_eff=I_eff))
     np.save(os.path.join(scene_dir, "sh_coeffs_irradiance.npy"), irradiance_coeffs)

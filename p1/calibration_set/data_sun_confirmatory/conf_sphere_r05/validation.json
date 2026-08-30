@@ -1,0 +1,27 @@
+{
+  "scene": "conf_sphere_r05",
+  "G1": {
+    "D_ij_max": 0.46148085594177246,
+    "D_ij_mean_offdiag": 0.20682177424145443,
+    "D_ij_std_offdiag": 0.10318501764889726,
+    "repeat_noise_floor": 0.001,
+    "light_to_noise_ratio": 461.480394461378,
+    "threshold_ratio": 3.0,
+    "passed": true
+  },
+  "G2": {
+    "psnr_self": 22.54286016040814,
+    "psnr_shuffled": 11.716749478068433,
+    "delta_db": 10.826110682339706,
+    "passed": true,
+    "note": "G2: stored c 是相机系；swap 应显著变差"
+  },
+  "G3": {
+    "psnr_self": 22.54286016040814,
+    "psnr_shuffled": 11.716749478068433,
+    "delta_db": 10.826110682339706,
+    "passed": true,
+    "note": "G2: stored c 是相机系；swap 应显著变差"
+  },
+  "any_fail": false
+}
