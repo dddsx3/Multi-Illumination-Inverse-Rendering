@@ -1,0 +1,99 @@
+{
+  "n_rows": 320,
+  "per_N": {
+    "3": {
+      "n": 80,
+      "spearman_lambda_min": [
+        -0.42064733915325053,
+        0.00010231141057170377
+      ],
+      "spearman_logdet": [
+        -0.10032817627754338,
+        0.37589978247221056
+      ],
+      "spearman_a_opt": [
+        0.3637130801687764,
+        0.000912156106365134
+      ],
+      "si_mae_mean": 0.014751491049537435,
+      "si_mae_std": 0.013647448503196316
+    },
+    "5": {
+      "n": 80,
+      "spearman_lambda_min": [
+        -0.6846460384435068,
+        2.512187095558246e-12
+      ],
+      "spearman_logdet": [
+        0.3745194561650258,
+        0.0006203705163225736
+      ],
+      "spearman_a_opt": [
+        0.21537740271917488,
+        0.05502758720162002
+      ],
+      "si_mae_mean": 0.0070744920114520935,
+      "si_mae_std": 0.0025648948301692977
+    },
+    "8": {
+      "n": 80,
+      "spearman_lambda_min": [
+        -0.8551804969526489,
+        5.751567063667564e-24
+      ],
+      "spearman_logdet": [
+        0.08288795124238163,
+        0.46480146996832045
+      ],
+      "spearman_a_opt": [
+        0.39760900140646976,
+        0.0002600612280994383
+      ],
+      "si_mae_mean": 0.005324357413337566,
+      "si_mae_std": 0.0014529516278877503
+    },
+    "12": {
+      "n": 80,
+      "spearman_lambda_min": [
+        -0.6336615096108767,
+        2.815982794115915e-10
+      ],
+      "spearman_logdet": [
+        0.3198781059540553,
+        0.0038224138842979797
+      ],
+      "spearman_a_opt": [
+        0.16598687294889827,
+        0.14115740427320922
+      ],
+      "si_mae_mean": 0.004885414897580631,
+      "si_mae_std": 0.0011376212359718882
+    }
+  },
+  "pooled": {
+    "r2_logN_only": 0.19859068871206542,
+    "r2_logN_plus_logdet": 0.21185039266361838,
+    "delta_r2": 0.013259703951552959,
+    "beta_logdet": 9.426529829370173e-07,
+    "verdict": "INCONCLUSIVE/FAIL"
+  },
+  "defining_gate_verdict": {
+    "G1_fixed_N_correlation": {
+      "verdict": "PASS",
+      "evidence": "Spearman rho(lambda_min_eff, SI-MAE): N=3 -0.42(p=1e-4), N=5 -0.69(p=2.5e-12), N=8 -0.86(p=5.8e-24), N=12 -0.63(p=2.8e-10); \u7b26\u53f7\u4e00\u81f4\u3001\u5168\u90e8\u663e\u8457",
+      "meaning": "\u56fa\u5b9a\u57fa\u6570\u5185\uff0c\u5149\u7167\u5b50\u96c6\u8d28\u91cf\uff08gauge-aware \u6709\u6548\u4fe1\u606f\uff09\u5f3a\u70c8\u9884\u6d4b\u6062\u590d\u8bef\u5dee"
+    },
+    "G2_beyond_N_explanatory_power": {
+      "verdict": "FAIL (inconclusive)",
+      "evidence": "pooled \u0394R\u00b2(logdet)=0.013<0.05\uff1b\u6309\u573a\u666f z-score \u5f52\u4e00\u540e \u03bbmin_z \u7684 \u0394R\u00b2=+0.002\u3001\u63a7\u5236 logN \u504f\u76f8\u5173=-0.049",
+      "caveats": [
+        "pooled \u56de\u5f52\u521d\u7248\u8bef\u7528\u6700\u5f31\u6307\u6807 logdet",
+        "4 calibration \u573a\u666f\u7684\u573a\u666f\u6548\u5e94\u4e3b\u5bfc",
+        "F_eff \u8de8\u573a\u666f\u5c3a\u5ea6\u672a\u5b8c\u5168\u89c4\u8303",
+        "solver restarts=1 \u6536\u655b\u504f\u5dee"
+      ],
+      "meaning": "GA-ISI \u5c1a\u672a\u8bc1\u660e\u63d0\u4f9b\u8d85\u51fa N \u7684\u8de8\u573a\u666f\u89e3\u91ca\u529b\u2014\u2014H-COND \u4fdd\u6301 hypothesis\uff0c\u4e0d\u5f97\u5b9a\u6838"
+    },
+    "overall": "NOT LOCKED \u2014 G1 \u5f3a\u521d\u6b65\u652f\u6301\uff0cG2 \u672a\u901a\u8fc7\uff1b\u6309\u4e13\u5bb6\u5206\u53c9\u4e0d\u6740\u65b9\u5411\u4e5f\u4e0d\u5347\u7ea7\uff0c\u5217\u5165 R4' \u4fee\u6b63\u91cd\u6d4b"
+  }
+}

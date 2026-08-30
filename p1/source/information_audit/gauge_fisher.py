@@ -54,7 +54,7 @@ def load_scene(path):
     return sc
 
 
-def ga_isi_scores(sc, subset, pixel_cap=4000, seed=0):
+def ga_isi_scores(sc, subset, pixel_cap=2000, seed=0):
     """对给定光照子集计算 GA-ISI 分数（见模块 docstring 的推导）。"""
     mask = sc["mask"]
     idx = np.argwhere(mask)

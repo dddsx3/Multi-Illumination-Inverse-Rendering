@@ -61,3 +61,17 @@
 > 级的"定核 Gate"。不要按原协议烧 27h GPU。
 
 签发：P1-R0 · ZCode agent · 2026-08-30 · commit 20d2ba8 之后
+
+
+---
+
+## 附录 · R1~R4 执行结果（2026-08-31 追加）
+
+| 步骤 | 结果 |
+|---|---|
+| R1 SH 卷积修正 | Â=[π,2π/3,π/4] 落地；5 项解析测试全过；MC MAE=0.0309（与专家独立核算 0.031 一致）；**"L=2 需升 L=4" 结论作废** |
+| R2 SUN P-domain 重渲 | 额外发现并修复三个失配源：①BlenderProc normals AOV 本已是相机系（二次旋转 bug，oracle 15.3→26.7dB）②默认 Principled 材质 specular 混入（强制纯 Diffuse）③SUN 能量饱和（100→3.0）。**Oracle Gate PASS：Or1 SI-PSNR=28.25 dB（>25）** |
+| R3 GA-ISI | Schur 补 + ReLU 指示 + gauge 固定实现（`gauge_fisher.py`），与旧 F=(AY)ᵀ(AY)（子集无关）本质不同 |
+| R4 定核 Gate | **G1 PASS**：固定 N 内 ρ(λ⁺_min, SI-MAE) = −0.42/−0.69/**−0.86**/−0.63（N=3/5/8/12，全 p<1e-4）。**G2 FAIL**：pooled ΔR²=0.002~0.013<0.05，控制 N 后偏相关 −0.05。**总体 NOT LOCKED**——H-COND 保持 hypothesis；G2 修正项（场景尺度规范、场景数、收敛控制）已列 |
+
+**当前一句话**：物理已封口（28.25dB 无 unexplained gap 主导），"固定 N 内子集质量决定误差"有强初步证据；"超出 N 的解释力"未证——**不许定核，也不必杀方向**，按 CLAIM_REGISTRY 降级纪律继续 R4' 修正。
