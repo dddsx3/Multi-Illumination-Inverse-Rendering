@@ -1,0 +1,40 @@
+========================================================================
+R3' 数学审计单测 · gauge_fisher_v2（阈值=任务书 T3'.3 冻结值）
+========================================================================
+T1 · Finite-difference Jacobian (≤1e-5 rel Frobenius)
+  [PASS] T1 active-config relF ≤ 1e-5  relF=1.163e-10
+  [PASS] T1 mixed-config(边界列剔除) relF ≤ 1e-5  relF=1.119e-10, 剔除列=0/51
+T2 · Block identity: J^T J vs 解析三块 (≤1e-8 max rel)
+  [PASS] T2a F_aa 严格对角（跨像素 ∂I_k(p)/∂a_q=0, p≠q）  max|off|=0.0e+00
+  [PASS] T2b F_aa diag == F_ss  max_rel=2.153e-16
+  [PASS] T2c F_ll,k == Σ_p a²h YYᵀ（逐光）  max_rel=8.307e-15
+  [PASS] T2d 跨光块恒为 0（I_k 不依赖 c_j, j≠k）  max|off|=0.0e+00
+  [PASS] T2e F_sℓ 交叉块 == B_k = a·s·h·Y（R3' 修正点 1：必须含 s_kp）  max_rel=2.398e-16
+T3 · Schur identity: 实现三条独立路线互证 (≤1e-6) + PSD + 非零 off-diag
+  [PASS] T3a 实现 vs J^TJ 组装 Schur ≤1e-6  relF=1.649e-11
+  [PASS] T3b 实现 vs 投影形式 ≤1e-6  relF=4.761e-12
+  [PASS] T3c F_eff PSD（λmin ≥ −1e-10·λmax）  λmin=-3.336e-12, λmax=2.310e+00
+  [PASS] T3d 跨像素 off-diagonal 非零（v1 逐像素近似丢失的结构）  max|off|=8.254e-01, off/diag_mean=7.146e+00
+  [PASS] T3e diag-Schur proxy == diag(full F_eff)（抵消尺度绝对 ≤1e-10·F_ss，良条件元相对 ≤1e-6）  abs_err=3.553e-15 (F_ss max=2.900e+00), rel(大元)=4.902e-14, n_big=5
+T4 · Gauge/null: 尺度方向、投影稳定性、cutoff 1e-8~1e-5 裁决不变
+  [PASS] T4a gauge residual (cutoff 1e-8) ≤1e-7  residual=6.507e-14
+  [PASS] T4a' gauge residual (cutoff 1e-5) ≤1e-4  residual=4.928e-06
+  [PASS] T4b 投影前后正谱一致 (relF ≤1e-8) 且 d⁺ 不变  relF=2.865e-15, d⁺ 20→20
+  [PASS] T4c cutoff 1e-8~1e-5 primary 漂移 ≤1e-3  values=[3.66819173e-06 3.66819173e-06 3.66987210e-06], spread=4.581e-04
+  [PASS] T4d gauge 变换 (a,C)→(a/2,2C) 归一化指标不变 (≤1e-9)  Δlogdet=0.00e+00, relΔλmin=0.00e+00, relΔa_opt=0.00e+00, d⁺ 20 vs 20
+T5 · 附加命题：重复光 kernel 不变性 / N=1 秩 / ReLU 边界
+  [PASS] T5a 重复光：rank(S∪{dup}) == rank(S)  rank 3 vs 3
+  [PASS] T5b N=1 rank = P−9 (P=14 → 5)  rank=5
+  [PASS] T5c-1 z=0 像素 h=0 且 s=0  
+  [PASS] T5c-2 z=0 像素 B 行 = 0  
+  [PASS] T5c-3 含 z=0 像素时 J^TJ 与解析块一致  
+  [PASS] T5c-4 boundary_frac 精确计数 1/N·P  =0.050000
+T6 · Operator 路径一致性：matvec / trace / eigsh λ_min⁺ vs dense
+  [PASS] T6a operator matvec == dense·v (relF ≤1e-12)  worst relF=3.518e-16
+  [PASS] T6b operator trace == dense trace (rel ≤1e-10)  op=3.7147052068e+02, dense=3.7147052068e+02
+  [PASS] T6c eigsh λ_min⁺ == dense λ_min⁺ (rel ≤1e-4)  eigsh=2.502018e-04, dense=2.502018e-04, rel=7.97e-13
+  [PASS] T6d eigsh 核维数估计 = 1 + n_dead  n_null=11
+  [PASS] T6e ga_isi_v2_scores dense/operator primary 一致 (rel ≤1e-4)  rel=1.74e-12, paths=dense/operator
+========================================================================
+总计 28 项 · PASS 28 · FAIL 0
+R3' MATH GATE: PASS（四类强制单测全过）

@@ -1,3 +1,5 @@
+> **[STALE · R3′ 2026-08-31]** 本文档为 P1 阶段历史问答（15 问），其中 Q1/Q3/Q9/Q11/Q12 含被取代的数字与归因（错误 SH 常数/K_L、22.25 dB=SH 截断、近场 N≥8 饱和等）。按《P1 下一阶段执行任务书 v1.0》§1，本文档仅作历史证据，不得作为当前状态引用。现行依据：CLAIM_REGISTRY.md、IDENTIFIABILITY_v2.md、R3P_MATH_AUDIT_REPORT.md、P1_R0_STOP_LINE.md 附录。
+
 # P1_REFOUNDATION_HANDOFF · Physical & Dataset Re-foundation 交付
 
 > **执行**：ZCode agent · 2026-08-30 · RTX 5070 Ti Laptop 12GB

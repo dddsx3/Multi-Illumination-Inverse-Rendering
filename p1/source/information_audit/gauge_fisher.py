@@ -1,4 +1,17 @@
-"""P1-R3 · Gauge-Aware Illumination-Set Information（GA-ISI）。
+"""DEPRECATED_EXPLORATORY（R3′ 裁决，2026-08-31 · 任务书 v1.0 §0.1/§3）
+
+本实现存在两个公式级错误，禁止再用于任何 confirmatory 用途：
+  1) 交叉块漏 s_kp：正确为 B_k[p,:] = a_p·s_kp·h_kp·Y_pᵀ；
+  2) 逐像素标量近似不是 Schur 补：真 F_eff = F_ss − Σ_k B_k F_ll,k† B_kᵀ
+     是 P×P 稠密矩阵（跨像素耦合），本文件的逐像素公式连对角都不对。
+由本实现派生的 R4 定核数字（ρ=−0.42~−0.86, ΔR²=0.002）只能作
+exploratory signal，不得进入主结论/摘要/标题/定核 Gate。
+正式实现：gauge_fisher_v2.py · 理论：protocol/IDENTIFIABILITY_v2.md ·
+单测：p1/tests/test_gauge_fisher_v2.py（28 项 PASS）。
+文件保留仅作历史证据，不再维护。
+
+———————————————————————————————————————————————————————————————
+P1-R3 · Gauge-Aware Illumination-Set Information（GA-ISI）。
 
 数学对象（per 专家定核 Gate 规格）：
 

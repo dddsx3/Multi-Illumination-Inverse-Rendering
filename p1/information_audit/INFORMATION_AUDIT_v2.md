@@ -1,3 +1,5 @@
+> **[STALE · R3′ 2026-08-31]** 本文档含 v1 gauge_fisher（缺 s_kp、逐像素假 Schur）与近场/旧 SH 常数时代的数字。按《P1 下一阶段执行任务书 v1.0》§1，仅作历史证据，不得作为当前状态引用。现行：gauge_fisher_v2.py + IDENTIFIABILITY_v2.md + R3P_MATH_AUDIT_REPORT.md。
+
 # INFORMATION_AUDIT_v2 · P1-10 受控 Information Audit（calibration 级）
 
 > 数据：P1 calibration set（5 简单 mesh × 32 真实渲染光照，128²，

@@ -1,4 +1,5 @@
 {
+  "_deprecated_exploratory": "R3' 裁决(2026-08-31, 任务书 v1.0 §0.1)：本 summary 基于 v1 gauge_fisher（交叉块漏 s_kp + 逐像素假 Schur），全部数字降级为 exploratory signal，禁止用于主结论/摘要/标题/定核 Gate。正式版见 gauge_fisher_v2.py + R3P_MATH_AUDIT_REPORT.md。原内容键值原样保留如下。",
   "n_rows": 320,
   "per_N": {
     "3": {
@@ -80,20 +81,20 @@
   "defining_gate_verdict": {
     "G1_fixed_N_correlation": {
       "verdict": "PASS",
-      "evidence": "Spearman rho(lambda_min_eff, SI-MAE): N=3 -0.42(p=1e-4), N=5 -0.69(p=2.5e-12), N=8 -0.86(p=5.8e-24), N=12 -0.63(p=2.8e-10); \u7b26\u53f7\u4e00\u81f4\u3001\u5168\u90e8\u663e\u8457",
-      "meaning": "\u56fa\u5b9a\u57fa\u6570\u5185\uff0c\u5149\u7167\u5b50\u96c6\u8d28\u91cf\uff08gauge-aware \u6709\u6548\u4fe1\u606f\uff09\u5f3a\u70c8\u9884\u6d4b\u6062\u590d\u8bef\u5dee"
+      "evidence": "Spearman rho(lambda_min_eff, SI-MAE): N=3 -0.42(p=1e-4), N=5 -0.69(p=2.5e-12), N=8 -0.86(p=5.8e-24), N=12 -0.63(p=2.8e-10); 符号一致、全部显著",
+      "meaning": "固定基数内，光照子集质量（gauge-aware 有效信息）强烈预测恢复误差"
     },
     "G2_beyond_N_explanatory_power": {
       "verdict": "FAIL (inconclusive)",
-      "evidence": "pooled \u0394R\u00b2(logdet)=0.013<0.05\uff1b\u6309\u573a\u666f z-score \u5f52\u4e00\u540e \u03bbmin_z \u7684 \u0394R\u00b2=+0.002\u3001\u63a7\u5236 logN \u504f\u76f8\u5173=-0.049",
+      "evidence": "pooled ΔR²(logdet)=0.013<0.05；按场景 z-score 归一后 λmin_z 的 ΔR²=+0.002、控制 logN 偏相关=-0.049",
       "caveats": [
-        "pooled \u56de\u5f52\u521d\u7248\u8bef\u7528\u6700\u5f31\u6307\u6807 logdet",
-        "4 calibration \u573a\u666f\u7684\u573a\u666f\u6548\u5e94\u4e3b\u5bfc",
-        "F_eff \u8de8\u573a\u666f\u5c3a\u5ea6\u672a\u5b8c\u5168\u89c4\u8303",
-        "solver restarts=1 \u6536\u655b\u504f\u5dee"
+        "pooled 回归初版误用最弱指标 logdet",
+        "4 calibration 场景的场景效应主导",
+        "F_eff 跨场景尺度未完全规范",
+        "solver restarts=1 收敛偏差"
       ],
-      "meaning": "GA-ISI \u5c1a\u672a\u8bc1\u660e\u63d0\u4f9b\u8d85\u51fa N \u7684\u8de8\u573a\u666f\u89e3\u91ca\u529b\u2014\u2014H-COND \u4fdd\u6301 hypothesis\uff0c\u4e0d\u5f97\u5b9a\u6838"
+      "meaning": "GA-ISI 尚未证明提供超出 N 的跨场景解释力——H-COND 保持 hypothesis，不得定核"
     },
-    "overall": "NOT LOCKED \u2014 G1 \u5f3a\u521d\u6b65\u652f\u6301\uff0cG2 \u672a\u901a\u8fc7\uff1b\u6309\u4e13\u5bb6\u5206\u53c9\u4e0d\u6740\u65b9\u5411\u4e5f\u4e0d\u5347\u7ea7\uff0c\u5217\u5165 R4' \u4fee\u6b63\u91cd\u6d4b"
+    "overall": "NOT LOCKED — G1 强初步支持，G2 未通过；按专家分叉不杀方向也不升级，列入 R4' 修正重测"
   }
 }
