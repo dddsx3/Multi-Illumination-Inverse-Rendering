@@ -11,7 +11,7 @@ import zlib
 import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "physics")))
-from sh import sh_basis_npy, K_L  # noqa: E402
+from sh import sh_basis_npy, A_L  # noqa: E402
 
 # ---------------- helpers（与 PRE-0 渲染器兼容）----------------
 def look_at(cam_pos, target, up=(0.0, 0.0, 1.0)):
@@ -74,8 +74,8 @@ def irradiance_sh_coeffs_camera(d_world, I_eff, R_cw):
     """Route A：d_world × R_cw → d_camera；c = k_l · I_eff · Y(d_camera)。"""
     d_cam = R_cw @ d_world
     Y = sh_basis_npy(d_cam[None])[0]                        # [9]
-    k = np.array([K_L[0], K_L[1], K_L[1], K_L[1],
-                  K_L[2], K_L[2], K_L[2], K_L[2], K_L[2]])
+    k = np.array([A_L[0], A_L[1], A_L[1], A_L[1],
+                  A_L[2], A_L[2], A_L[2], A_L[2], A_L[2]])
     return I_eff * k * Y
 
 
@@ -84,7 +84,8 @@ def srgb_to_linear(v):
 
 
 def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
-               cam_dist, samples, use_gpu, R_cw, light_dirs_w, rng_seed):
+               cam_dist, samples, use_gpu, R_cw, light_dirs_w, rng_seed,
+               light_type="sun"):
     scene_name = os.path.splitext(os.path.basename(obj_path))[0]
     scene_dir = os.path.join(out_dir, scene_name)
     if os.path.exists(os.path.join(scene_dir, "sh_coeffs_irradiance.npy")):
@@ -110,6 +111,22 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     import bpy
     for idx, ob in enumerate(o for o in bpy.data.objects if o.type == "MESH"):
         ob.pass_index = idx + 1
+
+    # P1-R2 P-domain 物理封口：强制纯 Lambertian（Diffuse BSDF）材质。
+    # 默认 Principled BSDF 含 specular=0.5，colors 通道混入镜面高光，
+    # 违反 P 域 "Lambertian only" 定义（R0 审查发现的第 3 个失配源）。
+    if light_type == "sun":
+        mat = bpy.data.materials.new("p1_diffuse")
+        mat.use_nodes = True
+        nt = mat.node_tree
+        nt.nodes.clear()
+        out = nt.nodes.new("ShaderNodeOutputMaterial")
+        diff = nt.nodes.new("ShaderNodeBsdfDiffuse")
+        diff.inputs["Color"].default_value = [0.8, 0.8, 0.8, 1.0]
+        nt.links.new(diff.outputs[0], out.inputs[0])
+        for o in mesh_objs:
+            o.blender_obj.data.materials.clear()      # 无条件清除默认 Principled
+            o.blender_obj.data.materials.append(mat)
 
     cam_pos = [cam_dist * math.cos(math.radians(30.0)), 0.0, cam_dist * math.sin(math.radians(30.0))]
     pose = look_at(cam_pos, [0, 0, 0], up=[0, 0, 1])
@@ -149,13 +166,14 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     alb_gray = 0.2126 * alb_lin[..., 0] + 0.7152 * alb_lin[..., 1] + 0.0722 * alb_lin[..., 2]
     np.save(os.path.join(scene_dir, "albedo.npy"), alb_gray[None])
 
-    # Mesh normal GT（BlenderProc normal AOV；转换到 camera frame）
-    normal_aov = data["normals"][0]                          # 通常 [H,W,3] in [-1,1]
+    # Mesh normal GT（BlenderProc normal AOV）
+    # P1-R2 修正（实验证实）：BlenderProc 2.8 的 normals AOV 已是【相机系】
+    # （立方体面法线聚类 = R_cw.T @ n_cam 的证据），此前又做了一次
+    # world→cam 旋转导致法线被二次旋转破坏（61~77° 夹角假象）。直接落盘。
+    normal_aov = data["normals"][0]
     if normal_aov.ndim == 4:
         normal_aov = normal_aov[0]
-    n_world = normal_aov.astype(np.float32) * 2.0 - 1.0
-    n_world /= np.maximum(np.linalg.norm(n_world, axis=-1, keepdims=True), 1e-9)
-    n_cam = n_world @ R_cw.T                                  # world→cam 旋转
+    n_cam = normal_aov.astype(np.float32) * 2.0 - 1.0
     n_cam /= np.maximum(np.linalg.norm(n_cam, axis=-1, keepdims=True), 1e-9)
     np.save(os.path.join(scene_dir, "normal_mesh.npy"), n_cam.transpose(2, 0, 1))
 
@@ -184,14 +202,24 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     # 掩码
     seg = np.asarray(data["instance_segmaps"][0]).astype(np.int64)
     mask = (seg != 0).astype(np.uint8)
+    if mask.sum() == 0:
+        # 场景不在画幅内（如水平平面在 30° 俯角相机下不可见）——干净跳过
+        raise RuntimeError("mask 为空：物体不可见（跳过该场景）")
     np.save(os.path.join(scene_dir, "mask.npy"), mask[None])
 
     # ---- 移除参考光，开始 per-light render ----
     ref_light.delete()
     set_world_black()
 
-    R_light = float(np.linalg.norm(light_dirs_w[0]))
-    I_eff = light_energy / (4 * math.pi * R_light ** 2)
+    # P1-R1 修正：P-domain 用 SUN（真远场方向光），R/stress 域才用 POINT 近场
+    # I_eff 语义：albedo 乘子域 irradiance = S/π（Lambertian BSDF 的 1/π 并入），
+    # 使 A⊙ReLU(Σ cY(n)) 与渲染像素在同一能量域（无 scale gauge 残余）。
+    import mathutils
+    if light_type == "sun":
+        I_eff = light_energy / math.pi          # light_energy 参数在此语义下 = SUN strength S
+    else:
+        R_light = float(np.linalg.norm(light_dirs_w[0]) * 2.99)  # point 模式放到远场半径
+        I_eff = light_energy / (4 * math.pi * R_light ** 2)
     irradiance_coeffs = np.zeros((num_lights, 9), dtype=np.float32)
     light_meta = []
     img_raw_list = []
@@ -199,9 +227,17 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
     for k in range(num_lights):
         d_w = light_dirs_w[k]
         light = bproc.types.Light()
-        light.set_type("POINT")
-        light.set_location(d_w.tolist())
-        light.set_energy(light_energy)
+        if light_type == "sun":
+            light.set_type("SUN")
+            # SUN 沿光对象 -Z 发射；令 +Z 对准 d_w（场景→光方向），发射即 -d_w（照向场景）
+            quat = mathutils.Vector(d_w).to_track_quat("Z", "Y")
+            light.set_rotation_euler(quat.to_euler())
+            light.set_energy(light_energy)      # SUN strength = irradiance W/m^2
+        else:
+            light.set_type("POINT")
+            loc = np.array(d_w) / np.linalg.norm(d_w) * 2.99
+            light.set_location(loc.tolist())
+            light.set_energy(light_energy)
         d_kimg = bproc.renderer.render(return_data=True)["colors"][0][:, :, :3]
         light.delete()
         set_world_black()
@@ -270,6 +306,8 @@ def main():
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--count", type=int, default=-1)
     ap.add_argument("--seed", type=int, default=20260830)
+    ap.add_argument("--light_type", choices=["sun", "point"], default="sun",
+                    help="sun=P-domain 真远场方向光（默认）；point=近场 stress 域")
     args = ap.parse_args()
 
     with open(args.obj_list, encoding="utf-8") as f:
@@ -286,7 +324,8 @@ def main():
         try:
             r = render_one(p, args.out_dir, args.size, args.num_lights,
                            args.light_energy, args.fov_deg, args.cam_dist,
-                           args.samples, args.gpu, R_cw, light_dirs, args.seed)
+                           args.samples, args.gpu, R_cw, light_dirs, args.seed,
+                           light_type=args.light_type)
             print(f"[{i+1}/{len(objs)}] {os.path.basename(p)} → {r}")
         except Exception as e:
             import traceback

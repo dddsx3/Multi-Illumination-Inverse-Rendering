@@ -32,7 +32,7 @@ import torch
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, _REPO)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "physics")))
-from sh import sh_basis_npy, K_L  # noqa: E402
+from sh import sh_basis_npy, A_L  # noqa: E402
 
 try:
     from p1.source.physics.sh_torch import sh_basis_torch

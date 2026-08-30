@@ -12,7 +12,10 @@ import numpy as np
 C0 = 0.282095                                # 0.5*sqrt(1/pi)
 C1 = 0.488603                                # sqrt(3/(4*pi))
 C2 = [1.092548, 1.092548, 0.315392, 1.092548, 0.546274]
-K_L = [math.sqrt(math.pi), math.sqrt(math.pi / 3.0), math.sqrt(math.pi / 5.0)]
+# Lambertian clamped-cosine convolution multipliers（正交归一实 SH，P1-R1 修正；
+# Ramamoorthi & Hanrahan 2001 Eq.7-9：A_hat_0=pi, A_hat_1=2pi/3, A_hat_2=pi/4）
+# 旧值 K_L=[sqrt(pi),sqrt(pi/3),sqrt(pi/5)] 为逐带畸变（P1_R0_STOP_LINE 问题1），作废。
+A_L = [math.pi, 2.0 * math.pi / 3.0, math.pi / 4.0]
 
 
 def sh_basis_npy(n: np.ndarray) -> np.ndarray:
@@ -29,13 +32,17 @@ def sh_basis_npy(n: np.ndarray) -> np.ndarray:
 
 
 def sh_directional_irradiance(direction: np.ndarray, intensity: float = 1.0) -> np.ndarray:
-    """direction [3] 单位向量, intensity I_eff (W/m^2)
+    """direction [3] 单位向量, intensity I_eff（albedo 乘子域，见下）
     -> 9 维 irradiance SH coefficients（Lambertian convolution 已应用）
 
-    c_lm = k_l · I_eff · Y_lm(d)
+    c_lm = A_hat_l · I_eff · Y_lm(d)
+
+    I_eff 语义（P1-R1）：albedo 乘子域的 irradiance —— 即
+    E(n) = Σ c Y(n) 直接乘 albedo 得到像素值（Lambertian BSDF 的 1/π
+    已并入 I_eff：若 Blender SUN strength=S，则 I_eff = S/π）。
     """
     Y = sh_basis_npy(direction[None])[0]                        # [9]
-    k = np.array([K_L[0], K_L[1], K_L[1], K_L[1], K_L[2], K_L[2], K_L[2], K_L[2], K_L[2]])
+    k = np.array([A_L[0], A_L[1], A_L[1], A_L[1], A_L[2], A_L[2], A_L[2], A_L[2], A_L[2]])
     return intensity * k * Y
 
 

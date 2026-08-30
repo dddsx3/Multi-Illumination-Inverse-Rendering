@@ -24,7 +24,7 @@ import numpy as np
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, _REPO)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "physics")))
-from sh import sh_basis_npy, K_L, sh_directional_irradiance  # noqa: E402
+from sh import sh_basis_npy, A_L, sh_directional_irradiance  # noqa: E402
 
 
 def load_scene(scene_dir):

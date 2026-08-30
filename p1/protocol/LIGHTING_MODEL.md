@@ -1,4 +1,11 @@
-# LIGHTING_MODEL · SH Irradiance Coefficients（Route A）
+# LIGHTING_MODEL · SH Irradiance Coefficients（Route A · R1 修正版）
+
+> **⚠ P1-R1 修正（2026-08-30，外部专家审查触发）**：本文初版给出的
+> Lambertian convolution 系数 `K_L=[√π, √(π/3), √(π/5)]` 为**逐带畸变**
+> （正确值见 §4R）。同日初版 §7 "L=2 有 75% relative MAE、需升 L=4" 的
+> 结论系 Test5 错误对照（用 reproducing kernel 而非卷积后 irradiance），
+> **作废**。修正后实测：**MAE=0.0309（~3% 相对），L=2 充分**，
+> 与 Ramamoorthi & Hanrahan 原文一致。详见 `p1/P1_R0_STOP_LINE.md`。
 
 > **P1 阶段决议**：网络输出的 9 维量是**表面 irradiance SH coefficients**（Route A）。
 > 不再使用 `c = I·Y(d)` 然后直接 `Σ cᵢYᵢ(n)` 这种把 radiance coefficients 当
@@ -75,6 +82,31 @@ E_lm = k_l · L_lm
 | 0 | √π ≈ 1.7724539 |
 | 1 | √(π/3) ≈ 1.0233267 |
 | 2 | √(π/5) ≈ 0.8862269 |
+
+### 4R · 【R1 修正】正交归一实 SH 下的正确卷积乘子
+
+上述 k_l 表对应的是**未归一化基约定**，与本项目使用的正交归一实 SH
+不匹配（这是 P1-R0 停线的核心问题）。在正交归一实 SH 下，clamped-cosine
+transfer function 的 SH 乘子（Ramamoorthi & Hanrahan 2001 Eq.7-9）：
+
+| l | Â_l | 数值 |
+|---|---|---|
+| 0 | π | 3.141593 |
+| 1 | 2π/3 | 2.094395 |
+| 2 | π/4 | 0.785398 |
+
+且加法定理给出单方向光 irradiance 的 L=2 解析式：
+`E_L2(n,d) = Σ_l Â_l Σ_m Y_lm(d)Y_lm(n) = 0.25 + 0.5μ + 0.3125·P₂(μ)`，μ=n·d。
+
+**实测（20k 随机对，`tests/test_sh_physics.py` Test5）**：
+MAE=0.0309 / RMSE=0.0364 / P95=0.0707 / max=0.0937（vs 专家独立核算
+0.031/0.036/0.094 完全一致）。三必测点：n=d → 1.0625（+6.25%）；
+n⊥d → +0.0937 ringing；n=−d → +0.0625 ringing。
+**结论：L=2 充分，无需升 L=4。**
+
+初版 K_L 与正确 Â 的逐带比 [0.564, 0.489, 1.128] ——非全局尺度，是真实
+畸变；这正是旧 calibration 数据（22.25 dB）oracle floor 的主要人为误差源
+之一（叠加近场点光失配，见 P1_R0_STOP_LINE 问题 2）。
 
 来源：Ramamoorthi & Hanrahan 2001 "An Efficient Representation for Irradiance
 Environment Maps"，Table 1；亦见 Sloan et al. "Simple Environment Map Filtering"。

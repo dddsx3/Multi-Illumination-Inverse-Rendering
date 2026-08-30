@@ -1,0 +1,33 @@
+{
+  "image_diversity": {
+    "max_D_ij": 0.17401570081710815,
+    "mean_D_ij_offdiag": 0.07825575768947601
+  },
+  "repeat_render_noise": {
+    "assumed_floor_1e-3": true
+  },
+  "light_to_noise_ratio": 87.00785040855408,
+  "lighting_metadata_match": {
+    "sh_irradiance_vs_image_cam_frame": 1.8392388820648193
+  },
+  "albedo_range": [
+    0.3864295482635498,
+    0.5711249113082886
+  ],
+  "depth_range": [
+    1.8011796474456787,
+    2.3683245182037354
+  ],
+  "normal_unit_error": 1.1920928955078125e-07,
+  "normal_mesh_vs_depth_ang_mae": null,
+  "sh_or_light_range": [
+    -0.8884580731391907,
+    0.9645581245422363
+  ],
+  "oracle_reconstruction": null,
+  "nan_inf": false,
+  "scene_id": "hemisphere",
+  "zsh_hash": null,
+  "generation_seconds": 17.7,
+  "protocol": "P1_v1_route_A_irradiance"
+}
