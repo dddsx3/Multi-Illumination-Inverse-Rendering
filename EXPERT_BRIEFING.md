@@ -15,12 +15,18 @@ accumulation**（多光照证据累积的可辨识性与可学习性）。
 | ~2026-08-27 | Phase 2 中期（FusionUNet + 6 变体消融），v2 best: PSNR 37.25 dB | `docs/Phase2_验收报告初稿.md` |
 | 2026-08-28 | 项目完全重置（本地全删，bundle 备份）；PRE-0 任务书发布 | `docs/PRE0_任务书.md` |
 | 2026-08-29 | **PRE-0 执行：发现数据灾难**——synthetic_v3 的 5 张"不同光照"图实为同一张图（BlenderProc 帧动画失效），多光照维度无效；Gate B FAIL | **`pre0/oracle_renderer/ORACLE_AUDIT.md`（必读）** |
+| 2026-08-30 晚 | **专家审查触发的 R 轮修正**：①SH Lambertian 卷积系数错误（√π 系 → Â=[π,2π/3,π/4]，MC MAE 0.0309 与专家核算一致，"需升 L=4"作废）②生成器三连修（normals 二次旋转/材质 specular/SUN 饱和）→ **Oracle Gate PASS 28.25 dB** ③GA-ISI gauge-aware Fisher 实现 + 320 子集定核 Gate：**G1 PASS（固定 N 内 ρ=-0.42~-0.86）/ G2 FAIL（ΔR²=0.002）→ 不定核不杀方向** | **`p1/P1_R0_STOP_LINE.md`（附录含全部结果）** |
 | 2026-08-30 | **P1 基础设施封口**：生成器修复（每灯独立 render call）+ SH 物理重构（Route A irradiance）+ calibration 5 mesh × 32 灯实证 N 曲线 2.9× 改善（N≥8 饱和）+ Oracle Gate 22.25 dB | **`p1/HANDOFF.md`（15 问逐答）** |
 | 当前 | 待跑：P1-13 全量 200×32 数据生成（~27h GPU）→ 正式 Information Audit → Probe 重训 → C1-C5 Learnability Gate | `p1/HANDOFF.md §门禁状态` |
 
 **当前总裁决**：多光照信息在修复后的真实渲染数据中确凿存在（首次实证）；
 下一阶段唯一下注假设 **H-COND**（光照子集质量通过局部 Fisher 条件数控制
 逆渲染可辨识性），见 `p1/HANDOFF.md` Q15。
+
+## 1.5 最新一轮（R 轮）关键裁决
+
+- **`_archive/P1-R_定核Gate轮交付报告.md`**（包内）或仓库根交付报告——R0~R4 全过程
+- 当前 H-COND 状态：G1（固定 N 内子集质量预测误差）强支持；G2（超出 N 解释力）未通过 → **不定核、不杀方向**，R4' 修正清单见 STOP_LINE 附录
 
 ## 2. 必读文件（按优先级）
 
