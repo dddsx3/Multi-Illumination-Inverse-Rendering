@@ -78,8 +78,47 @@ def si_mae_np(pred, gt, mask):
 
 
 # ---------------- 受控 solver（GT geometry 固定，A + {L_k} 联合优化）----------------
+def _gauge_tangent(a_raw, c, mask_t):
+    """尺度 gauge 在优化变量 (a_raw, c) 空间的切向量（未归一）。
+
+    gauge：a → a·e^ε，c → c·e^{-ε}（像素值 a·ReLU(Y c) 不变）。
+    a = softplus(a_raw) ⇒ da/da_raw = sigmoid(a_raw) ⇒ δa_raw = a / sigmoid(a_raw)。
+    掩码外的 a_raw 对 loss 无贡献（recon 与 tv 均乘 m），故切向量在掩码外置 0。
+    """
+    a = torch.nn.functional.softplus(a_raw)
+    sig = torch.sigmoid(a_raw).clamp_min(1e-12)
+    v_a = (a / sig) * mask_t
+    v_c = -c
+    return v_a, v_c
+
+
+def _proj_grad_norm(a_raw, c, mask_t, f_val, eps=1e-12):
+    """scale-normalized projected gradient norm（任务书 §6 stationarity 判据）。
+
+    1) 取掩码内的 a_raw 梯度与 c 梯度；
+    2) 投影掉 gauge 切向（尺度自由度方向上的梯度不代表未收敛）；
+    3) 用各块参数特征尺度（掩码内 RMS）加权，再除以 max(|f|, eps) → 无量纲。
+    """
+    g_a = (a_raw.grad if a_raw.grad is not None else torch.zeros_like(a_raw)) * mask_t
+    g_c = c.grad if c.grad is not None else torch.zeros_like(c)
+    v_a, v_c = _gauge_tangent(a_raw.detach(), c.detach(), mask_t)
+    vv = (v_a * v_a).sum() + (v_c * v_c).sum()
+    if float(vv) > 0:
+        gv = (g_a * v_a).sum() + (g_c * v_c).sum()
+        coef = gv / vv
+        g_a = g_a - coef * v_a
+        g_c = g_c - coef * v_c
+    n_mask = mask_t.sum().clamp_min(1.0)
+    a_lin = torch.nn.functional.softplus(a_raw.detach()) * mask_t
+    s_a = torch.sqrt((a_lin * a_lin).sum() / n_mask).clamp_min(eps)
+    s_c = torch.sqrt((c.detach() ** 2).mean()).clamp_min(eps)
+    num = torch.sqrt(((g_a * s_a) ** 2).sum() + ((g_c * s_c) ** 2).sum())
+    return float(num / max(abs(f_val), eps))
+
+
 def joint_solve(sc, subset, restarts=3, base_iters=800, lr=1e-2, lam_tv=0.03,
-                device="cuda", conv_tol=1e-7):
+                device="cuda", conv_tol=1e-7, seed=None, theta0=None,
+                return_trace=False, tail_k=50):
     """返回 best 轨迹 (A_hat, c_hat[sub], success, final_grad_norm, final_loss)。
 
     solver 控制项：
@@ -87,6 +126,16 @@ def joint_solve(sc, subset, restarts=3, base_iters=800, lr=1e-2, lam_tv=0.03,
       - max iters 随变量数缩放:  base_iters + 200 * N
       - convergence tolerance:  末 50 iter 损失变化 < conv_tol 视为收敛
       - success: 收敛且 final_grad_norm < 1e-3
+
+    R4″ C-1 新增（向后兼容：三个新参数取默认值时行为与冻结的 988 trial 逐位一致）：
+      - seed=None      : 沿用写死的 20260830+rs；给整数则用 seed+rs（Task C 需要
+                         同 (scene,N,subset) 下 5 个独立 solver 种子）
+      - theta0=None    : (a_init_linear[H,W] 或标量, c_init[N,9]) 显式初值，
+                         供 §21 oracle-local 实验（θ₀ = θ_GT + δ）；给定时不再
+                         用随机初始化，restarts 之间仅靠 seed 扰动（见下）
+      - return_trace   : True 时返回 loss_trace（best restart）与 all_traces
+      - 返回值新增     : proj_grad_norm / tail_rel_change / conv_finite /
+                         restart_records（逐 restart 诊断，供绝对收敛判据）
     """
     dev = torch.device(device if torch.cuda.is_available() else "cpu")
     mask = sc["mask"]; m = torch.from_numpy(mask.astype(np.float32)).to(dev)
@@ -99,12 +148,27 @@ def joint_solve(sc, subset, restarts=3, base_iters=800, lr=1e-2, lam_tv=0.03,
     mflat = mask
     max_iters = base_iters + 200 * N
     best = None
+    all_traces = []
+    restart_records = []
+    base_seed = 20260830 if seed is None else int(seed)
     for rs in range(restarts):
-        torch.manual_seed(20260830 + rs)
-        a_raw = torch.full((1, 1, H, W), math.log(math.expm1(0.3)), device=dev, requires_grad=True)
-        c = (torch.randn(N, 9, device=dev) * 0.01)
-        with torch.no_grad():
-            c[:, 0] += 0.3
+        torch.manual_seed(base_seed + rs)
+        if theta0 is None:
+            a_raw = torch.full((1, 1, H, W), math.log(math.expm1(0.3)), device=dev,
+                               requires_grad=True)
+            c = (torch.randn(N, 9, device=dev) * 0.01)
+            with torch.no_grad():
+                c[:, 0] += 0.3
+        else:
+            a_init, c_init = theta0
+            a_lin = np.full((H, W), float(a_init), dtype=np.float32) \
+                if np.isscalar(a_init) else np.asarray(a_init, dtype=np.float32)
+            a_lin = np.clip(a_lin, 1e-4, None)
+            a_raw = torch.from_numpy(np.log(np.expm1(a_lin))).to(dev) \
+                .reshape(1, 1, H, W).clone().requires_grad_(True)
+            c = torch.from_numpy(np.asarray(c_init, dtype=np.float32)).to(dev).clone()
+            if restarts > 1:                       # 多 restart 时对给定初值加小扰动
+                c = c + torch.randn(N, 9, device=dev) * 0.01 * (rs > 0)
         c.requires_grad_(True)
         opt = torch.optim.Adam([{"params": [a_raw], "lr": lr},
                                 {"params": [c], "lr": lr}], betas=(0.9, 0.99))
@@ -124,20 +188,43 @@ def joint_solve(sc, subset, restarts=3, base_iters=800, lr=1e-2, lam_tv=0.03,
             opt.step()
             losses.append(float(loss.detach()))
         # 收敛性
-        tail = losses[-50:]
+        tail = losses[-tail_k:]
         converged = (max(tail) - min(tail)) < conv_tol
         with torch.no_grad():
             a_grad = a_raw.grad.norm().item() if a_raw.grad is not None else 0.0
             c_grad = c.grad.norm().item() if c.grad is not None else 0.0
             grad_norm = math.sqrt(a_grad ** 2 + c_grad ** 2)
             final_loss = losses[-1]
+        # R4″ 绝对收敛判据的三个分量（阈值不在此处判定，只落原始量）
+        pgn = _proj_grad_norm(a_raw, c, m, final_loss)
+        tail_rel = (max(tail) - min(tail)) / max(abs(final_loss), 1e-12)
+        conv_finite = bool(math.isfinite(final_loss) and math.isfinite(grad_norm)
+                           and math.isfinite(pgn)
+                           and bool(torch.isfinite(a_raw.detach()).all())
+                           and bool(torch.isfinite(c.detach()).all()))
         success = converged and grad_norm < 1e-3
         A_hat = torch.nn.functional.softplus(a_raw).detach().cpu().numpy()[0, 0] * mask
         c_hat = c.detach().cpu().numpy()
+        restart_records.append(dict(restart=rs, seed=base_seed + rs,
+                                    final_loss=final_loss, grad_norm=grad_norm,
+                                    proj_grad_norm=pgn, tail_rel_change=tail_rel,
+                                    conv_finite=conv_finite, converged=converged,
+                                    iters=max_iters))
+        if return_trace:
+            all_traces.append(np.asarray(losses, dtype=np.float64))
         if best is None or final_loss < best[0]:
-            best = (final_loss, A_hat, c_hat, success, grad_norm, max_iters)
-    return dict(final_loss=best[0], A_hat=best[1], c_hat=best[2],
-                success=best[3], grad_norm=best[4], iters=best[5])
+            best = (final_loss, A_hat, c_hat, success, grad_norm, max_iters,
+                    pgn, tail_rel, conv_finite, rs,
+                    np.asarray(losses, dtype=np.float64) if return_trace else None)
+    out = dict(final_loss=best[0], A_hat=best[1], c_hat=best[2],
+               success=best[3], grad_norm=best[4], iters=best[5],
+               proj_grad_norm=best[6], tail_rel_change=best[7],
+               conv_finite=best[8], best_restart=best[9],
+               seed_base=base_seed, restart_records=restart_records)
+    if return_trace:
+        out["loss_trace"] = best[10]
+        out["all_traces"] = all_traces
+    return out
 
 
 def n_curve_one(sc, N, restarts):
