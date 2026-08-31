@@ -1,0 +1,33 @@
+{
+  "image_diversity": {
+    "max_D_ij": 0.3855736553668976,
+    "mean_D_ij_offdiag": 0.1495862901210785
+  },
+  "repeat_render_noise": {
+    "assumed_floor_1e-3": true
+  },
+  "light_to_noise_ratio": 192.7868276834488,
+  "lighting_metadata_match": {
+    "sh_irradiance_vs_image_cam_frame": 1.8357503414154053
+  },
+  "albedo_range": [
+    0.3864295482635498,
+    0.5711249113082886
+  ],
+  "depth_range": [
+    1.5081186294555664,
+    2.8565516471862793
+  ],
+  "normal_unit_error": 0.0,
+  "normal_mesh_vs_depth_ang_mae": null,
+  "sh_or_light_range": [
+    -0.8884277939796448,
+    0.9647461771965027
+  ],
+  "oracle_reconstruction": null,
+  "nan_inf": false,
+  "scene_id": "conf_cube_axis",
+  "zsh_hash": null,
+  "generation_seconds": 5.6,
+  "protocol": "P1_v1_route_A_irradiance"
+}
