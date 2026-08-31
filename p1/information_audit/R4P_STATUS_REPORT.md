@@ -37,9 +37,23 @@
 
 ## 2. 进行中：全 18 scene solver + 统计
 
-后台任务 `exec_1ef9c747-...`：canary 1 scene（conf_cone_r04_d12）已 90 trial 完成（N=3 414s, N=5 538s, N=8 802s, 节奏 ~14~27s/run），17 scene × 90 ≈ 5h+。**断点续跑**：trials.csv 已 96 行（+5 from canary continue），可被任何重启的 solve 阶段自动跳过已做。
+后台任务 `exec_1ef9c747-...`：canary 1 scene（conf_cone_r04_d12）已 90 trial 完成（N=3 414s, N=5 538s, N=8 802s, 节奏 ~14~27s/run）。**当前进度 851/1620 trial（52.5%）、10/18 scene 完整**（cyl_plus_sphere 89/90 trial 几近完成；hemisphere_sq 仅 30 trial N=3 完成）。
 
-stats 端到端 1-scene 验证：90 trial → 52 success（58%）、E2 verdict=INSUFFICIENT（要求 ≥8 scene）、G2/E3=INSUFFICIENT。**这仅是管线 sanity check，不作 E2 真实证据**。
+**Partial E2 诊断（8-9 scene，非 verdict）**：
+
+| N | n_scene (≥18 success) | median_ρ | frac_neg | 95% CI | 方向 |
+|---|---|---|---|---|---|
+| 3 | 5 | -0.146 | 100% | [-0.433, -0.073] | 弱负 ✓ 方向对 |
+| 5 | 5 | -0.196 | 60% | [-0.554, +0.150] | 弱负（含 0）|
+| 8 | 5 | +0.186 | 40% | [-0.544, +0.581] | **混杂（场景间方差大）** |
+
+**直觉**（仅信号，不可作 verdict）：G1 部分被验证（固定 N 内确有相关），G2/E3 仍待 18 scene 全部。**N=8 的 5 scene 中 ρ∈{-0.54, -0.46, +0.19, +0.46, +0.58}**——场景间方差巨大，可能与法线多样性（cluster vs smooth）相关；**8 scene 还远不够 scene-bootstrap 的 10000 重采样稳定性**。
+
+**距离裁决还差**：
+- 剩余 8 scene × 90 trial ≈ 5h GPU
+- 全 18 scene 跑完后 stats 阶段 <1 min
+- 裁决落盘 + CLAIM_REGISTRY v0.3 + 交付报告 < 1h
+- **最早裁决时间**：solve 完成 +1h
 
 ## 3. 数学协议的最终状态
 

@@ -203,6 +203,8 @@ def e2_stats(trials):
     from scipy.stats import spearmanr
     per_N = {}
     verdicts = {}
+    # 自适应 per-scene 最低 trial 数：≥ 0.6 * SUBSETS_PER_N（30 → 18）
+    min_ts = max(int(0.6 * SUBSETS_PER_N), 15)
     for N in NS:
         tN = [t for t in trials if t["N"] == N and t["success"] == 1]
         by_scene = {}
@@ -210,7 +212,7 @@ def e2_stats(trials):
             by_scene.setdefault(t["scene"], []).append(t)
         rhos, scenes_ok = [], []
         for scn, ts in sorted(by_scene.items()):
-            if len(ts) < 60:
+            if len(ts) < min_ts:
                 continue
             x = np.array([t["score"] for t in ts]); y = np.array([t["err"] for t in ts])
             if x.std() < 1e-15 or y.std() < 1e-15:
