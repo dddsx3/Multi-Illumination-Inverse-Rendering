@@ -1,11 +1,17 @@
 # Multi-Illumination Inverse Rendering
 
 > **外部专家求助导航**：[`EXPERT_BRIEFING.md`](EXPERT_BRIEFING.md)（一页式现状 + 事故记录索引 + 建议咨询问题）
-> **当前状态最权威文档**：[`p1/HANDOFF.md`](p1/HANDOFF.md)（15 问逐答，2026-08-30）
+> **P1 阶段最新状态（2026-08-31）**：[`p1/information_audit/R4P_STATUS_REPORT.md`](p1/information_audit/R4P_STATUS_REPORT.md)（数学 R3′ PASS + 数据 R4′-C 18/18 PASS；统计全量 solve 后台跑）
+> **H-COND 状态**：[`p1/protocol/CLAIM_REGISTRY.md`](p1/protocol/CLAIM_REGISTRY.md) v0.2 — 仍 hypothesis，最终 A/B/C 裁决待全量 stats 落盘
 
 基于物理渲染器监督的多光照逆渲染系统：从同一场景的 **N 张不同光照图像**（RGB 或灰度、非定标光照）中分解出**深度 / 反照率 / 法线 / 球谐光照系数**，支持任意光照数量（N ≥ 1）的置换不变推理，并通过可微物理渲染器端到端监督。
 
-> **当前状态（2026-08-28）**：Phase 2（架构升级与消融）进行中。核心创新——光照数量无关的注意力融合架构（FusionUNet）已交付，通过置换不变性测试与 N 敏感性双轨评估；物理输出约束（INC-0012）已落地并验证。消融矩阵补全（4 个变体）与 3-seed 抖动实验训练中。
+> **当前状态（2026-08-31 · commit `dcebbd0`）**：
+> - **数学 R3′** PASS：`gauge_fisher_v2.py` 替代 v1，full-Schur 完整、交叉块含 s_kp，28/28 单测过。`IDENTIFIABILITY_v2.md` 修正 v0.1 命题。
+> - **数据 R4′-C** 18 scene 全部 G1/G2/G3 PASS + Or1 SI-PSNR 25.06–31.41 dB。
+> - **统计 R4′** 端到端管线验证（1-scene canary 90 trial, 58% success）；全量 1530 trial 后台求解中，~5h GPU 余。
+> - **待裁决**：E2/G2/E3 → A/B/C 三分支（CLAIM 锁核 / 保留 fixed-N 命题 / 杀 H-COND）。
+> - 历史 Phase 2 融合架构（FusionUNet）已暂搁置；R3′ 之后等 H-COND 裁决再决定。
 
 ## Demo
 
