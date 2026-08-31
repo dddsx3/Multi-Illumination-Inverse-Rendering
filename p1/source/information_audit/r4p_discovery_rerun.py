@@ -44,7 +44,17 @@ def run(tag, out_name, pixel_cap, cutoff):
                 sub = sorted(rng.choice(sc["K"], N, replace=False).tolist())
                 px_seed = int(rng.integers(1 << 31))
                 a, Y, C = scene_arrays(sc, sub, pixel_cap=pixel_cap, seed=px_seed)
-                r = ga_isi_v2_scores(a, Y, C, cutoff=cutoff)
+                # 本机 commit 配额紧张（INC 笔记：30GB/32GB）→ MemoryError 退避重试
+                for attempt in range(6):
+                    try:
+                        r = ga_isi_v2_scores(a, Y, C, cutoff=cutoff)
+                        break
+                    except MemoryError:
+                        import gc as _gc, time as _t
+                        _gc.collect()
+                        _t.sleep(20 * (attempt + 1))
+                else:
+                    raise MemoryError(f"{tag} {sc['name']} N={N}: OOM persist")
                 r.update(scene=sc["name"], N=N, subset=",".join(map(str, sub)),
                          variant=tag)
                 rows.append(r)
@@ -74,13 +84,17 @@ def rank_stability(base, variant, key="full_lam_min_pos_norm"):
 
 def main():
     print("== R4'-D discovery rerun (v2) ==", flush=True)
-    base = run("cap2000_cut1e-8", "ga_isi_v2_discovery.csv", 2000, 1e-8)
-    cap1k = run("cap1000_cut1e-8", "ga_isi_v2_discovery_cap1000.csv", 1000, 1e-8)
-    cut6 = run("cap2000_cut1e-6", "ga_isi_v2_discovery_cut1e6.csv", 2000, 1e-6)
+    # pixel_cap 冻结为 1000（本机 commit 配额 ~32GB 已用 94%+，P=2000 dense 的
+    # ~500MB 峰值不稳；P=1000 峰值 ~150MB 稳健。cap 一致适用于全部子集/场景，
+    # 指标为 trace 归一无量纲，排名稳定性由 cap1000 vs cap500 变体实证。）
+    base = run("cap1000_cut1e-8", "ga_isi_v2_discovery.csv", 1000, 1e-8)
+    cap05 = run("cap500_cut1e-8", "ga_isi_v2_discovery_cap500.csv", 500, 1e-8)
+    cut6 = run("cap1000_cut1e-6", "ga_isi_v2_discovery_cut1e6.csv", 1000, 1e-6)
 
     lines = ["# R4′-D · Discovery Set 复跑报告（v2 稳定性检查；非确认性证据）", "",
              f"> seed={SEED} · N∈{NS} × {SUBSETS} subsets × 4 scenes · "
-             "primary = full_lam_min_pos_norm（scene/trace 归一 λ_min⁺）", ""]
+             "primary = full_lam_min_pos_norm（scene/trace 归一 λ_min⁺） · "
+             "pixel_cap 冻结 = 1000（commit 配额约束；cap1000 vs cap500 稳定性见下）", ""]
 
     # 病态检查（主扫描）
     gr = max(float(r["full_gauge_residual"]) for r in base)
@@ -99,10 +113,10 @@ def main():
               f"- primary ≤0 的 (scene,subset)：{zero_primary}/{len(base)}", ""]
 
     # 稳定性：秩相关
-    n1, s1, p1 = rank_stability(base, cap1k)
+    n1, s1, p1 = rank_stability(base, cap05)
     n2, s2, p2 = rank_stability(base, cut6)
     lines += ["## 稳定性（primary 的 Spearman 秩相关）", "",
-              f"- pixel_cap 2000 vs 1000（同子集）：ρ={s1:.4f}（n={n1}, p={p1:.2e}）",
+              f"- pixel_cap 1000 vs 500（同子集）：ρ={s1:.4f}（n={n1}, p={p1:.2e}）",
               f"- cutoff 1e-8 vs 1e-6（同像素）：ρ={s2:.4f}（n={n2}, p={p2:.2e}）", ""]
 
     # 存在性前提：固定 N 内 primary 分布宽度（GA-ISI 非退化的前提）

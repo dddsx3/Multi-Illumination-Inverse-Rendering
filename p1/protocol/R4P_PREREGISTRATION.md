@@ -17,8 +17,12 @@
 
 - **Primary**：`full_lam_min_pos_norm` = scene-normalized λ_min⁺
   （`gauge_fisher_v2.spectrum_metrics`：F_eff/trace 正谱最小值）。
-  数值策略冻结：cutoff(F_k 伪逆) = 1e-8；pixel_cap = 【R4′-D 定：2000 或 1000，
-  取两 cap 秩相关更稳者；见 R4P_DISCOVERY_RERUN_REPORT.md】；spec_cutoff = 1e-8；
+  数值策略冻结：cutoff(F_k 伪逆) = 1e-8；**pixel_cap = 1000**
+  （冻结理由：本机 Windows commit 配额 ~32GB 已用 ≥94%，P=2000 dense 的
+  ~500MB 瞬时峰值反复分配失败——同一评估重复 3 次死于 30.5MB 分配；
+  P=1000 峰值 ~150MB 稳健。cap 对全部 scene/subset 统一适用，指标为
+  trace 归一无量纲；cap1000 vs cap500 的 primary 排名稳定性由 R4′-D
+  变体实证，见 R4P_DISCOVERY_RERUN_REPORT.md）；spec_cutoff = 1e-8；
   gauge 处理 = 投影等效的正谱指标（T4b 已证不变）。
 - **Secondary**：`full_logdet_pos_norm`、`full_a_opt_pos_norm`、
   `full_d_pos`、angular diversity（32 SUN 方向子集的成对夹角均值，
@@ -32,10 +36,13 @@
 - Solver：`joint_solve_batched`（批量 = 串行实现的逐元素等价形式；
   冻结验证门槛：4 个 (scene,N) 验证用例上 SI-MAE 相对差 ≤ 1e-3）。
   - restarts = 3（固定种子 20260830+rs）；max_iters = 800 + 200·N（与 R4 相同）；
-  - 收敛判据（先在 Discovery 上标定后冻结）：tail-50 loss 极差 < 【标定值】
-    且 final grad-norm < 【标定值】；标定程序：Discovery 20 pilot trials 的
-    tail-range 分布取 P75；最终 success rate 必须报告；**只纳入收敛 trials**，
-    失败率单独列报，不得静默删除；
+  - 收敛判据（先在 Discovery 上标定后冻结）：solver 落盘 raw 诊断
+    tail_range（末 50 iter loss 极差）与 grad_norm；pilot（Discovery 4 scene ×
+    N=5 × 6 subsets = 24 trials，批量 solver）取 rel 标度后冻结
+    **tail_range < 【pilot P75】且 grad_norm < 【pilot P75】**，写
+    `p1/information_audit/r4p_conv_thresholds.json` 后不得更改；
+    最终 success rate 必须报告；**只纳入收敛 trials**，失败率单独列报，
+    不得静默删除；另报全 trials（不筛）的 E2 相关系数作稳健性对照（不改裁决）。
   - 记录：iters / grad-norm / final loss / objective gap（loss − 饱和下界代理）/ success。
 - 误差：`si_mae_A`（albedo SI-MAE，scale gauge，mesh normal GT 口径）+
   `ho_psnr`（oracle-query-light held-out relighting，q = 子集外最小索引）。
@@ -93,8 +100,8 @@ Claim 状态更新写入 `CLAIM_REGISTRY.md`（版本号递增），随后更新
 ## 7. 冻结清单（commit 时逐项打钩）
 
 - [x] primary 定义与数值策略（cutoff/spec_cutoff）
-- [ ] pixel_cap（待 R4′-D 稳定性结果，二选一并注明）
-- [ ] solver 收敛判据数值（待 Discovery pilot 标定）
+- [x] pixel_cap = 1000（commit 配额约束，理由与稳定性对照见 §1）
+- [ ] solver 收敛判据数值（待 Discovery pilot 标定 → r4p_conv_thresholds.json）
 - [ ] 批量/串行 solver 一致性验证记录（≤1e-3）
 - [x] N 集合、subsets 数、seed
 - [x] E2/G2/E3 回归式与阈值

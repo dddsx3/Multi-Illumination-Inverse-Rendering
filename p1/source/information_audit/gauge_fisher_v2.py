@@ -73,6 +73,7 @@ Gauge 处理
 """
 import argparse
 import csv
+import gc
 import os
 import sys
 
@@ -168,7 +169,7 @@ def pinv_psd(F, cutoff=DEFAULT_CUTOFF):
 # Full Schur（R3' 修正点 2）与 diag proxy
 # ======================================================================
 def schur_full(bl, cutoff=DEFAULT_CUTOFF):
-    """F_eff = diag(F_ss) − Σ_k B_k F_k† B_k^T，P×P 稠密对称（fp 对称化）。"""
+    """F_eff = diag(F_ss) − Σ_k B_k F_k† B_k^T，P×P 稠密对称（fp 对称化，原地）。"""
     P = bl["P"]
     F_eff = np.diag(bl["F_ss_diag"])
     pinv_info = []
@@ -176,7 +177,8 @@ def schur_full(bl, cutoff=DEFAULT_CUTOFF):
         Fk_inv, rank, lmax = pinv_psd(bl["Fk"][k], cutoff)
         F_eff -= bl["B"][k] @ Fk_inv @ bl["B"][k].T
         pinv_info.append(dict(k=k, rank=rank, lam_max=lmax))
-    F_eff = 0.5 * (F_eff + F_eff.T)
+    F_eff += F_eff.T          # 转置视图原地累加（numpy 检测重叠自动缓冲）
+    F_eff *= 0.5
     bl.setdefault("diag", {})["pinv_info"] = pinv_info
     return F_eff
 
@@ -221,7 +223,7 @@ def spectrum_metrics(F_eff, cutoff=DEFAULT_CUTOFF, spec_cutoff=1e-8):
     spec_cutoff：正谱判定阈（相对 trace 归一化后的 λ̃），与 F_k 伪逆
     cutoff 语义不同（后者作用于 9×9 块）。
     """
-    w = np.linalg.eigvalsh(0.5 * (F_eff + F_eff.T))
+    w = np.linalg.eigvalsh(F_eff)                # 输入已对称（schur_full 保证）
     tr = float(w.sum())
     if tr <= 0:
         return dict(lam_min_pos_norm=0.0, lam_max_norm=0.0, logdet_pos_norm=float("-inf"),
@@ -364,9 +366,20 @@ def ga_isi_v2_scores(a, Y, C, cutoff=DEFAULT_CUTOFF, want_proxy=True,
     use_op = (path == "operator") or (path == "auto" and bl["P"] > DENSE_MAX_P)
     if not use_op:
         F_eff = schur_full(bl, cutoff)
-        m = spectrum_metrics(F_eff)
+        P = bl["P"]
+        # 内存精简：offdiag 分块求 max（避免 3×P² 临时矩阵；本机 commit 配额紧张）
+        d_sl = np.diag(F_eff)
+        offdiag_max = 0.0
+        for r0 in range(0, P, 256):
+            r1 = min(r0 + 256, P)
+            blk = F_eff[r0:r1].copy()
+            blk[np.arange(r0, r1) - r0, np.arange(r0, r1)] = 0.0
+            if blk.size:
+                offdiag_max = max(offdiag_max, float(np.abs(blk).max()))
+            del blk
+        m = spectrum_metrics(F_eff)                 # F_eff 已对称，eigvalsh 直接用
         row = dict(
-            P=bl["P"], N=bl["N"], cutoff=cutoff, path="dense",
+            P=P, N=bl["N"], cutoff=cutoff, path="dense",
             full_lam_min_pos_norm=m["lam_min_pos_norm"],      # ← primary
             full_lam_max_norm=m["lam_max_norm"],
             full_logdet_pos_norm=m["logdet_pos_norm"],
@@ -375,11 +388,13 @@ def ga_isi_v2_scores(a, Y, C, cutoff=DEFAULT_CUTOFF, want_proxy=True,
             full_trace=m["trace"],
             full_min_eig=m["min_eig"],
             full_gauge_residual=gauge_residual(F_eff, bl["a"]),
-            full_offdiag_max=float(np.abs(F_eff - np.diag(np.diag(F_eff))).max()),
+            full_offdiag_max=offdiag_max,
             rank_Fk_min=min(i["rank"] for i in bl["diag"]["pinv_info"]),
             active_frac_min=float(bl["diag"]["active_frac"].min()),
             boundary_frac_max=float(bl["diag"]["boundary_frac"].max()),
         )
+        del F_eff
+        gc.collect()
     else:
         apply_f, trace, meta = schur_operator(bl, cutoff)
         eigs = lambda_min_pos_eigsh(bl, apply_f, trace)
