@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-08-31T20:01:23.323818",
+  "dataset_tag": "R4prime_exploratory",
+  "n_trials": 988,
+  "n_scenes": 11,
+  "n_cells": 33,
+  "N_values": [
+    3,
+    5,
+    8
+  ],
+  "family_counts": {
+    "smooth": 450,
+    "cluster": 360,
+    "composite": 178
+  },
+  "old_p75_success_rate": 0.5840080971659919,
+  "old_success_asrecorded_rate": 0.0,
+  "old_converged_flag_rate": 0.0,
+  "objective_rel_change_available": false,
+  "assertions_all_pass": true,
+  "note": "旧 filter 为分析时施加，采集未丢数据；objective_rel_change 需 C-1 之后的新 trial 才可计算。"
+}
