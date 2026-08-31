@@ -20,6 +20,7 @@
 """
 import argparse
 import csv
+import gc
 import json
 import math
 import os
@@ -180,16 +181,33 @@ def stage_analyze():
     import pandas as pd
     from scipy import stats
     df = pd.read_csv(SOLVE_CSV)
-    # geometry metric（用 scene Gram 的 rank，从 04_geometry_spectrum 读）
+    # 全部数值列强制 numeric（处理可能的字符串残留）
+    for col in ["reconstruction_error", "information", "N", "G", "n", "beta_G"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    # reconstruction_error 可能有 NaN 或非数值（断点续跑覆盖期产生）
+    df["reconstruction_error"] = pd.to_numeric(df["reconstruction_error"],
+                                                errors="coerce")
+    df = df.dropna(subset=["reconstruction_error", "information"])
+    df = df[df["reconstruction_error"] > 0]
+    # geometry metric：优先用 effrank（对 controlled 连续），fallback rank
     geo = {}
     for r in csv.DictReader(open(os.path.join(OUT_DIR, "04_geometry_spectrum.csv"))):
-        geo[r["scene"]] = float(r[f"{G_METRIC}_wI"])
+        try:
+            er = float(r.get("G3_effrank_wI", "nan"))
+        except (TypeError, ValueError):
+            er = float("nan")
+        try:
+            rk = float(r.get("G1_rank_wI", "nan"))
+        except (TypeError, ValueError):
+            rk = float("nan")
+        geo[r["scene"]] = er if np.isfinite(er) else rk
     rows = []
     for (scn, N), g in df.groupby(["scene", "N"]):
         if len(g) < 10:
             continue
-        I = g["information"].values
-        E = np.log(g["reconstruction_error"].values)
+        I = np.asarray(g["information"].values, dtype=float)
+        E = np.log(np.asarray(g["reconstruction_error"].values, dtype=float))
         # 标准化 I（z-score），log Error ~ z(I)
         Iz = (I - I.mean()) / max(I.std(), 1e-12)
         slope, intercept, r, p, se = stats.linregress(Iz, E)
