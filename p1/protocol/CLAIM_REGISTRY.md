@@ -2,7 +2,9 @@
 
 > **本文件是论文的宪法**：此后任何实验、图表、章节都必须服务于以下三句话。
 > 修改本文件 = 修改论文核心 = 需要 R4 级证据 + 显式版本号。
-> 版本：v0.1（R4 定核 Gate 结果出来前，Hypothesis 以假设形式存在）
+> **版本**：v0.2（R3′ 数学封口 + R4′-C 18 scene 全部 Gate PASS；R4′ 全量
+> solver 1530 trial 采集后台进行中、stats 裁决未出，H-COND 仍 hypothesis；
+> 见 `p1/information_audit/R4P_STATUS_REPORT.md`）。
 
 ## Research Question
 
@@ -48,3 +50,10 @@ canonical reflectance + 2.5D 几何 + 显式 per-image 光照。）
 - 若失败 → 杀掉 H-COND（不许补故事），降级候选 =
   "arbitrary-N single-view joint decomposition with explicit per-light
   illumination + held-out relighting"（弱核心，参考 IDArb/LINO 再定位）。
+
+> **当前状态（v0.2）**：R3′ 数学封口通过（v2 full-Schur、28/28 单测 PASS），
+> R4′-C 18 scene 全部 G1/G2/G3 PASS + Or1 SI-PSNR 27.29 dB（物理协议仍封口）。
+> R4′ 统计采集在后台进行（17/18 scene solve 待跑，1-scene canary 已验证端到端管线）。
+> H-COND 状态保持 hypothesis；以下三种裁决**均待 R4′ stats 完成后**由下一棒 agent 落盘：
+> A（锁核）/ B（保留 fixed-N 命题、P1-13 由 R5 fallback novelty 决定）/ C（杀 H-COND）。
+> 任何 R4′ 跑完前的临时裁决均**不写入**。
