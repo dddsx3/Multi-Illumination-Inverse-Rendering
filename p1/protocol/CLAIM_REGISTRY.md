@@ -2,9 +2,10 @@
 
 > **本文件是论文的宪法**：此后任何实验、图表、章节都必须服务于以下三句话。
 > 修改本文件 = 修改论文核心 = 需要 R4 级证据 + 显式版本号。
-> **版本**：v0.2（R3′ 数学封口 + R4′-C 18 scene 全部 Gate PASS；R4′ 全量
-> solver 1530 trial 采集后台进行中、stats 裁决未出，H-COND 仍 hypothesis；
-> 见 `p1/information_audit/R4P_STATUS_REPORT.md`）。
+> **版本**：v0.3（R4″ sprint 完成；6 行 Gate dashboard 见 `r4pp/08_go_no_go_dashboard.md`；
+> 终裁 `r4pp/09_R4pp_decision.md` = **PIVOT (B′)**；H-COND 主效应在 Direction
+> 弱化版上成立但 Geometry × Information interaction 未观察到稳定趋势）。
+> 落盘 commit：`2af42c0`（Task F 完成点）。
 
 ## Research Question
 
@@ -39,21 +40,30 @@ canonical reflectance + 2.5D 几何 + 显式 per-image 光照。）
 - 2.5D depth 本身
 - "光照质量比数量重要"的直觉（ICCV05 经典 + GeoUniPS 已占）
 
-## 核心判据（R4 Gate，对应 EXPERIMENT_CONTRACT E2/E3）
+## 核心判据（R4″ Gate，6 行 dashboard，详见 `r4pp/08_go_no_go_dashboard.md`）
 
-- **G1**：固定 N 内，GA-ISI 分数（λ⁺_min / logdet⁺ / A-opt）与恢复误差
-  有稳定符号的显著相关；
-- **G2**：Error ~ logN + score 的解释力显著优于 Error ~ logN（ΔR²）；
-- 若通过 → 核心锁定，题目候选
-  *Beyond Cardinality: Gauge-Aware Illumination-Set Identifiability
-  for Variable-Cardinality Inverse Rendering*；
-- 若失败 → 杀掉 H-COND（不许补故事），降级候选 =
-  "arbitrary-N single-view joint decomposition with explicit per-light
-  illumination + held-out relighting"（弱核心，参考 IDArb/LINO 再定位）。
+- **Instrument**：bulk 信息度量（M1 log pdet）5/5 stability test PASS。
+- **Signal**：low-N R_signal 远高于 repeat noise（全 24 cell > 2，median 27.2）。
+- **Direction**：info→error β<0 在多数 scene 成立（β median −0.348, 81% 负号）。
+- **Interaction**：controlled geometry pilot 内 G↑⇒|β_G|↑ 趋势 **未稳定**
+  （family A N=3 ρ=+0.29, N=5 ρ=+0.72 反向；family B 3 level G 区分度不足）。
+- **Saturation**：N=8 R_signal 22.6 且 σ_subset/err 3.2% — 真衰减不是噪声。
+- **Externality**：local-vs-global init 实验因本机环境约束 PENDING（详见 decision 报告）。
 
-> **当前状态（v0.2）**：R3′ 数学封口通过（v2 full-Schur、28/28 单测 PASS），
-> R4′-C 18 scene 全部 G1/G2/G3 PASS + Or1 SI-PSNR 27.29 dB（物理协议仍封口）。
-> R4′ 统计采集在后台进行（17/18 scene solve 待跑，1-scene canary 已验证端到端管线）。
-> H-COND 状态保持 hypothesis；以下三种裁决**均待 R4′ stats 完成后**由下一棒 agent 落盘：
-> A（锁核）/ B（保留 fixed-N 命题、P1-13 由 R5 fallback novelty 决定）/ C（杀 H-COND）。
-> 任何 R4′ 跑完前的临时裁决均**不写入**。
+> **当前状态（v0.3）**：R4″ sprint 6 行 Gate = **Instrument/Signal/Saturation
+> PASS, Direction PASS, Interaction FAIL, Externality PENDING**。
+> 预注册裁决映射（§44）：**PIVOT (B′)**。
+>
+> **PIVOT 后的新科学问题**（任务书 §28 B′ 主线原文）：
+> *Beyond Cardinality: Effective Information at Fixed Illumination Budget*
+> 说明 illumination information 本身有效（Direction + Signal + Instrument 三条支撑），
+> 但 geometry × information interaction 没有稳定机制证据（Interaction FAIL）。
+>
+> 不进入 GO (A2) 也不进入 KILL H-COND —— 前 4 个 Gate 给出足够裁决依据，
+> 第 5 个（Externality）受环境硬约束不能执行、但任务书 §28 规定不影响裁决。
+>
+> 与 R4prime_frozen 旧数据的根本区别（详见 `archive/R4prime_frozen/R4prime_failure_audit.md`
+> 与 `r4pp/09_R4pp_decision.md`）：primary metric 已从退化的 `λ_min⁺` 换为 M1 log pdet；
+> 收敛判据已从 P75×P75 内生筛选换为 absolute-step200 无内生准则；Solver 加 seed/theta0/
+> trace/proj_grad_norm 可复现；新增噪声地板标定。**所有引用旧 R4′ 数字的论文段落
+> 必须在更新版删除或重做**。

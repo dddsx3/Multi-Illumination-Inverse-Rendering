@@ -36,9 +36,9 @@ def load_beta(path):
     out = []
     for r in rows:
         try:
-            out.append(dict(scene=r["scene"], N=int(r["N"]), G=float(r["G"]),
+            out.append(dict(scene=r["scene"], N=int(float(r["N"])), G=float(r["G"]),
                             beta=float(r["beta_G"]), lo=float(r["boot_ci_lo"]),
-                            hi=float(r["boot_ci_hi"]), n=int(r["n"])))
+                            hi=float(r["boot_ci_hi"]), n=int(float(r["n"]))))
         except (ValueError, KeyError):
             continue
     return out
