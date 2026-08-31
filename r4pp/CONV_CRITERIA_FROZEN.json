@@ -1,0 +1,53 @@
+{
+  "criterion_version": "R4pp_conv_criteria_v1",
+  "frozen_at": "2026-08-31T21:15:00",
+  "calibration_source": "r4pp/02_noise_floor.csv + r4pp/traces/*.npy (pilot 96 runs, 24 cell x 2 subset x 2 seed)",
+  "decision": "ABS_STEP200_ABSOLUTE",
+  "rule": "converged = finite AND (abs_step200 < eps_s) AND (final_objective < eps_l_abs)",
+  "components": {
+    "finite": {
+      "definition": "final_objective, grad_norm, proj_grad_norm, 全部参数 有限",
+      "threshold": null,
+      "note": "布尔判据，无阈值"
+    },
+    "abs_step200": {
+      "definition": "mean(|diff(loss_trace[-200:])|)",
+      "unit": "absolute loss units",
+      "calibration": {
+        "median": 2.81e-07,
+        "p90": 3.64e-07,
+        "max": 3.93e-07
+      },
+      "frozen_threshold_eps_s": 1.0e-06,
+      "rationale": "不归一化的末200步绝对步长。归一化(除以 final_loss 或初始 loss)与 error 反向相关(-0.74/-0.35)或相关弱；绝对步长与 error 无反向选择(ρ=+0.11)。阈值取 p90 的 ~2.7×，留足收敛容差。"
+    },
+    "final_objective_abs": {
+      "definition": "final_objective 的绝对量级",
+      "calibration": {
+        "N2_median": 1.252e-04,
+        "N3_median": 9.117e-05,
+        "N5_median": 9.265e-05,
+        "N8_median": 8.454e-05
+      },
+      "frozen_threshold_eps_l_abs": 3.0e-04,
+      "rationale": "loss 绝对尺度跨 N 稳定(8.4e-5~1.3e-4)，用绝对上界排除发散 run。阈值取 max(p90) 的 ~2×。"
+    },
+    "proj_grad_norm": {
+      "use": "diagnostic only, NOT a filter",
+      "observation": "ρ(proj_grad_norm, reconstruction_error) = -0.748 (p=2e-18) 在 pilot 上",
+      "rationale": "pgn 越小 → error 越大。若用作收敛筛选会反向选择（筛掉好的、留下差的）。因此 pgn 只记录，不参与收敛判定。"
+    },
+    "tail_rel_change": {
+      "use": "diagnostic only, NOT a filter",
+      "observation": "ρ(tail_rel_change, reconstruction_error) = +0.568",
+      "rationale": "与 error 正相关但弱；且其分母 max(|f|,eps) 在 loss 变化时不稳定。不参与收敛判定。"
+    },
+    "grad_norm_old": {
+      "use": "DEPRECATED",
+      "observation": "旧判据分量；master table 988 trial 上 ρ(grad_norm, err) = -0.471 (91% cell 为负)",
+      "rationale": "反向选择已由 P0-3 记录，禁止再用于筛选。"
+    }
+  },
+  "hurdle_model_note": "优化 failure 不删除；作为端点进入 hurdle 模型（任务书 §36）：P(success) ~ I+G+N+I×G 为第一部分，Error|success 为第二部分。",
+  "validation_required": "Task C 全量完成后复核：abs_step200 判据的 success rate 应落在合理区间(10%~90%)，且 ρ(success_flag, error) 不得为负。"
+}
