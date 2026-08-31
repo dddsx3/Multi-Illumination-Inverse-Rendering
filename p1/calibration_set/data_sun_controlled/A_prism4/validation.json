@@ -1,0 +1,33 @@
+{
+  "image_diversity": {
+    "max_D_ij": 0.2613292336463928,
+    "mean_D_ij_offdiag": 0.10289376229047775
+  },
+  "repeat_render_noise": {
+    "assumed_floor_1e-3": true
+  },
+  "light_to_noise_ratio": 130.6646168231964,
+  "lighting_metadata_match": {
+    "sh_irradiance_vs_image_cam_frame": 1.833280086517334
+  },
+  "albedo_range": [
+    0.33716365694999695,
+    0.5711249113082886
+  ],
+  "depth_range": [
+    1.908189058303833,
+    2.8881640434265137
+  ],
+  "normal_unit_error": 0.0,
+  "normal_mesh_vs_depth_ang_mae": null,
+  "sh_or_light_range": [
+    -0.8892030119895935,
+    0.9642062783241272
+  ],
+  "oracle_reconstruction": null,
+  "nan_inf": false,
+  "scene_id": "A_prism4",
+  "zsh_hash": null,
+  "generation_seconds": 5.8,
+  "protocol": "P1_v1_route_A_irradiance"
+}

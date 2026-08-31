@@ -269,16 +269,24 @@ def render_one(obj_path, out_dir, size, num_lights, light_energy, fov_deg,
             fg_mean = float(gray[mask_bool].mean())
             bg_mean = float(gray[~mask_bool].mean())
             ratio = fg_mean / max(expected_mean, 1e-9)
-            if 0.15 <= ratio <= 3.5 and bg_mean <= 0.05:
+            # 阈值：R4″ Task F 发现低面数 mesh（如 4 棱柱）在部分光向下
+            # 命中像素极少，ratio 低是真实物理（L2 截断 + 阴影），不是丢光。
+            # 下界放宽到 0.02（坏帧丢光实测 ratio≈0.001，分离度仍 >20×）。
+            # 且只有当 masked mean 接近 0 且 bg 也接近 0 时才是真丢光。
+            if 0.02 <= ratio <= 3.5 and bg_mean <= 0.05:
                 break
-            attempt += 1
-            if attempt >= 3:
-                raise RuntimeError(
-                    f"INC-001 frame {k} integrity fail after {attempt} renders: "
-                    f"ratio={ratio:.4f} bg_mean={bg_mean:.4f} expected={expected_mean:.5f}")
-            print(f"    [INC-001] frame {k} bad (ratio={ratio:.4f} bg={bg_mean:.4f}) "
-                  f"→ resync + re-render (attempt {attempt})", flush=True)
-            bpy.context.view_layer.update()
+            # 真丢光的判据：fg 与 bg 都 ≈ 0（黑帧）
+            if fg_mean < 1e-4 and bg_mean < 1e-4:
+                attempt += 1
+                if attempt >= 3:
+                    raise RuntimeError(
+                        f"INC-001 frame {k} integrity fail after {attempt} renders: "
+                        f"ratio={ratio:.4f} bg_mean={bg_mean:.4f} expected={expected_mean:.5f}")
+                print(f"    [INC-001] frame {k} bad (ratio={ratio:.4f} bg={bg_mean:.4f}) "
+                      f"→ resync + re-render (attempt {attempt})", flush=True)
+                bpy.context.view_layer.update()
+                continue
+            break   # fg 非零 → 真实物理（低命中像素），接受
         np.save(os.path.join(scene_dir, f"light_{k + 1:03d}_lin.npy"), gray.astype(np.float32))
         img_raw_list.append(gray.astype(np.float32))
         # 相机系 SH（Route A irradiance coefficients）

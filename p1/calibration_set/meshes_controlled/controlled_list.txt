@@ -1,0 +1,10 @@
+p1/calibration_set/meshes_controlled\A_prism4.obj
+p1/calibration_set/meshes_controlled\A_prism8.obj
+p1/calibration_set/meshes_controlled\A_prism16.obj
+p1/calibration_set/meshes_controlled\A_prism32.obj
+p1/calibration_set/meshes_controlled\A_cylinder.obj
+p1/calibration_set/meshes_controlled\B_cube.obj
+p1/calibration_set/meshes_controlled\B_bevel05.obj
+p1/calibration_set/meshes_controlled\B_bevel15.obj
+p1/calibration_set/meshes_controlled\B_bevel30.obj
+p1/calibration_set/meshes_controlled\B_rounded.obj
