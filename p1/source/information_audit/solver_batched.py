@@ -84,10 +84,11 @@ def joint_solve_batched(sc, subsets, restarts=3, base_iters=800, lr=1e-2,
             A = torch.nn.functional.softplus(a_raw)[:, 0]        # [Bp,H,W]
             s = torch.nn.functional.relu(
                 torch.einsum("hwc,bnc->bnhw", Y_full, c))        # [Bp,N,H,W]
-            recon = (((A[:, None] * s - I) * m[None, None]) ** 2).sum((2, 3)) / (msum * N)
+            recon = (((A[:, None] * s - I) * m[None, None]) ** 2).sum((1, 2, 3)) / (msum * N)
             Am = A * m
-            tv_x = (Am[:, 1:] - Am[:, :-1]).abs() * m[None, 1:] * m[None, :-1]
-            tv_y = (Am[1:, :] - Am[:-1, :]).abs() * m[None, 1:, :] * m[None, :-1, :]
+            # TV：x 方向 (W-1) 与 y 方向 (H-1) 一阶差，mask 同位置切片对齐。
+            tv_x = (Am[..., :, 1:] - Am[..., :, :-1]).abs() * m[None, :, 1:] * m[None, :, :-1]
+            tv_y = (Am[..., 1:, :] - Am[..., :-1, :]).abs() * m[None, 1:, :] * m[None, :-1, :]
             tv = (tv_x.sum((1, 2)) + tv_y.sum((1, 2))) / msum
             loss = recon + lam_tv * tv                           # [Bp]
             loss.sum().backward()
@@ -130,7 +131,8 @@ def validate(data_root, scenes=2, subsets_per_scene=2, N=5, seed=7):
     """预注册验证门槛：批量 vs 串行 SI-MAE/final_loss 相对差 ≤ 1e-3。"""
     import time
     scene_dirs = sorted([os.path.join(data_root, d) for d in os.listdir(data_root)
-                         if os.path.isfile(os.path.join(data_root, d, "sh_coeffs_irradiance.npy"))])
+                         if os.path.isfile(os.path.join(data_root, d, "sh_coeffs_irradiance.npy"))
+                         and not d.startswith("_")])
     rng = np.random.default_rng(seed)
     worst = 0.0
     for sd in scene_dirs[:scenes]:
@@ -153,7 +155,7 @@ def validate(data_root, scenes=2, subsets_per_scene=2, N=5, seed=7):
                   f"(rel {de:.2e}) | loss rel {dl:.2e} | success {rseq['success']}/{rbat['success']}")
         print(f"  timing: seq {t_seq:.1f}s vs batched {t_bat:.1f}s "
               f"(speedup x{t_seq / max(t_bat, 1e-9):.1f})")
-    print(f"WORST rel diff = {worst:.3e}  → {'PASS (≤1e-3)' if worst <= 1e-3 else 'FAIL'}")
+    print(f"WORST rel diff = {worst:.3e}  → {'PASS (≤1e-3)' if worst <= 1e-3 else 'FAIL (>1e-3; 检查实现是否真的逐元素等价)'}")
     return worst
 
 

@@ -1,0 +1,36 @@
+{
+  "n_trials": 90,
+  "n_converged": 52,
+  "convergence_rate": 0.5777777777777777,
+  "E2": {
+    "per_N": {
+      "3": {
+        "n_scenes": 0,
+        "verdict": "INSUFFICIENT"
+      },
+      "5": {
+        "n_scenes": 0,
+        "verdict": "INSUFFICIENT"
+      },
+      "8": {
+        "n_scenes": 0,
+        "verdict": "INSUFFICIENT"
+      }
+    },
+    "verdict_by_N": {},
+    "overall": "FAIL"
+  },
+  "G2": {
+    "verdict": "INSUFFICIENT"
+  },
+  "E3": {
+    "verdict": "INSUFFICIENT",
+    "n_scenes": 0
+  },
+  "VERDICT": "C",
+  "verdict_rule": {
+    "A": "E2+G2+E3 all PASS",
+    "B": "E2 PASS (G2/E3 any fail)",
+    "C": "E2 FAIL"
+  }
+}
