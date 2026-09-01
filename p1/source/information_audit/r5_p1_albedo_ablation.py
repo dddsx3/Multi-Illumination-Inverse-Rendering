@@ -38,6 +38,9 @@ import math
 import os
 import sys
 from collections import defaultdict
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]  # p1/source/information_audit/r5_p1_albedo_ablation.py → repo root (3 levels up)
 
 import numpy as np
 from scipy.stats import spearmanr
@@ -384,6 +387,11 @@ def main():
 
     print(f"\nGate verdict: {verdict}  (median rho = {med_rho:.4f})")
     print(f"Wrote: {raw_path}\n       {rank_path}\n       {gate_path}\n       {outlier_path}")
+    # R5-B' IDE-friendly: write DONE marker so r5_train.py / r5_status.py can detect completion
+    done_marker = Path(os.environ.get("R5_DONE_MARKER", REPO_ROOT / ".venv_a10" / "P1A_DONE"))
+    done_marker.parent.mkdir(parents=True, exist_ok=True)
+    done_marker.write_text(f"P1-A DONE at {verdict} (median rho={med_rho:.4f})\n")
+    print(f"[r5_train marker] {done_marker}")
 
     # ===== 3. solver arm (optional) =====
     if args.solver:
