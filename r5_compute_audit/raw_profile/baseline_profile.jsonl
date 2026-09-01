@@ -1,0 +1,13 @@
+{"scene": "conf_sphere_r05", "N": 3, "method": "dense_gsiq", "runtime": 0.031275733335254095, "peak_memory": 2.4, "score": -5.8458, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 5, "method": "dense_gsiq", "runtime": 0.040673533328420795, "peak_memory": 2.5, "score": -5.8104, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 3, "method": "dense_gsiq", "runtime": 0.21116396666426832, "peak_memory": 16.3, "score": -6.9947, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 5, "method": "dense_gsiq", "runtime": 0.2197006666683592, "peak_memory": 23.9, "score": -6.972, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 3, "method": "dense_gsiq", "runtime": 0.44449676666666466, "peak_memory": 97.0, "score": -7.6714, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 5, "method": "dense_gsiq", "runtime": 0.5397077999999927, "peak_memory": 97.6, "score": -7.6501, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 8, "method": "dense_gsiq", "runtime": 0.6295035666666612, "peak_memory": 97.9, "score": -7.6472, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 3, "method": "dense_gsiq", "runtime": 1.160556850000006, "peak_memory": 217.3, "score": -8.0729, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 5, "method": "dense_gsiq", "runtime": 1.220006600000005, "peak_memory": 218.3, "score": -8.054, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 8, "method": "dense_gsiq", "runtime": 1.3554335000000037, "peak_memory": 219.3, "score": -8.0449, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 3, "method": "dense_gsiq", "runtime": 5.760760800000014, "peak_memory": 404.4, "score": -8.5831, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 5, "method": "dense_gsiq", "runtime": 6.466651900000045, "peak_memory": 405.3, "score": -8.5597, "rank_score": "", "selection_error": "", "status": "ok"}
+{"scene": "conf_sphere_r05", "N": 8, "method": "dense_gsiq", "runtime": 7.874211099999968, "peak_memory": 406.9, "score": -8.555, "rank_score": "", "selection_error": "", "status": "ok"}

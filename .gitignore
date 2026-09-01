@@ -16,7 +16,11 @@ build/
 # Virtual environments
 venv/
 .venv/
+.venv_a10
+.venv_a10/
+.venv_cpu/
 env/
+precompute/
 
 # Model checkpoints / weights（大文件不入库）
 *.pth

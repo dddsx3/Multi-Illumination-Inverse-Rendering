@@ -1,0 +1,6 @@
+part,P,n_vec,median_rel_err,max_rel_err,status,steps,probes,n_subsets,spearman_raw,spearman_corrected,kendall_tau,t_exact_per_subset,t_slq_per_subset,speedup
+C1,500,100,6.9767128654421e-15,3.508688985537687e-14,PASS,,,,,,,,,
+C2,1000,,,,PASS-low,10,30,40,0.9944,0.9944,0.9564,0.295,0.022,13.3
+C2,1000,,,,PASS-low,20,30,40,0.9934,0.9934,0.9513,0.295,0.048,6.2
+C2,1000,,,,PASS,50,30,40,0.9921,0.9921,0.941,0.295,0.105,2.8
+C2,1000,,,,PASS,100,30,40,0.9921,0.9921,0.9436,0.295,0.195,1.5
