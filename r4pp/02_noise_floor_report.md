@@ -1,5 +1,11 @@
-# 02 · Noise-Floor 报告（Task C 全量 480 runs）
+# 02 · Solver-Repeat Noise Floor 报告（Task C 全量 480 runs）
 
+> **R5-B′ 术语说明（2026-09-01）**：本文原题 "Noise-Floor Report"。当前 setup
+> 下 `n_renders=1`，renderer 为 deterministic ⇒ σ_render = 0；本报告测得
+> 的实际是 *solver repeat noise / solver repeatability floor*（同一 solver
+> 不同 seed 引起的误差方差），不是 render noise。后续正文统一改为
+> *solver-repeat noise* / *repeatability floor*。
+>
 > **实验**：6 scene × N{2,3,5,8} × 4 subset × 5 solver seed = 480 runs（restarts=1）
 > **目的**：判定 N=8 是 saturation 还是噪声；标定绝对收敛判据；为 Gate 2 提供 R_signal。
 > **脚本**：`p1/source/information_audit/r4pp_noise_floor.py`

@@ -169,13 +169,27 @@ def pinv_psd(F, cutoff=DEFAULT_CUTOFF):
 # Full Schur（R3' 修正点 2）与 diag proxy
 # ======================================================================
 def schur_full(bl, cutoff=DEFAULT_CUTOFF):
-    """F_eff = diag(F_ss) − Σ_k B_k F_k† B_k^T，P×P 稠密对称（fp 对称化，原地）。"""
+    """F_eff = diag(F_ss) − Σ_k B_k F_k† B_k^T，P×P 稠密对称（fp 对称化，原地）。
+
+    R5-P1 smoke 修复（2026-09-01）：在累加循环中显式 del 中间矩阵，避免
+    Windows commit 配额紧张时 numpy 的 numpy._core._exceptions._ArrayMemoryError。
+    """
     P = bl["P"]
     F_eff = np.diag(bl["F_ss_diag"])
     pinv_info = []
-    for k in range(bl["N"]):
-        Fk_inv, rank, lmax = pinv_psd(bl["Fk"][k], cutoff)
-        F_eff -= bl["B"][k] @ Fk_inv @ bl["B"][k].T
+    # snapshot B list locally so we can del the per-iter arrays without breaking bl["B"] length
+    B_list = bl["B"]
+    Fk_list = bl["Fk"]
+    N = bl["N"]
+    for k in range(N):
+        Fk_inv, rank, lmax = pinv_psd(Fk_list[k], cutoff)
+        Bk = B_list[k]
+        # F_eff -= Bk @ Fk_inv @ Bk.T
+        G = Fk_inv @ Bk.T
+        update = Bk @ G
+        F_eff -= update
+        del Fk_inv, G, update
+        gc.collect()
         pinv_info.append(dict(k=k, rank=rank, lam_max=lmax))
     F_eff += F_eff.T          # 转置视图原地累加（numpy 检测重叠自动缓冲）
     F_eff *= 0.5
@@ -222,20 +236,27 @@ def spectrum_metrics(F_eff, cutoff=DEFAULT_CUTOFF, spec_cutoff=1e-8):
 
     spec_cutoff：正谱判定阈（相对 trace 归一化后的 λ̃），与 F_k 伪逆
     cutoff 语义不同（后者作用于 9×9 块）。
+
+    R5-P0 additive: 输出 `n_at_cutoff` 字段（无量纲 λ̃ 落在
+    [spec_cutoff, 100×spec_cutoff] 区间的 eigenvalue 数量），用于 surface
+    boundary-granularity 敏感度（IDENTIFIABILITY_v3 §7 与 r5_p1_a_boundary_diagnostic.md）。
     """
     w = np.linalg.eigvalsh(F_eff)                # 输入已对称（schur_full 保证）
     tr = float(w.sum())
     if tr <= 0:
         return dict(lam_min_pos_norm=0.0, lam_max_norm=0.0, logdet_pos_norm=float("-inf"),
                     a_opt_pos_norm=float("inf"), d_pos=0, min_eig=float(w.min()),
-                    trace=0.0)
+                    trace=0.0, n_at_cutoff=0)
     lam_n = w / tr                                       # 无量纲谱
     pos = lam_n > spec_cutoff
     d = int(pos.sum())
+    # boundary window: λ̃ in (spec_cutoff, 100*spec_cutoff]
+    upper = 100.0 * spec_cutoff
+    n_at_cutoff = int(((lam_n > spec_cutoff) & (lam_n <= upper)).sum())
     if d == 0:
         return dict(lam_min_pos_norm=0.0, lam_max_norm=float(lam_n.max()),
                     logdet_pos_norm=float("-inf"), a_opt_pos_norm=float("inf"),
-                    d_pos=0, min_eig=float(w.min()), trace=tr)
+                    d_pos=0, min_eig=float(w.min()), trace=tr, n_at_cutoff=n_at_cutoff)
     lp = lam_n[pos]
     return dict(
         lam_min_pos_norm=float(lp.min()),
@@ -244,7 +265,9 @@ def spectrum_metrics(F_eff, cutoff=DEFAULT_CUTOFF, spec_cutoff=1e-8):
         a_opt_pos_norm=float((1.0 / lp).mean()),
         d_pos=d,
         min_eig=float(w.min()),                          # PSD 检查用（应 ≥ −fp tol）
-        trace=tr)
+        trace=tr,
+        n_at_cutoff=n_at_cutoff,
+    )
 
 
 def diag_proxy_metrics(d, spec_cutoff=1e-8):
@@ -349,6 +372,46 @@ def dead_tol_abs(bl):
     return 1e-12 * max(float(bl["F_ss_diag"].max()), 1e-300)
 
 
+def n_dead_count(bl):
+    """全 inactive 像素数（任何光都打不到 → F_ss_diag[p] = 0）。"""
+    return int((bl["F_ss_diag"] <= dead_tol_abs(bl)).sum())
+
+
+def structural_null_gate(bl, d_pos_observed=None):
+    """R5-P0 · T0.2 structural-null gate（IDENTIFIABILITY_v3.md §7）。
+
+    Returns
+    -------
+    dict with keys
+      P            : int
+      n_dead       : int   (全 inactive 像素数)
+      d_expected   : int   (= P - n_dead - 1，gauge 投影后 Π_g F_eff Π_g 的解析期望 dim)
+      d_pos        : int   (#{λ̃_i > spec_cutoff}; d_pos_observed 提供时用其值，
+                            否则 NaN 占位 — 在 dense 路径外不可用)
+      d_extra_null : int   (= d_expected - d_pos; > 0 标记 structurally deficient)
+      structural_status : {'full', 'deficient', 'flip', 'unknown'}
+    """
+    P = int(bl["P"])
+    n_dead = n_dead_count(bl)
+    d_expected = P - n_dead - 1
+    if d_pos_observed is None or (isinstance(d_pos_observed, float) and np.isnan(d_pos_observed)):
+        status = "unknown"
+        d_pos = -1
+        d_extra_null = -1
+    else:
+        d_pos = int(d_pos_observed)
+        d_extra_null = d_expected - d_pos
+        if d_extra_null == 0:
+            status = "full"
+        elif d_extra_null > 0:
+            status = "deficient"
+        else:
+            status = "flip"
+    return dict(P=P, n_dead=n_dead, d_expected=d_expected,
+                d_pos=d_pos, d_extra_null=d_extra_null,
+                structural_status=status)
+
+
 # ======================================================================
 # 端到端：dense 路径（P ≤ DENSE_MAX_P）/ operator 路径（大 P）
 # ======================================================================
@@ -392,7 +455,11 @@ def ga_isi_v2_scores(a, Y, C, cutoff=DEFAULT_CUTOFF, want_proxy=True,
             rank_Fk_min=min(i["rank"] for i in bl["diag"]["pinv_info"]),
             active_frac_min=float(bl["diag"]["active_frac"].min()),
             boundary_frac_max=float(bl["diag"]["boundary_frac"].max()),
+            full_n_at_cutoff=m["n_at_cutoff"],            # R5-P0 additive: boundary granularity
         )
+        # R5-P0 · T0.2 structural-null gate
+        sn = structural_null_gate(bl, d_pos_observed=m["d_pos"])
+        row.update(sn)
         del F_eff
         gc.collect()
     else:
@@ -413,7 +480,11 @@ def ga_isi_v2_scores(a, Y, C, cutoff=DEFAULT_CUTOFF, want_proxy=True,
             active_frac_min=meta["active_frac_min"],
             boundary_frac_max=meta["boundary_frac_max"],
             eigsh_n_null=eigs["n_null"],
+            full_n_at_cutoff=float("nan"),                # operator 路径无全谱
         )
+        # R5-P0 · T0.2 structural-null gate（operator 路径 d_pos 未知 → status='unknown'）
+        sn = structural_null_gate(bl, d_pos_observed=float("nan"))
+        row.update(sn)
     if want_proxy:
         d = schur_diag_proxy(bl, cutoff)
         row.update(diag_proxy_metrics(d))

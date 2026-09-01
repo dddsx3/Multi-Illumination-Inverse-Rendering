@@ -12,7 +12,7 @@
 | Signal | low-N signal/noise | **PASS** | R_signal 全部 24 cell > 2（median 27.2, min 9.0）|
 | Direction | info→error β<0 | **PASS** | β median −0.348, 81% 负号 |
 | Interaction | G↑ ⇒ \|β_G\|↑ | **FAIL** | A N=3 ρ=+0.29, A N=5 ρ=+0.72（**反向**）|
-| Saturation | N=8 noise-floor | **PASS** | N=8 R_signal 22.6 vs N=3 43.0, σ_subset/err 3.2% |
+| Saturation | N=8 selection-leverage compression | **PASS** | N=8 R_signal 22.6 vs N=3 43.0, σ_subset/err 3.2% |
 | Externality | local-init replication | **PENDING** | Task G 因本机 WinError 1455（页面文件太小）无法执行 |
 
 **4/6 PASS**。
