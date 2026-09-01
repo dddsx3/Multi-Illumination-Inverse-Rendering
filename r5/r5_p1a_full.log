@@ -1,0 +1,8 @@
+P1-A full: 6 scene × NS=[3, 5] × P=2000
+  N=3 subsets: 4960, N=5: 2000
+  2 score variants (O, A)
+  Total GSIQ calls: 83520
+  csv: r5/r5_p1a_full.csv
+  estimated wall-clock: ~0.0 h (assuming 1.5s/call)
+
+csv mode: w

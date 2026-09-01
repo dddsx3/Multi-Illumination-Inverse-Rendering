@@ -2,12 +2,12 @@
 
 > **本文件是论文的宪法**：R5-B′ 阶段任何实验、图表、章节都必须服务于以下四句 claim（C1–C4）。
 > 修改本文件 = 修改论文核心 = 需要 R5 级证据 + 显式版本号。
-> **版本**：v0.4（R5-B′ P0 收官；取代 v0.3 三句话结构，扩展为四句话 C1–C4；
-> 配套 `p1/protocol/IDENTIFIABILITY_v3.md` 给出完整数学 + structural-null gate 报告口径）。
-> **落盘**：2026-09-01 · R5-P0 完成点。
-> **上游继承**：v0.3（R4″ sprint 6 行 Gate dashboard：Instrument/Signal/Saturation PASS,
-> Direction PASS, Interaction FAIL, Externality PENDING → PIVOT B′）；
-> v0.4 **不重审** 6 行 Gate 数字，只在 B′ 主线内更新 wording / 增加 structural-null 报告口径。
+> **版本**：v0.5（R5-B′ P1-C 实测后；R4″ PIVOT B′ → 本机实测 Q1 PASS-A + Q2 Case 2
+> 触发 → 论文 claim 按任务书 §R5-P1-C Case 2 wording 降级为"practical optimization
+> recoverability predictor"；前版 v0.4 wording 已兼容但本版显式记录）。
+> **落盘**：2026-09-02 · R5-P1-C 实测点（本机, P0 修复后）。
+> **上游继承**：v0.4（R5-B′ P0）；v0.5 **不重审** v0.4 wording，只增补"实测裁决
+> 状态"字段。
 
 ---
 
@@ -77,6 +77,34 @@
 > 禁止使用：noise-floor saturation / hits the noise floor / render noise floor。
 > 报告要求：同时画 CV_subset(N) = σ_subset/Ē 与 R_signal(N) = σ_subset/σ_repeat
 > （任务书 §19）。
+
+---
+
+## v0.5 实测裁决状态 (R5-P1-C 本机实测, 2026-09-02)
+
+> **来源**: r4pp/07_local_vs_global_init.csv (本机, P0 修复后, 240 unique runs,
+> 6 scene × 2 N × 10 subset × 2 init_mode, R4″ 任务书 §R5-P1-C Case 1/2/3 判定)
+
+| 模式 | n | β (logE vs I) | pearson r | 解读 |
+|---|---:|---:|---:|---|
+| global | 120 | **-0.558** | -0.559 | ✓ 信息多 → global solver 误差小 |
+| **oracle_local** | 120 | **+0.029** | +0.053 | ✗ 信息多少与 local 误差无关 |
+
+**判定: 任务书 §R5-P1-C Case 2 触发**
+- β_g < 0 AND β_o ≥ 0 → 信息效应只在 standard (global-initialized) reconstruction
+  下成立, 在 local-perturbed 初始化下不成立
+- **C3 升级路径关闭**: 不能 claim "intrinsic identifiability → error"
+- **C3 当前 wording (兼容)**: "At fixed illumination cardinality, higher GSIQ is
+  *associated with* lower reconstruction error" (保守 wording, Case 1 / Case 2 都成立)
+- **论文最终 wording** (任务书 §17 Case 2 降级, 待 v0.6 写入):
+  > "At fixed illumination cardinality, Gauge-Schur information quality
+  >  predicts the difficulty of standard (global-initialised) reconstruction
+  >  and, consequently, the relative quality of selected subsets under
+  >  such reconstruction pipelines."
+
+**P1-A smoke 同时验证 (本机, 2026-09-02 1 scene × 2 N)**:
+- ρ(O vs A) = 0.99997 @ P=500, 12/12 cells PASS-A (从 in-domain 6 scene 推论)
+- 验证 P2 (held-out) 数据收集中, 见 `r5/r5_p2_heldout.csv`
 
 ---
 

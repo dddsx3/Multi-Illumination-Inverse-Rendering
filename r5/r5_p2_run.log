@@ -1,0 +1,40 @@
+P2 held-out GSIQ: 18 scene × NS=[3, 5] × P=500
+  N=3 subsets: 500, N=5: 500
+  total GSIQ calls: 36000
+  csv: r5\r5_p2_heldout.csv (mode=w)
+
+[ 1/18] conf_cone_r04_d12        N=3   500 subsets     94s  (overall    94s)
+[ 1/18] conf_cone_r04_d12        N=5   500 subsets    101s  (overall   195s)
+[ 2/18] conf_cone_r08_d06: 缺数据文件, 跳过
+[ 3/18] conf_cube_plus_cone      N=3   500 subsets     92s  (overall   287s)
+[ 3/18] conf_cube_plus_cone      N=5   500 subsets     97s  (overall   384s)
+[ 4/18] conf_cube_rot30z: 缺数据文件, 跳过
+[ 5/18] conf_cube_rot45z30x: 缺数据文件, 跳过
+[ 6/18] conf_cyl_plus_sphere     N=3   500 subsets     96s  (overall   480s)
+[ 6/18] conf_cyl_plus_sphere     N=5   500 subsets    105s  (overall   584s)
+[ 7/18] conf_cylinder_r03_d12    N=3   500 subsets     97s  (overall   682s)
+[ 7/18] conf_cylinder_r03_d12    N=5   500 subsets    101s  (overall   783s)
+[ 8/18] conf_ellipsoid_x13z07    N=3   500 subsets     95s  (overall   878s)
+[ 8/18] conf_ellipsoid_x13z07    N=5   500 subsets    100s  (overall   978s)
+[ 9/18] conf_hemisphere_sq       N=3   500 subsets     95s  (overall  1073s)
+[ 9/18] conf_hemisphere_sq       N=5   500 subsets    101s  (overall  1174s)
+[10/18] conf_icosphere_sub3      N=3   500 subsets     95s  (overall  1269s)
+[10/18] conf_icosphere_sub3      N=5   500 subsets    100s  (overall  1369s)
+[11/18] conf_pyramid4: 缺数据文件, 跳过
+[12/18] conf_pyramid4_rot30z: 缺数据文件, 跳过
+[13/18] conf_pyramid6: 缺数据文件, 跳过
+[14/18] conf_snowman             N=3   500 subsets     96s  (overall  1465s)
+[14/18] conf_snowman             N=5   500 subsets    102s  (overall  1567s)
+[15/18] conf_sphere_on_cube      N=3   500 subsets     90s  (overall  1657s)
+[15/18] conf_sphere_on_cube      N=5   500 subsets     97s  (overall  1755s)
+[16/18] conf_torus_R05_r02       N=3   500 subsets     97s  (overall  1852s)
+[16/18] conf_torus_R05_r02       N=5   500 subsets    106s  (overall  1958s)
+[17/18] conf_torus_R06_r035      N=3   500 subsets     95s  (overall  2053s)
+[17/18] conf_torus_R06_r035      N=5   500 subsets    102s  (overall  2155s)
+[18/18] conf_two_spheres_row     N=3   500 subsets     95s  (overall  2251s)
+[18/18] conf_two_spheres_row     N=5   500 subsets    102s  (overall  2352s)
+
+[skip summary] 跳过 6 scene (数据不完整)
+
+[Phase 1] done in 2352s
+output: r5\r5_p2_heldout.csv
