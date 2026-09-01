@@ -41,6 +41,23 @@ if [ "$N_SCENES" -lt 19 ]; then
   exit 1
 fi
 
+# Verify LFS data is REAL (not pointer files)
+TEST_ALBEDO="$DATA_ROOT/conf_sphere_r05/albedo.npy"
+if [ -f "$TEST_ALBEDO" ]; then
+  SIZE=$(stat -c %s "$TEST_ALBEDO")
+  if [ "$SIZE" -lt 1000 ]; then
+    echo "ERROR: albedo.npy is only $SIZE bytes — looks like an LFS POINTER file."
+    echo "  Real data is ~65 KB. The cloud instance didn't pull LFS."
+    echo "  Fix: cd $REPO_ROOT && git lfs install && git lfs pull"
+    exit 1
+  else
+    echo "[OK] albedo.npy is real data ($SIZE bytes)"
+  fi
+else
+  echo "ERROR: $TEST_ALBEDO missing. LFS pull failed."
+  exit 1
+fi
+
 echo "=== [01 env] Python venv ==="
 PYTHON="${PYTHON:-python3}"
 $PYTHON --version

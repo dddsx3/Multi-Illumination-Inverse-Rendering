@@ -218,15 +218,20 @@ def main():
                     help="override smoke PIXEL_CAP (default 300); set 2000 for paper-grade full")
     ap.add_argument("--n5_sample", type=int, default=None,
                     help="override N5_SAMPLE (default 500); set 2000 for paper-grade full")
+    ap.add_argument("--n3_limit", type=int, default=None,
+                    help="override N3_SMOKE_LIMIT (default 500); set 4960 for paper-grade full enumerate")
     args = ap.parse_args()
 
     # Apply CLI overrides (R5-P1-A full on A10 / H100)
-    global PIXEL_CAP, N5_SAMPLE
+    global PIXEL_CAP, N5_SAMPLE, N3_SMOKE_LIMIT
     if args.pixel_cap is not None:
         PIXEL_CAP = args.pixel_cap
     if args.n5_sample is not None:
         N5_SAMPLE = args.n5_sample
-    print(f"[config] PIXEL_CAP={PIXEL_CAP}  N5_SAMPLE={N5_SAMPLE}", flush=True)
+    if args.n3_limit is not None:
+        N3_SMOKE_LIMIT = args.n3_limit
+    print(f"[config] PIXEL_CAP={PIXEL_CAP}  N3_SMOKE_LIMIT={N3_SMOKE_LIMIT}  N5_SAMPLE={N5_SAMPLE}",
+          flush=True)
 
     os.makedirs(args.out_dir, exist_ok=True)
 
@@ -266,7 +271,7 @@ def main():
                     subsets = subsets_all[:N3_SMOKE_LIMIT]
                 else:
                     subsets = sample_subsets(32, n, N5_SAMPLE, RNG)
-                print(f"[{s} N={n}] scoring {len(subsets)} subsets (smoke budget) ...", flush=True)
+                print(f"[{s} N={n}] scoring {len(subsets)} subsets ...", flush=True)
                 rows = score_pool(scene_dir, subsets, PIXEL_CAP, SUBSET_SEED)
                 # write per-subset
                 for r in rows:

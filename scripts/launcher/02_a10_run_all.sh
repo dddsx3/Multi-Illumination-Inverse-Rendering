@@ -63,6 +63,7 @@ python -u p1/source/information_audit/r5_p1_albedo_ablation.py \
   --scenes $SCENES_CSV \
   --pixel_cap 2000 \
   --n5_sample 2000 \
+  --n3_limit 4960 \
   --solver \
   --n_top 10 --n_random 10 \
   2>&1 | tee "$REPO_ROOT/r5/r5_p1_a_full_run.log"
@@ -128,7 +129,9 @@ TOTAL_M=$((ELAPSED%3600/60))
 echo ""
 echo "============================================"
 echo "[02 run] ALL DONE in ${TOTAL_H}h ${TOTAL_M}m"
-echo "抵扣机时 ~$(echo "scale=1; $ELAPSED/3600*3.3" | bc)"
+# Pure shell arithmetic; avoid bc (may not be installed)
+BILLED_M=$((ELAPSED * 11 / 1200))   # ELAPSED * 3.3 / 3600 = ELAPSED * 33 / 36000 ≈ ELAPSED * 11 / 12000
+echo "抵扣机时 ~$((BILLED_M / 60)).$((BILLED_M % 60 / 6)) (×3.3 抵扣)"
 echo "============================================"
 echo ""
 echo "Next step: open r5/r5_p1_a_full_run.log + r5/r5_p1_albedo_ablation_gate.md"

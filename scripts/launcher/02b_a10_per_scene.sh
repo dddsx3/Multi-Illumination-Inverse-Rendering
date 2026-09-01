@@ -32,6 +32,7 @@ python -u p1/source/information_audit/r5_p1_albedo_ablation.py \
   --scenes "$SCENE" \
   --pixel_cap 2000 \
   --n5_sample 2000 \
+  --n3_limit 4960 \
   2>&1 | tee -a "$REPO_ROOT/r5/r5_p1_a_full_run.log"
 
 echo "=== [02b per-scene] done: $SCENE N=$N ==="
