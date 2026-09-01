@@ -62,7 +62,7 @@ nvidia-smi
 
 ## 2. 一次性准备（首次运行约 5-10 分钟）
 
-### 2.1 克隆仓库
+### 2.1 克隆仓库（如果 /workspace 不是本仓库）
 
 ```bash
 cd ~
@@ -70,10 +70,14 @@ git clone https://github.com/dddsx3/Multi-Illumination-Inverse-Rendering.git
 cd Multi-Illumination-Inverse-Rendering
 ```
 
+> **如果已经在 `/workspace` 且是本仓库（看到 `(main)` 在 prompt 里）**：
+> 跳过 2.1，直接 `cd /workspace` 即可。
+
 ### 2.2 安装 git-lfs（LFS 拉取 data_sun_confirmatory/*.npy）
 
 ```bash
 # Ubuntu 22.04 通常需要 apt 装
+# 注意包名是 git-lfs (git-l-ess, 末尾是 ess), 不是 git-lf
 sudo apt-get update
 sudo apt-get install -y git-lfs
 ```

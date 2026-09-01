@@ -26,7 +26,9 @@ echo "=== [01 env] git LFS pull ==="
 if command -v git-lfs >/dev/null 2>&1; then
   git lfs pull
 else
-  echo "WARN: git-lfs not installed. Install via 'apt-get install -y git-lfs' first."
+  echo "WARN: git-lfs not installed."
+  echo "  Install via: sudo apt-get install -y git-lfs  (note: package is 'git-lfs' = git-l-ess, NOT 'git-lf')"
+  echo "  Then re-run: git lfs install && git lfs pull"
 fi
 
 echo "=== [01 env] verify data layout ==="
