@@ -1,0 +1,11 @@
+object,n_png_total,n_light_png,light_directions_shape,light_dir_min,light_dir_max,light_intensities_exists,normal_shape,mask_exists,status
+ballPNG,98,96,"[96, 3]",-0.614,0.9971,True,[940032],True,OK
+bearPNG,98,96,"[96, 3]",-0.6241,0.9965,True,[940032],True,OK
+buddhaPNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
+catPNG,98,96,"[96, 3]",-0.614,0.9971,True,[940032],True,OK
+cowPNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
+gobletPNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
+harvestPNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
+pot1PNG,98,96,"[96, 3]",-0.614,0.9971,True,[940032],True,OK
+pot2PNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
+readingPNG,98,96,"[96, 3]",-0.6037,0.9973,True,[940032],True,OK
