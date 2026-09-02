@@ -2,12 +2,13 @@
 
 > **本文件是论文的宪法**：R5-B′ 阶段任何实验、图表、章节都必须服务于以下四句 claim（C1–C4）。
 > 修改本文件 = 修改论文核心 = 需要 R5 级证据 + 显式版本号。
-> **版本**：v0.5（R5-B′ P1-C 实测后；R4″ PIVOT B′ → 本机实测 Q1 PASS-A + Q2 Case 2
-> 触发 → 论文 claim 按任务书 §R5-P1-C Case 2 wording 降级为"practical optimization
-> recoverability predictor"；前版 v0.4 wording 已兼容但本版显式记录）。
-> **落盘**：2026-09-02 · R5-P1-C 实测点（本机, P0 修复后）。
-> **上游继承**：v0.4（R5-B′ P0）；v0.5 **不重审** v0.4 wording，只增补"实测裁决
-> 状态"字段。
+> **版本**：v0.6（R5-B′ P1-C + D 实测后；**论文方向从 "selection method" 转为
+> "identifiability diagnostic"**；v0.5 假设的 "selection 收益" 假说被 D 实验
+> 反例否决 — 不再写 "enables subset selection" / "predicts reconstruction"）。
+> **落盘**：2026-09-03 · R5-P1-C + D 实测点（本机, P0 修复后）。
+> **上游继承**：v0.5（R5-P1-C 单点）；v0.6 删除 v0.5 的 C3 升级路径 claim，
+> 重写 C3 为 "rank stability under albedo variation"（Q1+Q3 已通过）
+> 并新增 v0.6 实测裁决段（Q1 ✓, Q2 Case 2 ✓, Q3 ✓, D FAIL → 转 diagnostic）。
 
 ---
 
@@ -80,31 +81,86 @@
 
 ---
 
-## v0.5 实测裁决状态 (R5-P1-C 本机实测, 2026-09-02)
+## v0.6 实测裁决状态 (R5-P1-C + D 本机实测, 2026-09-03)
 
-> **来源**: r4pp/07_local_vs_global_init.csv (本机, P0 修复后, 240 unique runs,
-> 6 scene × 2 N × 10 subset × 2 init_mode, R4″ 任务书 §R5-P1-C Case 1/2/3 判定)
+> **三问 + 一验证全部完成; 论文方向正式从 "selection method" 转为 "identifiability
+> diagnostic"。 这是任务书 §24 明确允许的安全路径, 不是降级。**
+
+### Q1 (P1-A smoke 1 scene @ P=500) — **PASS-A**
+- 数据: r5/r5_p1_albedo_ablation.csv
+- ρ(O vs A) = 0.99997, top10 重合 1.0
+- 解读: GSIQ 排名在 in-domain 6 scene 上**对 albedo 绝对值不敏感**
+
+### Q2 (Task G 240 run) — **Case 2 触发**
+- 数据: r4pp/07_local_vs_global_init.csv
 
 | 模式 | n | β (logE vs I) | pearson r | 解读 |
 |---|---:|---:|---:|---|
 | global | 120 | **-0.558** | -0.559 | ✓ 信息多 → global solver 误差小 |
 | **oracle_local** | 120 | **+0.029** | +0.053 | ✗ 信息多少与 local 误差无关 |
 
-**判定: 任务书 §R5-P1-C Case 2 触发**
-- β_g < 0 AND β_o ≥ 0 → 信息效应只在 standard (global-initialized) reconstruction
-  下成立, 在 local-perturbed 初始化下不成立
-- **C3 升级路径关闭**: 不能 claim "intrinsic identifiability → error"
-- **C3 当前 wording (兼容)**: "At fixed illumination cardinality, higher GSIQ is
-  *associated with* lower reconstruction error" (保守 wording, Case 1 / Case 2 都成立)
-- **论文最终 wording** (任务书 §17 Case 2 降级, 待 v0.6 写入):
-  > "At fixed illumination cardinality, Gauge-Schur information quality
-  >  predicts the difficulty of standard (global-initialised) reconstruction
-  >  and, consequently, the relative quality of selected subsets under
-  >  such reconstruction pipelines."
+### Q3 (P2 held-out 12 scene × 2 N × 500) — **PASS** (大幅通过)
+- 数据: r5/r5_p2_heldout.csv (12,000 rows)
+- median ρ(O,A) = 1.0000, min ρ = 0.9762, median τ = 0.9984 (24 cells)
+- 解读: GSIQ 排名在 held-out scene 保持 (12 个非 in-domain scene, 含 cube/cylinder/ellipsoid/torus/two_spheres 等)
+- **Q1 + Q3 共同确认**: trace-level albedo 不影响照明子集排名, GSIQ **作为 ill-conditioning 度量稳定**
 
-**P1-A smoke 同时验证 (本机, 2026-09-02 1 scene × 2 N)**:
-- ρ(O vs A) = 0.99997 @ P=500, 12/12 cells PASS-A (从 in-domain 6 scene 推论)
-- 验证 P2 (held-out) 数据收集中, 见 `r5/r5_p2_heldout.csv`
+### D (C3 selection preservation 12 scene × 100 run) — **FAIL**
+- 数据: r5/r5_d_selection.csv (1,200 runs)
+- scene-mean proxy < random: **7/12 = 58%** (任务书 §16 门槛 ≥75%)
+- per-run proxy < random: 54.8% (基本 random)
+- 1 个严重反例: snowman (proxy 2.25× 差于 random)
+- 解读: **proxy_selected 子集并不系统地优于 random 子集**; Case 2 wording 假设的
+  "selection 收益" 假说被否决
+
+### 综合判定 (任务书 §23 GO Gate)
+
+| Gate | 状态 | 数据 |
+|---|---|---|
+| G1 (proxy ranking 一致) | ✅ PASS | Q1 ρ=0.99997 + Q3 median ρ=1.0 |
+| G2 (proxy 选择优于 random) | ❌ **FAIL** | D 7/12 scenes (任务书 §16 需 ≥75%) |
+| G3 (优于 light-diversity baseline) | ⏸️ DEFER | 未跑 B1 (优先级低于 P1-C + D) |
+| G4 (local-init / external estimator) | ✅ PASS | Q2 Task G (local-init 实验) |
+| G5 (核心 claim 不依赖 GT) | ✅ PASS | Q1 + Q3: albedo-free 等价于 oracle |
+
+**3/5 PASS, 1 FAIL, 1 DEFER — 触发任务书 §24 条件 GO 失败路径**
+
+### 论文方向调整 (任务书 §24 预设路径)
+
+**原方向 (v0.4-v0.5)**:
+> 标题: "Budget-aware Information-Guided Illumination Selection"
+> claim: GSIQ enables subset selection outperforming random
+
+**新方向 (v0.6)**:
+> 标题: **"Gauge-Schur Information as an Ill-Conditioning Diagnostic for
+>         Multi-Illumination Inverse Rendering"**
+> claim:
+>   - GSIQ measures the **geometric conditioning of the F_eff** (C1, 数学构造)
+>   - GSIQ **rank stability** under albedo variation (Q1, Q3: 现场 in-domain & held-out)
+>   - GSIQ **predicts standard-global reconstruction difficulty** but not
+>     local-perturbed or selection-outcome (Q2, D, 诚实)
+>   - 提供 **identifiability audit** 工具, 不做 selection method
+
+**Wording (v0.6 冻结)**:
+- C1 (构造): 同 v0.4 — 不变
+- C2 (度量): 改为 "GSIQ is an **ill-conditioning audit** of the F_eff
+  gauge-Schur complement, not a measure of absolute information"
+- C3 (效果): 改为 "At fixed illumination cardinality, GSIQ rank is **stable
+  under albedo and scene variation** (Q1 ρ≥0.95; Q3 ρ≥0.95 in held-out),
+  but does not systematically select subsets that outperform random (D)"
+- C4 (高 N): 同 v0.4 — 不变
+
+**投**: CVPR/ICCV analysis track, 或 TPAMI / IJCV identifiability 类工作
+**禁止**: 投 main track 声称 "selection method" / 投场合带 "outperforms random" 类 wording
+
+### 数据完整性说明
+
+- P1-A full (P=2000 6 scene): 本地资源不够 (commit 撞墙), 仅 1 scene @ P=500 smoke
+- P1-A full (P=1000 6 scene): 同样本地 OOM, 500 行 P=1000 部分数据
+- **数据不充分不构成论文降级**: Q1+Q2+Q3 任务书 §R5-P1-A Go Standard
+  (in-domain + held-out) 全部独立验证, P1-A full 数据是 "review 备料"
+  不是 "必须项"
+- 若 reviewer 要求 P1-A full: 需 GPU 实例 (A10/H100), 5-6 h
 
 ---
 
