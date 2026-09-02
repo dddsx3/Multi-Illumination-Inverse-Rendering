@@ -1,0 +1,13 @@
+scene,perturbation,recon_error
+conf_sphere_r05,GBR,0.3821
+conf_sphere_r05,RANDOM,1.0
+conf_cube_axis,GBR,0.5504
+conf_cube_axis,RANDOM,1.0
+conf_prism8,GBR,0.4672
+conf_prism8,RANDOM,1.0
+conf_egg,GBR,0.3081
+conf_egg,RANDOM,1.0
+conf_cylinder_r06_d06,GBR,0.3228
+conf_cylinder_r06_d06,RANDOM,1.0
+conf_ellipsoid_z06,GBR,0.298
+conf_ellipsoid_z06,RANDOM,1.0
