@@ -1,0 +1,5 @@
+metric,description,kl_value,status
+grad_hist,"梯度直方图 (联合 mag, 64 bin)",0.0107,EQUAL
+spec_radial,"功率谱径向平均 (log 尺度, 64 bin)",0.0288,EQUAL
+luma_hist,"亮度直方图 (0-1, 64 bin)",2.5738,SUPPORT
+highlight_frac,高光占比 (luma > 0.95),0.3078,WEAK

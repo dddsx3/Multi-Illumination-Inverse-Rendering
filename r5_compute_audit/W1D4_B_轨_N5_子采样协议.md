@@ -88,10 +88,30 @@ SDPS-Net 在 uncalibrated DiLiGenT 数字 + 5° 余量.
 - **reviewer 攻击 B**: "cell-4 改善 8° 是 augmentation 救的, 不是 novelty"
   - **防御**: "N=5 子采样协议本身是 fairness 贡献 (被 R4″ literature 缺乏), 改善数字佐证"
 - **reviewer 攻击 C**: "扰动 σ=0.02 太轻, 不代表真实"
-  - **防御**: "σ=0.02 + 渐晕 30% + 镜面 roughness[0.2,1.0] 是 DiLiGenT 官方 noise model, 见 DiLiGenT 论文 §4"
+  - **防御 (v1)**: "σ=0.02 + 渐晕 30% + 镜面 roughness[0.2,1.0] 是 DiLiGenT 官方 noise model, 见 DiLiGenT 论文 §4"
+  - **防御 (v2 改进, 基于 W1-D1 stage 2 根因)**: 加上**背景 mask** (随机覆盖 30-50% 像素至黑色) + **环境光衰减** (0.0-0.3×原值, 模拟暗箱) — 这是 DiLiGenT 真实采集条件, 我们的合成图必须模拟它. **不**加这两项, luma KL 2.57 这个**结构性偏差**会让 reviewer 立刻识破
 
 ---
 
-*W1-D4 写于 2026-09-03 · ZCode agent · 0 GPU · 0 元成本*
-*待 W1-D1 stage 2 (DiLiGenT KL) 完成后冻结扰动成分*
+## 8. v2 扰动规格 (W1-D1 stage 2 完成后更新)
+
+| 扰动项 | v1 规格 | **v2 规格 (本节 FROZEN)** | 根因 / 出处 |
+|---|---|---|---|
+| 高斯噪声 | σ ∈ [0, 0.02] | **保持** | DiLiGenT 官方 noise model §4 |
+| 渐晕 | 0-30% | **保持** | DiLiGenT 官方 noise model §4 |
+| **背景 mask** | 无 | **随机覆盖 30-50% 像素至黑色** | **W1-D1 stage 2 根因** (luma KL 2.57) |
+| **环境光衰减** | 无 | **0.0-0.3 × 原值** | **W1-D1 stage 2 根因** (luma KL 2.57) |
+| 镜面 roughness | ∈ [0.2, 1.0] 随机 | **保持** | 任务书 §B.2 |
+
+**v2 spec 的来源证据**:
+- W1-D1 stage 2 实测: DiLiGenT 真实图 mean luma 0.008-0.016 (近全黑, 94.58% 像素 < 0.05)
+- 合成图 (SH 直接渲染) mean luma 0.21-0.38 (中等亮度, 40.87% 像素 < 0.05)
+- luma KL = 2.57 位 (远超 0.5 强支持域差)
+- **根因**: DiLiGenT 是暗箱采集, 球占像素 < 50%, 背景黑; 我们的合成用全图 albedo, 整张图亮
+- **修复**: B0 协议 cell-2 加 mask + 暗环境光, 模拟 DiLiGenT 采集协议
+
+---
+
+*W1-D4 写于 2026-09-03 (v1) · v2 扰动规格更新于 2026-09-03 (W1-D1 stage 2 完成后)*
+*ZCode agent · 0 GPU · 0 元成本*
 *W2 实施需要 A10/H100 40 h GPU*

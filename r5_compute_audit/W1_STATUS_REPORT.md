@@ -8,10 +8,20 @@
   - sphere / prism: 0% 高光 (Lambertian 干净)
   - cube: 10-34% "高光" (实际是平面法线 + 强照度伪高光)
   - 频谱比 5e4-5e5 (极度低频主导, 真实图比这复杂 1-2 数量级)
-- **stage 2 待做**: 下载 DiLiGenT (~1 GB) → KL 检验
-  - 已写脚本: r5_compute_audit/w1d1_synth_stats.py
-  - 产出: r5_compute_audit/raw_profile/synth_low_level_stats.csv
-  - 报告: r5_compute_audit/decision_reports/W1D1_synth_stats.md
+- **stage 2 跑通** (2026-09-03):
+  - **4 项 KL** (合成 30 张 vs DiLiGenT 50 张, N=5, 256×256)
+  - grad_hist: 0.0107 ✅ 域差=0
+  - spec_radial: 0.0288 ✅ 域差=0
+  - **luma_hist: 2.5738** 🔥 强支持域差 (>0.5)
+  - highlight_frac: 0.3078 ⚠️ 中等
+  - **根因分析**: 真实图 mean luma 0.008-0.016 (近全黑, 94.58% 像素 < 0.05)
+    vs 合成图 mean luma 0.21-0.38 (中等亮度)
+    → **DiLiGenT 是暗箱采集协议**, 球占像素 < 50%, 背景黑
+    → 我们的合成用全图 albedo, 整张图亮
+    → **不是物理差异, 是采集协议差异**
+  - **闸门判定**: 推进 B0 协议 (W1-D4 v2 改进版)
+    - cell-2 扰动规格加: 背景 mask (30-50% 像素至黑) + 环境光衰减 (0.0-0.3×)
+  - 产出: r5_compute_audit/w1d1_diligent_kl.py + decision_reports/W1D1_stage2_KL_verdict.md
 
 ## 2. W1-D2 文献检索 (A 轨基础)
 - **已发现 p1/literature/closest_prior_verified.md + RELATED_WORK_MATRIX_v2.md**
