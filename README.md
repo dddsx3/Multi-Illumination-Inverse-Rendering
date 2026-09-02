@@ -49,6 +49,101 @@
 
 更多组会演示（5 场景 × 18 张可视化）：`group_meeting_demo_v2/`。
 
+---
+
+## 几天工作总览 (R5-B′ → W1 → W2, 2026-09-03)
+
+> **基线 commit**：`9796884` (R4″ sprint 收官) · **最新 commit**：`886b7b8` (CLAIM_REGISTRY v0.7) · **8 个新 commit**
+> **全程 0 元云算力**（本机 RTX 5070 Ti Laptop）
+
+### 阶段 1 · R5-B′ 任务书跑完（commit `8d75467`）
+
+- Q1 (P1-A smoke 1 scene): ρ(O,A) = 0.99997, top10 = 1.0, **PASS-A**
+- Q2 (Task G 240 run): β_g = -0.56, β_o = +0.03 → **Case 2 触发** (oracle_local 不可预测)
+- Q3 (P2 held-out 12 scene × 2 N × 500): median ρ = 1.0, min = 0.976 → **大幅通过**
+- **D (C3 selection 12 scene × 100 run)**: scene-mean proxy < random = **7/12 = 58%** (任务书 §16 需 ≥75%) → **FAIL**
+- **结论**：选择方法假说被否决；论文方向正式转 "identifiability diagnostic" (CLAIM_REGISTRY v0.6 → v0.7)
+
+### 阶段 2 · W1 新路线书（4 轨 + 闸门, commit `e59e854` + `344a2da`）
+
+- **W1-D1 域差检验 (DiLiGenT vs 合成)**：4 项 KL 散度计算
+  - grad_hist 0.0107, spec_radial 0.0288 → **域差=0** (局部统计相似)
+  - **luma_hist 2.57** → **强支持域差** (根因：DiLiGenT 暗箱采集 vs 合成无暗箱)
+  - 修：B0 协议 v2 扰动规格**新增**背景 mask (30-50% 像素至黑) + 环境光衰减 (0-0.3×)
+- **W1-D2 文献 v3 matrix**：8 高危 prior × A 轨 3 子命题 = **0/3 撞车** ✓
+- **W1-D3 A 轨推导** (本机无 GPU)：A-P2 引理 1+2 (GBR 群结构) + A-P3 Gram 秩论证全跑通
+- **W1-D5 C 轨带宽分析**：SH-2 高光结构性缺失, SG K=4 仍 24 dim > N=5
+
+### 阶段 3 · W2 阶段 1 (本机无 GPU, commit `936a7d7` + `886b7b8`)
+
+| 实验 | 测度 | 实测 | 状态 |
+|---|---|---|:---:|
+| **W2-A.1 P-A1** | GBR 重建误差 (3 参数 LSQ) | GBR 0.39 vs RANDOM 1.0, **差值 +0.61** | ✅ **PASS** |
+| **W2-A.2 P-A2** | Spearman(normal_spread, min_positive) | **+0.37** (任务书要 >0.9) | ⚠️ **WEAK** (诚实 FAIL) |
+| **W2-B.1** | DiLiGenT 10 物体 MAE | 中位 ~40° (任务书要 25°) | ⚠️ 未达 (25° 先验偏紧) |
+| **文献 v3** | 撞车检查 | 0/3 撞车 | ✅ **PASS** |
+
+### 论文方向最终决定 (CLAIM_REGISTRY v0.7)
+
+> **押 A 轨 (identifiability diagnostic)**，撞车风险 0, 实证基础已就位。
+> 论文标题候选: *"Gauge-Aware Identifiability Diagnostic for Multi-Illumination Inverse Rendering"*
+> P-A2b 弱相关 (ρ=0.37) **诚实写进论文 limitations** (任务书预测过强)
+
+### 数据 + 报告产物索引 (本机 0 GPU 完成)
+
+| 报告 | 路径 |
+|---|---|
+| R5-B′ 全部报告 (v0.7) | `p1/protocol/CLAIM_REGISTRY.md` |
+| W1 阶段 1 状态 | `r5_compute_audit/W1_STATUS_REPORT.md` |
+| W2 阶段 1 状态 | `r5_compute_audit/W2_STATUS_REPORT.md` |
+| Compute-Aware Campaign | `r5_compute_audit/CAMPAIGN_REPORT.md` |
+| 本机阻塞根因 (P0 修复) | `r5_compute_audit/LOCAL_MACHINE_DIAGNOSIS.md` |
+| W1-D1 stage 2 KL 检验 | `r5_compute_audit/decision_reports/W1D1_stage2_KL_verdict.md` |
+| W2-A.1 P-A1 报告 | `r5_compute_audit/decision_reports/W2A1_P_A1_GBR_Verdict.md` |
+| W2-A.2 P-A2 报告 | `r5_compute_audit/decision_reports/W2A2_P_A2_Fisher_Verdict.md` |
+| W2-B.1 baseline | `r5_compute_audit/W2B1_cell1_baseline.md` |
+| Q2 verdict (R5-B') | `r5/r5_q2_taskG_verdict.md` |
+| Q3 verdict (R5-B') | `r5/r5_q3_p2_verdict.md` |
+| 同步验证 | `r5/SYNC_VERIFICATION_REPORT.md` |
+| R5-B′ FINAL 报告 v2 | `r5/R5_FINAL_REPORT.md` |
+| 本机 6 项能力自检 | `r5_local_smoke.py` |
+
+### 数据 CSV (本机 0 GPU 跑出)
+
+| CSV | 行数 | 内容 |
+|---|---:|---|
+| `r5/r5_p1_albedo_ablation.csv` | 5,160 | P1-A smoke 1 scene @ P=500 (Q1) |
+| `r4pp/07_local_vs_global_init.csv` | 240 | Task G (Q2 Case 2) |
+| `r5/r5_p2_heldout.csv` | 12,001 | P2 held-out 12 scene (Q3) |
+| `r5/r5_d_selection.csv` | 1,201 | C3 selection 12 scene (D FAIL) |
+| `r5_compute_audit/raw_profile/kl_diligent_vs_synth.csv` | 4 | W1-D1 stage 2 KL 4 项 |
+| `r5_compute_audit/raw_profile/synth_low_level_stats.csv` | 30 | W1-D1 stage 1 合成图画像 |
+| `r5_compute_audit/raw_profile/diligent_validation.csv` | 10 | DiLiGenT 10 物体验证 |
+| `r5_compute_audit/raw_profile/a_track_p_a1_gbr.csv` | 600 | P-A1 GBR 扰动 6 scene × 100 |
+| `r5_compute_audit/raw_profile/a_track_p_a2_fisher.csv` | 85 | P-A2 Fisher 18 scene × 5 config |
+
+### 关键可视化 (R5-B′ 已有)
+
+<p align="center">
+  <img src="report_assets/n_curve_synth.png" width="48%" alt="N-curve synth v3" />
+  <img src="report_assets/n_curve_diligent.png" width="48%" alt="N-curve DiLiGenT" />
+</p>
+<p align="center">
+  <em>左：合成 v3 N-curve (124 scene × 3 subsets) — 4 指标 (PSNR / albedo / normal / depth) 全部 N=1-5 几乎平, 验证 selection-leverage compression<br/>
+  右：DiLiGenT N-curve (10 object × 3 subsets, zero-shot) — MAE ~40° 几乎平, acc@11.25° N=1-2 跃升后稳定</em>
+</p>
+
+<p align="center">
+  <img src="report_assets/curve_p2_r0_v3gray.png" width="48%" alt="R0 baseline curve" />
+  <img src="report_assets/curve_p2_t22_f_n5gray.png" width="48%" alt="F-N5-gray main delivery curve" />
+</p>
+<p align="center">
+  <em>左：R0 对照臂 (原 U-Net, gray) 训练曲线 — val loss 收敛但 normal MAE 残留在 35°<br/>
+  右：F-N5-gray (FusionUNet 主交付) 训练曲线 — normal MAE 收敛到 8° (4× 改进, 论文主表 1 关键数字)</em>
+</p>
+
+---
+
 ## 1. 方法概述
 
 ```
