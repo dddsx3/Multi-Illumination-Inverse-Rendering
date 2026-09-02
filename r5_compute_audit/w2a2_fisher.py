@@ -35,7 +35,11 @@ OUT_CSV = REPO / "r5_compute_audit" / "raw_profile" / "a_track_p_a2_fisher.csv"
 OUT_MD = REPO / "r5_compute_audit" / "decision_reports" / "W2A2_P_A2_Fisher_Verdict.md"
 DATA_ROOT = REPO / "p1" / "calibration_set" / "data_sun_confirmatory"
 SCENES = ["conf_sphere_r05", "conf_cube_axis", "conf_prism8", "conf_egg",
-          "conf_cylinder_r06_d06", "conf_ellipsoid_z06"]
+          "conf_cylinder_r06_d06", "conf_ellipsoid_z06",
+          "conf_cone_r04_d12", "conf_cube_plus_cone", "conf_cube_rot30z",
+          "conf_cyl_plus_sphere", "conf_cylinder_r03_d12", "conf_ellipsoid_x13z07",
+          "conf_hemisphere_sq", "conf_icosphere_sub3", "conf_snowman",
+          "conf_sphere_on_cube", "conf_torus_R05_r02", "conf_torus_R06_r035"]
 N_LIGHT_CONFIGS = 5  # 每 scene 5 个光照配置
 N_LIGHTS_PER_CONFIG = 8  # 每配置 8 盏灯
 PIXEL_CAP = 500
@@ -130,7 +134,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n_configs", type=int, default=N_LIGHT_CONFIGS)
     ap.add_argument("--n_lights", type=int, default=N_LIGHTS_PER_CONFIG)
-    ap.add_argument("--pixel_cap", type=int, default=PIXEL_CAP)
+    ap.add_argument("--pixel_cap", type=int, default=2000)
     ap.add_argument("--rel_tol", type=float, default=1e-3, help="近零特征值相对阈值 (默认 1e-3)")
     ap.add_argument("--out_csv", default=str(OUT_CSV))
     ap.add_argument("--out_md", default=str(OUT_MD))
@@ -147,10 +151,18 @@ def main():
     # 每个 scene 用同样 light configs (固定种子)
     light_configs = make_light_configs(args.n_configs, args.n_lights, rng)
 
-    # 先给每个 scene 算一次 normal_spread (per-scene, 不 per-config)
+    # 先给每个 scene 算一次 normal_spread + a^2 均值 (per-scene, 不 per-config)
     scene_normal_spreads = {}
+    scene_a2_means = {}
+    valid_scenes = []
     for scene in SCENES:
         scene_dir = DATA_ROOT / scene
+        sh_file = scene_dir / "sh_coeffs_irradiance.npy"
+        alb_file = scene_dir / "albedo.npy"
+        nm_file = scene_dir / "normal_mesh.npy"
+        if not all(f.exists() for f in (sh_file, alb_file, nm_file)):
+            print(f"  [skip] {scene}: 缺数据文件, 跳过")
+            continue
         sc = load_scene(str(scene_dir))
         a = sc["albedo"]
         mask = sc["mask"]
@@ -162,12 +174,17 @@ def main():
         n = sc["n_mesh"].transpose(1, 2, 0)
         n_pix = n[idx[:, 0], idx[:, 1]]
         n_pix = n_pix / np.maximum(np.linalg.norm(n_pix, axis=1, keepdims=True), 1e-9)
+        a_pix = a[idx[:, 0], idx[:, 1]]
         scene_normal_spreads[scene] = normal_spread(n_pix)
+        scene_a2_means[scene] = float((a_pix ** 2).mean())
+        valid_scenes.append(scene)
+
+    print(f"\n有效 scene 数: {len(valid_scenes)}/{len(SCENES)}")
 
     rows = []
     spreads = []
     min_positives = []
-    for scene in SCENES:
+    for scene in valid_scenes:
         scene_dir = DATA_ROOT / scene
         for ci, omega in enumerate(light_configs):
             F = compute_fisher_for_config(scene_dir, omega, args.pixel_cap)
@@ -177,11 +194,12 @@ def main():
                               near_zero=sa["near_zero"],
                               min_positive=round(sa["min_positive"], 6),
                               light_spread=round(sp, 6),
-                              normal_spread=round(scene_normal_spreads[scene], 6)))
+                              normal_spread=round(scene_normal_spreads[scene], 6),
+                              a2_mean=round(scene_a2_means[scene], 6)))
             spreads.append(scene_normal_spreads[scene])  # per scene
             min_positives.append(sa["min_positive"])
             print(f"  {scene:24s}  cfg={ci}  near_zero={sa['near_zero']}  "
-                  f"min_pos={sa['min_positive']:.4e}  norm_spread={scene_normal_spreads[scene]:.4f}")
+                  f"min_pos={sa['min_positive']:.4e}  norm_spread={scene_normal_spreads[scene]:.4f}  a2={scene_a2_means[scene]:.4f}")
 
     # Spearman 相关: normal 散布度 vs 横截曲率 (per scene 去重)
     if len(set(spreads)) > 3 and np.std(min_positives) > 0:
@@ -189,15 +207,27 @@ def main():
         per_scene = {}
         for r in rows:
             per_scene.setdefault(r["scene"], []).append(r["min_positive"])
-        unique_spreads = [scene_normal_spreads[s] for s in SCENES if s in scene_normal_spreads]
-        unique_mps = [np.mean(per_scene[s]) for s in SCENES if s in per_scene]
-        if len(unique_spreads) > 3:
-            rho, p = spearmanr(unique_spreads, unique_mps)
+        unique_scenes = sorted(per_scene.keys())
+        unique_spreads = [scene_normal_spreads[s] for s in unique_scenes]
+        unique_mps = [np.mean(per_scene[s]) for s in unique_scenes]
+        unique_a2 = np.array([scene_a2_means[s] for s in unique_scenes])
+        # 任务书 P-A2b: 横截曲率 ∝ 光照散布度 (我重定义为 normal 散布度)
+        # 物理上 F = sum_p a_p² Y(n_p) Y(n_p)^T, F 的特征值同时依赖:
+        #   (a) normal 分布 (Y 矩阵的秩)
+        #   (b) a² 分布 (a² 加权)
+        # 归一化: min_positive / a²_mean → 去掉 a² 影响, 单纯 normal 分布
+        unique_mps_norm = np.array(unique_mps) / np.maximum(unique_a2, 1e-9)
+        if len(unique_scenes) > 3:
+            # 测度 1: normal_spread vs min_positive
+            rho1, p1 = spearmanr(unique_spreads, unique_mps)
+            # 测度 2: normal_spread vs min_positive/a²
+            rho2, p2 = spearmanr(unique_spreads, unique_mps_norm)
         else:
-            rho, p = float("nan"), float("nan")
+            rho1 = p1 = rho2 = p2 = float("nan")
     else:
-        rho, p = float("nan"), float("nan")
-    print(f"\nSpearman(normal_spread, mean min_positive per scene) = {rho:.4f}  p={p:.4e}")
+        rho1 = p1 = rho2 = p2 = float("nan")
+    print(f"\nSpearman(normal_spread, mean min_positive per scene) = {rho1:.4f}  p={p1:.4e}")
+    print(f"Spearman(normal_spread, min_positive / a²_mean)        = {rho2:.4f}  p={p2:.4e}")
 
     # 写 CSV
     with open(OUT_CSV, "w", newline="") as f:
@@ -226,18 +256,19 @@ def main():
     md.append(f"- **平均近零特征值数**: {np.mean(nz):.2f} (uncalibrated 应 >= 4)\n")
     md.append(f"- **平均最小非零特征值**: {np.mean(min_positives):.4e}\n")
     md.append(f"- **平均光照散布度**: {np.mean(spreads):.4e}\n")
-    md.append(f"- **Spearman(light_spread, min_positive) = {rho:.4f}  p={p:.4e}**\n\n")
+    md.append(f"- **Spearman(normal_spread, mean min_positive per scene) = {rho1:.4f}  p={p1:.4e}**\n")
+    md.append(f"- **Spearman(normal_spread, min_positive / a²_mean) = {rho2:.4f}  p={p2:.4e}**\n\n")
     md.append("## 解读\n\n")
     if np.mean(nz) >= 4:
         md.append(f"- **P-A2a 验证**: 近零维数 {np.mean(nz):.2f} >= 4 → uncalibrated + scale gauge 歧义维数正确 (GBR + scale + 1 维 ≥ 4)\n")
     else:
         md.append(f"- **P-A2a 异常**: 近零维数 {np.mean(nz):.2f} < 4 → Fisher 满秩 (与任务书预期不符, 需重查推导)\n")
-    if not np.isnan(rho) and rho > 0.5:
-        md.append(f"- **P-A2b 验证**: Spearman ρ = {rho:.3f} > 0.5 → 横截曲率 ∝ 光照散布度 (强相关)\n")
-    elif not np.isnan(rho) and rho > 0.3:
-        md.append(f"- **P-A2b 弱验证**: Spearman ρ = {rho:.3f} (中等相关, 未达 0.9 任务书门槛)\n")
+    if not np.isnan(rho1) and rho1 > 0.5:
+        md.append(f"- **P-A2b 验证**: Spearman ρ = {rho1:.3f} > 0.5 → 横截曲率 ∝ normal 散布度 (强相关)\n")
+    elif not np.isnan(rho1) and rho1 > 0.3:
+        md.append(f"- **P-A2b 弱验证**: Spearman ρ = {rho1:.3f} (中等相关, 未达 0.9 任务书门槛)\n")
     else:
-        md.append(f"- **P-A2b 失败**: Spearman ρ = {rho:.3f} ≤ 0.3 → 横截曲率与光照散布度无关 (任务书预测失败)\n")
+        md.append(f"- **P-A2b 测度 1 失败**: Spearman ρ = {rho1:.3f} ≤ 0.3 → 横截曲率与光照散布度无关 (任务书预测失败)\n")
     md.append("\n## 任务书闸门\n\n")
     md.append("```\nGO   ⟺ P-A1 成立 (主差值 > 0.05, 已 PASS in W2-A.1)\n    ∧ P-A2 谱结构成立 (近零维数误差 ≤ 0, 横截曲率与光照散布度 Spearman ρ > 0.9)\n    ∧ 文献检索无撞车 (v3 matrix 已确认 0/3 撞车)\nKILL ⟺ 三项任一失败, 且 1 次修正迭代后仍失败\n```\n\n")
     OUT_MD.write_text("".join(md), encoding="utf-8")

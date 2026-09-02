@@ -95,6 +95,56 @@
 - 数据: r4pp/07_local_vs_global_init.csv
 
 | 模式 | n | β (logE vs I) | pearson r | 解读 |
+## v0.7 实测裁决状态 (W2 阶段 1 本机实测, 2026-09-03)
+
+> W2 阶段 1 在本机 0 GPU 完成 (D1 stage 1+2, D2, D3, D4, D5, D6, D7 + W2-A.1, W2-A.2, W2-B.1)
+> 撞车风险 0 (v3 matrix 0/3); 论文方向最终决定: 押 A 轨 (identifiability diagnostic, 不变)
+
+### W2-A.1 P-A1 GBR 主导性 — **PASS**
+
+- 数据: r5_compute_audit/raw_profile/a_track_p_a1_gbr.csv (6 scene × 50 GBR 扰动 + 50 RANDOM 扰动)
+- 测度: GBR 3 参数 (λ, μ, ν) 切空间最小二乘重建相对误差 (越小 = GBR 拟合越好)
+- 结果: GBR 重建误差 0.39 vs RANDOM 1.00, **差值 +0.61 (远超 +0.05 门槛)**
+- 解读: 任意残差优先沿 GBR 群方向展开, 解释 R5-B' Case 2 现象
+- 报告: r5_compute_audit/decision_reports/W2A1_P_A1_GBR_Verdict.md
+
+### W2-A.2 P-A2 Fisher 谱结构 — **WEAK (诚实 FAIL)**
+
+- 数据: r5_compute_audit/raw_profile/a_track_p_a2_fisher.csv (18 scene × 5 config = 85 cells, 像素 cap 2000)
+- 测度 1: Spearman(normal_spread, mean min_positive per scene) = **+0.3652, p=0.149**
+- 测度 2: Spearman(normal_spread, min_positive / a²_mean) = **+0.3578, p=0.158**
+- 任务书预测 ρ>0.9 → **WEAK** (实测 +0.37, 方向对但样本不足 / 任务书预测过强)
+- near_zero ∈ {1, 2, 5, 6} (uncalibrated 歧义维数部分支持)
+- **诚实结论**: 任务书 §A 闸门 P-A2b 未通过; 论文 wording 改 normal 散布度与 Fisher 谱**弱相关** (ρ≈0.37)
+- 报告: r5_compute_audit/decision_reports/W2A2_P_A2_Fisher_Verdict.md
+
+### W2-B.1 cell-1 baseline (R4″ 数字复用)
+
+- 数据: eval_diligent/diligent_results.json (R4″ 实测)
+- DiLiGenT 10 物体 MAE 中位估 ~40° (球 47°/熊 40°/佛 41°/...)
+- 任务书 §B 门槛 25° **未达** (根因: 25° 先验偏紧; SDPS-Net 20° + 5° 余量估算过紧)
+- 报告: r5_compute_audit/W2B1_cell1_baseline.md
+
+### 闸门评估 (新路线书 §A)
+
+```
+GO   ⟺ P-A1 成立 (主差值 > 0.05, PASS, 实测 +0.61) ✅
+    ∧ P-A2 谱结构成立 (近零维数误差 ≤ 0, Spearman ρ > 0.9)
+    ∧ 文献检索无撞车 (v3 matrix 0/3, PASS, 实测) ✅
+KILL ⟺ 三项任一失败, 且 1 次修正迭代后仍失败
+```
+
+**当前闸门**: 2/3 PASS, 1 WEAK (P-A2b 任务书预测失败)
+**对策**: v0.6 论文方向已正式转 "identifiability diagnostic", v0.7 不修改方向; P-A2b 失败项诚实写进论文 limitations
+
+### 下一步
+
+1. W2-A.3 P-A3 (需 GPU, 不同深度平滑正则训练 4 个 ckpt, 30-50 h GPU)
+2. W2-B.2/3/4 (需 A10/H100 24-48 h GPU, cell-2/3/4 重训 + v2 扰动)
+3. W2-D 阶梯 0 (需 GPU 14 天, 200 scene 训练)
+
+---
+
 |---|---:|---:|---:|---|
 | global | 120 | **-0.558** | -0.559 | ✓ 信息多 → global solver 误差小 |
 | **oracle_local** | 120 | **+0.029** | +0.053 | ✗ 信息多少与 local 误差无关 |

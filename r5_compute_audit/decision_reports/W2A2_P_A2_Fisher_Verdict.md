@@ -17,24 +17,25 @@
 
 | Scene | Config | Near-zero count | min positive | light spread |
 |---|---:|---:|---:|---:|
-| conf_sphere_r05          | 0 | 1 | 1.9249e-01 | 1.3399e+00 |
-| conf_sphere_r05          | 1 | 1 | 1.9249e-01 | 1.5482e+00 |
-| conf_sphere_r05          | 2 | 1 | 1.9249e-01 | 1.8060e+00 |
-| conf_sphere_r05          | 3 | 1 | 1.9249e-01 | 1.2702e+00 |
-| conf_sphere_r05          | 4 | 1 | 1.9249e-01 | 5.3760e-01 |
-| conf_cube_axis           | 0 | 6 | 5.5141e-01 | 1.3399e+00 |
+| conf_sphere_r05          | 0 | 1 | 7.4303e-01 | 1.3399e+00 |
+| conf_sphere_r05          | 1 | 1 | 7.4303e-01 | 1.5482e+00 |
+| conf_sphere_r05          | 2 | 1 | 7.4303e-01 | 1.8060e+00 |
+| conf_sphere_r05          | 3 | 1 | 7.4303e-01 | 1.2702e+00 |
+| conf_sphere_r05          | 4 | 1 | 7.4303e-01 | 5.3760e-01 |
+| conf_cube_axis           | 0 | 6 | 1.4490e+00 | 1.3399e+00 |
 
-## 汇总 (across 30 cells)
+## 汇总 (across 85 cells)
 
-- **平均近零特征值数**: 3.33 (uncalibrated 应 >= 4)
-- **平均最小非零特征值**: 1.3451e+00
-- **平均光照散布度**: 8.1807e-01
-- **Spearman(light_spread, min_positive) = 0.6000  p=2.0800e-01**
+- **平均近零特征值数**: 2.59 (uncalibrated 应 >= 4)
+- **平均最小非零特征值**: 2.6138e+00
+- **平均光照散布度**: 7.9491e-01
+- **Spearman(normal_spread, mean min_positive per scene) = 0.3652  p=1.4947e-01**
+- **Spearman(normal_spread, min_positive / a²_mean) = 0.3578  p=1.5846e-01**
 
 ## 解读
 
-- **P-A2a 异常**: 近零维数 3.33 < 4 → Fisher 满秩 (与任务书预期不符, 需重查推导)
-- **P-A2b 验证**: Spearman ρ = 0.600 > 0.5 → 横截曲率 ∝ 光照散布度 (强相关)
+- **P-A2a 异常**: 近零维数 2.59 < 4 → Fisher 满秩 (与任务书预期不符, 需重查推导)
+- **P-A2b 弱验证**: Spearman ρ = 0.365 (中等相关, 未达 0.9 任务书门槛)
 
 ## 任务书闸门
 
