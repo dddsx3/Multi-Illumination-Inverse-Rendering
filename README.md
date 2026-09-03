@@ -138,8 +138,8 @@
   <img src="report_assets/curve_p2_t22_f_n5gray.png" width="48%" alt="F-N5-gray main delivery curve" />
 </p>
 <p align="center">
-  <em>左：R0 对照臂 (原 U-Net, gray) 训练曲线 — val loss 收敛但 normal MAE 残留在 35°<br/>
-  右：F-N5-gray (FusionUNet 主交付) 训练曲线 — normal MAE 收敛到 8° (4× 改进, 论文主表 1 关键数字)</em>
+  <em>左：R0 对照臂（原 U-Net, gray, bs8）训练曲线 — 历史世代 reference（test normal MAE 10.66°，p2_r0_v3gray_test）<br/>
+  右：F-N5-gray 训练曲线 — 历史世代 reference（7.792°，ckpt 缺失）；Gen-A3 复现（bs4）见 §4.1（10.30°）</em>
 </p>
 
 ---
@@ -250,16 +250,31 @@ data_root/
 
 ## 4. 当前进展与关键数字
 
-### 4.1 主结果（v2 best，synthetic_v3 test 124 场景）
+### 4.1 主结果（synthetic_v3 test，124 场景；世代分行，数字源 = eval_output/*/eval_summary.json，R6）
 
-| 指标 | 数值 | 说明 |
+**Gen-A3 · 当前协议世代（bs4 · 物理约束 clamp 头 · ckpt 在库可复现）**
+
+| 指标 | 数值（mean±std）| 来源 |
 |---|---|---|
-| image_psnr | **37.25 dB** | 重建质量（全部臂中最佳）|
-| normal_mae | 8.18° | 法线角误差 |
-| albedo_si_mae | 0.0532 | 尺度不变反照率误差 |
-| depth_rmse | 0.3554 | 深度误差 |
-| albedo/depth 物理违规率 | **0.0000%** | INC-0012 Sigmoid/Softplus 约束（3 个已训臂全部通过）|
-| DiLiGenT zero-shot MAE (N=5) | 39.41° | 合成→真实零样本迁移（Phase 1 基线 40.39°）|
+| image_psnr | **32.55 ± 3.50 dB** | eval_output/A3-0_f_n5gray_seed42_test |
+| normal_mae | **10.30° ± 3.75** | 同上 |
+| albedo_si_mae | **0.1482 ± 0.0446** | 同上 |
+| depth_rmse_aligned | 0.3377 ± 0.0636 | 同上 |
+| 物理违规率（albedo / depth）| **0.0000%** | 同上（physical_assertions）|
+
+**历史世代 · reference-only（pre-constraint · ckpt 永久缺失不可复现）**
+
+| 臂 | PSNR | normal MAE | albedo si-MAE |
+|---|---|---|---|
+| F-N5 gray（bs8）| 36.09 dB | 7.792° | 0.1279 |
+| F-N5 rgb v2（bs8）| 37.25 dB | 8.177° | 0.1304 |
+| R0 gray 对照（bs8）| 36.04 dB | 10.66° | 0.0548 |
+
+> 历史世代含已修复缺陷（输出无物理约束，曾出现负 albedo），仅供消融/叙事参考，
+> **禁作对比基准**；与 Gen-A3 协议（bs4 + 物理约束头）不可直接同格比较，口径说明见
+> `docs/G0_资产清点表.md` 与 `p1/protocol/CLAIM_CARDS.md`（S-01）。
+
+迁移参考（非主结果，历史世代 ckpt）：DiLiGenT zero-shot MAE (N=5) **39.41°**（EX-02 重测后回填）。
 
 ### 4.2 N 敏感性双轨（核心创新证据）
 
@@ -269,6 +284,11 @@ data_root/
 | DiLiGenT（10 物体 × 3 随机子集/N）| 1–15 | 0.33° (< 1%) | 架构对光照数鲁棒 |
 
 图源：`report_assets/n_curve_{synth,diligent,combined}.png`；原始数据：`eval_output/n_curve_synth_v3/`、`eval_diligent/n_curve/`；解读报告：`docs/design/t2_5_n_sensitivity_report.md`。
+
+> **世代注记（FIX-01）**：上表"极差 0.030°（合成）"出自**旧消融世代**（resA/albOff）的
+> n_curve 子采样协议，与 Gen-A3 主臂协议不可比（旧世代 n_curve ≈10.35° vs 主臂 7.79°，
+> 见审计裁决 E8）。**Gen-A3 重测进行中（EX-01），N_min 声明待重测结果定稿**；此前禁止
+> 把 0.030°/N_min=1 作为当前世代引用源。
 
 ### 4.3 消融与判别实验（进行中）
 
