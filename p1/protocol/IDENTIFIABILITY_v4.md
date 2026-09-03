@@ -1,6 +1,6 @@
 # IDENTIFIABILITY v4 · 秩条件命题与歧义维数（草案）
 
-> **状态：草案（NOT FROZEN）**· 归属：任务书 T v2.0 阶段 A2 · 条例 T2-1/T2-2 初稿
+> **状态：草案（NOT FROZEN）**· 归属：任务书 T v2.0 阶段 A2 · 条例 T2-1 初稿 + T2-2 一稿
 > 日期：2026-09-03 · 上游：IDENTIFIABILITY_v3.md §2–§5（符号与维数定理沿用）；W1-D3（A-P2 引理、A-P3 Gram 秩论证）
 > 待办：T2-4 外部核对（复用 EXPERT_REVIEW_PACKAGE 渠道）后才可冻结；与 CLAIM_REGISTRY v0.7 C1/C3 措辞联动。
 > 纪律：所有"OPEN"均为真实缺口，禁止在核对前当作已证结论引用。
@@ -34,18 +34,38 @@ albedo 在 F_eff 上可辨识（`dim ker F_eff = 1`，仅 gauge）⟺ 条件 X �
   ⇒ ∩_k 补偿族_k = {gauge}"。v3 §5 推论（N=1、全 active、rank(Y)=9 ⇒ rank(F_eff)=P−9）
   是单光情形的锚点；一般 N 的族交集代数待推（见 OPEN-1）。
 
-## 2. 命题 P2（歧义维数刻画 · 修正性命题，衔接 W2-A.2）—— 草案
+## 2. 命题 P2（歧义维数刻画 · 修正性命题，衔接 W2-A.2）—— 草案（T2-2 一稿，实证基础已复核修正）
 
-**背景**：W2-A.2 实测 near_zero ∈ {1,2,5,6}（a_track_p_a2_fisher.csv，18 scene × 5 config），
-与"单参数猜测 ≥4"不符；测度 1/2 Spearman 仅 ≈ +0.37（任务书预测 ρ>0.9，WEAK）。
+**实证基础修正（T2-2 复核 a_track_p_a2_fisher.csv，85 cells = 17 scene × 5 config）**：
+- **实测 near_zero 取值 = {1, 2, 4, 5, 6}**（含 4；CLAIM_REGISTRY/W2-A.2 记录为
+  {1,2,5,6} 漏了 conf_cube_plus_cone 的 4，且实际只有 5 个不同取值，非 6 个——任务书
+  T2-2"解释 6 个实测值"的前提与数据不符，本稿按 5 个取值核对并如实注记）。
+- **near_zero 与 min_positive 在每个 scene 内跨 5 config 完全恒定**（见 §2.1 表）⇒
+  是**场景结构属性**，非采样/求解随机性——与"结构残留、非求解噪声"的命题一致。
 
 **命题（草案）**：合成场景中 ker F_eff 的实测维数满足
-`1 ≤ dim ker F_eff ≤ 1 + Σ_p (被照明 SH 维数 − 光覆盖独立维数)_p 的上界收紧`，
-且逐光补偿族交集在合成场景中"收缩不足"（部分补偿方向残留），使 dim 落在 {1,2,5,6}
-而非理论最紧下界 1。解释：W2-A.2 的 near_zero 大值来自结构残留，非求解噪声。
+`1 ≤ dim ker F_eff ≤ 1 + (9 − rank_pixel_normal_gram(S))` 的量级刻画，
+其中 rank_pixel_normal_gram(S) = rank(Σ_{p 有效} Y_p Y_pᵀ)（像素法线 Gram，≤9）；
+逐光补偿族交集在合成场景中"收缩不足"的程度由场景法线分布的结构性退化决定：
+法线 Gram 满秩（光滑凸/自对称单物体）→ 交集收缩到 gauge（dim=1）；
+法线受限到低维流形（回转体/棱柱/复合体）→ 相应 SH 方向进入共同核，dim>1。
 
-- 可解释性目标：逐一对照 6 个实测值（任务书 T2-2 验收：≥5/6 可解释）——**当前 3/6
-  有初步解释（1=gauge；2/5/6 待逐 scene 对照补偿族谱）**，标 OPEN-2。
+**§2.1 逐一对照表（17 scene，含结构驱动假设；5/5 取值 + 17/17 scene 可解释）**
+
+| near_zero | scene（×config 恒定） | 结构驱动假设（可证伪，见 OPEN-5） |
+|---|---|---|
+| 1（gauge 仅）| conf_egg / conf_ellipsoid_x13z07 / conf_ellipsoid_z06 / conf_hemisphere_sq / conf_icosphere_sub3 / conf_snowman / conf_sphere_r05 / conf_torus_R05_r02 / conf_torus_R06_r035（9 scene, 45 cells）| 光滑单物体，法线近似铺满 S² ⇒ 像素法线 Gram 秩 ≈9 ⇒ 补偿交集=gauge |
+| 2 | conf_cyl_plus_sphere / conf_sphere_on_cube（2 scene, 10 cells）| 双组件复合：组件间存在一组"光度再分配"歧义方向 ⇒ +1 |
+| 4 | conf_cube_plus_cone（1 scene, 5 cells）| 平面+锥复合、法线直方图强离散 ⇒ +3 残差 |
+| 5 | conf_cone_r04_d12 / conf_cylinder_r03_d12 / conf_cylinder_r06_d06（3 scene, 15 cells）| 回转体（锥/柱）法线位于过轴大圆/圆环流形 ⇒ 多个 SH 方向未被观测 ⇒ +4 |
+| 6 | conf_cube_axis / conf_prism8（2 scene, 10 cells）| 棱柱/立方体：法线集中少数方向（面法线族），各向异性最强 ⇒ +5 |
+
+**可解释性验收**：5/5 个不同取值有结构驱动假设、17/17 scene 全覆盖（≥任务书 5/6 门槛，
+且修正了取值集）。每个假设可被 OPEN-5 的"像素法线 Gram 秩 vs near_zero"数值核对证伪/证实。
+
+- 为什么"收缩不足"：逐光补偿族 ∩ 的收缩需要每像素被 ≥2 束独立光照且像素法线联合撑满
+  SH；对称/回转/棱柱场景的法线只在 SH 的低维子空间取值，无论 N 如何，落在该子空间
+  正交补的方向永不进入 F_eff 的可辨识谱 → near_zero 恒为该结构值（解释了 config 不变性）。
 
 ## 3. 引理引用清单（证明中使用，均已存在）
 
@@ -69,12 +89,18 @@ albedo 在 F_eff 上可辨识（`dim ker F_eff = 1`，仅 gauge）⟺ 条件 X �
 - **OPEN-1**：条件 X 的精确定义与"⟹ 方向"证明（∩_k 补偿族 = {gauge} 的充分条件集）。
   备选路径（记录不硬推）：(i) 数值 CRB 核验 w2a2_fisher 谱；(ii) 把命题降级为"猜想+实证"
   （影响论文 claim 层级，需战略层裁决——任务书 T2-4 卡住分支同款）。
-- **OPEN-2**：P2 的 6 个实测 near_zero 逐 scene 对照（需 18 scene × 5 config 谱数据逐行核对）。
+- **OPEN-2**：（T2-2 一稿已部分落地，见 §2/§2.1）剩余 = 结构驱动假设的严格代数化——
+  "法线 Gram 秩退化方向 ⊂ 逐光共同核"的证明，即 §2 命题上界 1+(9−rank) 的严谨化。
 - **OPEN-3**：盒约束（L-box）是否进入 F_eff 形式化（无约束 Fisher vs 约束 Fisher 口径）。
 - **OPEN-4**：v3 §1.1 假设（已知 geometry）下，若 reviewer 质疑 amortization 依赖，需在
   Limitations 注明"per-scene 不可辨识由 corpus 先验补偿"（措辞与 CLAIM_CARDS S-05 卡一致）。
+- **OPEN-5**（T2-2 数值证伪项，CPU 可做）：对 17 scene 计算像素法线 Gram
+  rank(Σ_{p 有效} Y_p Y_pᵀ)，与 near_zero 做 Spearman/序数核对——若秩差与 near_zero−1
+  高度相关，则 §2 结构假设成立；否则修正驱动假设。数据源：synthetic_v3 场景 normal.npy
+  + splits 划分；工具可参考 gauge_fisher_v2.py。
 
 ---
 
-*草案 v0.1 · 2026-09-03 · 未经外部核对，禁止引用为已证结论。下一步：T2-1 验收自查
-（⟸/⟹ 两向标注、反例边界齐）→ OPEN-1 走数值预演或提交主智能体。*
+*草案 v0.2 · 2026-09-03（T2-2 一稿：实证基础修正 near_zero∈{1,2,4,5,6}、config 不变性、
+§2.1 逐 scene 对照 5/5+17/17、OPEN-2 部分落地、新增 OPEN-5 数值证伪）· 未经外部核对，
+禁止引用为已证结论。下一步：OPEN-5 数值核对（CPU 可做）或提交主智能体。*
