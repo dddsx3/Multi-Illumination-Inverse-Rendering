@@ -196,13 +196,13 @@ def preflight_train(amp_dtype="bf16", batch=4, allow_stale=False,
     return rc, items
 
 
-def check_host_memory(phys_floor_gb=1.0, pf_floor_gb=1.5):
+def check_host_memory(phys_floor_gb=0.25, pf_floor_gb=1.5):
     """运行中熔断：越界抛 MemoryStop。供 trainer 训练循环周期性调用。
 
-    地板取值说明（INC-0014 实测）：GlobalMemoryStatusEx 的 availPhys 把 standby
-    （可回收文件缓存）计为不可用，数值偏低是常态；过高的地板会让熔断频繁误触发。
-    取 phys 1.0GB / pf 1.5GB：高于 2026-09-03 系统停摆当口的实际区间（~0.1GB），
-    又不会因 Windows 缓存口径而误伤。
+    地板取值说明（INC-0014 + 2026-09-04 启动谷值实测）：系统停摆的主导信号是
+    commit 上限（页面文件空闲），而非 availPhys——availPhys 把 standby 计为不可用，
+    且训练/worker 启动存在 ~0.3–0.6GB 瞬时谷值（页面文件仍健康、可吸收；A3-0 全天
+    已实证安全）。故以 pf<1.5GB 为主熔断信号；phys 仅在 <0.25GB（近零）时单独触发。
     """
     mem = host_memory()
     if mem is None:
