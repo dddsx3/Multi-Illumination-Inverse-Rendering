@@ -79,6 +79,12 @@ ARMS = [
      ["--model", "fusion", "--modality", "gray"],
      ["--model", "fusion", "--modality", "gray"],
      "A3-0 F-N5 复现臂：闭合主表基线 ckpt 缺失的可复现性缺口"),
+    # A3-1 noFiLM（v2.1 R-C 排序第一臂 · Gen-A3 协议：bs4+物理约束头+gray）：
+    # 判别 FiLM 必要性（表 1 消融行）。训练开关 --disable_film（FiLM gamma≡1/beta≡0）。
+    ("A3-1_noFiLM",
+     ["--model", "fusion", "--modality", "gray", "--disable_film"],
+     ["--model", "fusion"],
+     "EX-03 A3-1 noFiLM：FiLM 调制关闭判别（Gen-A3 同协议）"),
     ("p2_t25_f_resA",
      ["--model", "fusion", "--modality", "gray", "--residual_off"],
      ["--model", "fusion", "--residual_off"],

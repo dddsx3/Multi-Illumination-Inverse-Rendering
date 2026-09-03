@@ -5,8 +5,9 @@
 
 | 日期 | run | 预算(h) | 实际(h) | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 2026-09-03 | A3-0_f_n5gray_seed42（含冒烟） | 11.0 | ~8.9（13:34→23:0x 完成） | complete | INC-0014 后 bs4 降配；100/100 epoch + eval_rc=0（evals 见 A3-0_f_n5gray_seed42_test）|
-| 2026-09-04 | FIX-01..07 批次 | 0 GPU | 0 | **完成** | 强制修复书全绿；tag gate-FIX-20260904 已推送（fb6a95e）；待确认后启动 EX-01 |
+| 2026-09-03 | A3-0_f_n5gray_seed42（含冒烟） | 11.0 | ~8.9（13:34→23:0x 完成） | complete | INC-0014 后 bs4 降配；100/100 epoch + eval_rc=0（scene 级主表见 *_test_v2_scenelevel，INC-0015）|
+| 2026-09-04 | FIX-01..07 批次 | 0 GPU | 0 | **完成** | 强制修复书全绿；tag gate-FIX-20260904 已推送（fb6a95e）；EX-01/02 已闭合（INC-0015 scene 级口径）|
+| 2026-09-04 | 世代变更行 Gen-A3 内 → A3-1 noFiLM | — | — | 登记 | 理由=判别 FiLM 必要性（v2.1 R-C）；训练代码与 A3-0 同语义（FIX-06 默认 bs4 一致；INC-0015 仅改评估链路 batch=1，不影响训练）；相关 commit=FIX-06/INC-0015(eval-only)/run_arms A3-1 臂 |
 
 ## T0-4 · 情景裁定（2026-09-03，草案 → G0 裁决书确认）
 
