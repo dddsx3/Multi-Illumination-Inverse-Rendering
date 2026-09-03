@@ -252,15 +252,19 @@ data_root/
 
 ### 4.1 主结果（synthetic_v3 test，124 场景；世代分行，数字源 = eval_output/*/eval_summary.json，R6）
 
-**Gen-A3 · 当前协议世代（bs4 · 物理约束 clamp 头 · ckpt 在库可复现）**
+**Gen-A3 · 当前协议世代（bs4 · 物理约束 clamp 头 · ckpt 在库可复现 · scene 级口径 INC-0015 校准）**
 
 | 指标 | 数值（mean±std）| 来源 |
 |---|---|---|
-| image_psnr | **32.55 ± 3.50 dB** | eval_output/A3-0_f_n5gray_seed42_test |
-| normal_mae | **10.30° ± 3.75** | 同上 |
-| albedo_si_mae | **0.1482 ± 0.0446** | 同上 |
-| depth_rmse_aligned | 0.3377 ± 0.0636 | 同上 |
+| image_psnr | **32.54 ± 7.53 dB** | eval_output/A3-0_f_n5gray_seed42_test_v2_scenelevel |
+| normal_mae | **14.89° ± 12.62** | 同上 |
+| albedo_si_mae | **0.0543 ± 0.0451** | 同上 |
+| depth_rmse_aligned | 0.235（mean）| 同上 |
 | 物理违规率（albedo / depth）| **0.0000%** | 同上（physical_assertions）|
+
+> 口径注记（INC-0015）：评估统一为 **scene 级（batch=1）**——旧版 evaluate_model 的
+> batch 池化会污染 per-scene 语义与 albedo scale-invariant 归一化（曾产出 10.30°/
+> 0.1482，已作废）。scene 级数字与 EX-01 n_curve N=5（14.887°/0.0543）完全一致。
 
 **历史世代 · reference-only（pre-constraint · ckpt 永久缺失不可复现）**
 
@@ -274,21 +278,20 @@ data_root/
 > **禁作对比基准**；与 Gen-A3 协议（bs4 + 物理约束头）不可直接同格比较，口径说明见
 > `docs/G0_资产清点表.md` 与 `p1/protocol/CLAIM_CARDS.md`（S-01）。
 
-迁移参考（非主结果，历史世代 ckpt）：DiLiGenT zero-shot MAE (N=5) **39.41°**（EX-02 重测后回填）。
+迁移参考（非主结果，历史世代 ckpt）：DiLiGenT zero-shot MAE (N=5) **39.41°**；Gen-A3 重测（EX-02）= **40.41°**（S-04 卡）。
 
 ### 4.2 N 敏感性双轨（核心创新证据）
 
 | 轨道 | N 范围 | MAE 极差 | 结论 |
 |---|---|---|---|
-| 合成 v3 test（124 场景 × 3 随机子集/N）| 1–5 | 0.030° (< 0.3%) | N=1 不退化 → **N_min = 1** |
+| 合成 v3 test · Gen-A3（124 场景，EX-01 校准后 scene 级）| 1–5 | **0.017°**（N1 14.875→N5 14.887）| N=1 不退化 → **N_min = 1**（S-02 冻结版）|
 | DiLiGenT（10 物体 × 3 随机子集/N）| 1–15 | 0.33° (< 1%) | 架构对光照数鲁棒 |
 
-图源：`report_assets/n_curve_{synth,diligent,combined}.png`；原始数据：`eval_output/n_curve_synth_v3/`、`eval_diligent/n_curve/`；解读报告：`docs/design/t2_5_n_sensitivity_report.md`。
+图源：`report_assets/n_curve_{synth,diligent,combined}.png`；原始数据：Gen-A3 = `eval_output/A3-0_f_n5gray_seed42_n_curve/`（INC-0015 校准后有效）、旧消融世代 = `eval_output/n_curve_synth_v3/`；解读报告：`docs/design/t2_5_n_sensitivity_report.md`。
 
-> **世代注记（FIX-01）**：上表"极差 0.030°（合成）"出自**旧消融世代**（resA/albOff）的
-> n_curve 子采样协议，与 Gen-A3 主臂协议不可比（旧世代 n_curve ≈10.35° vs 主臂 7.79°，
-> 见审计裁决 E8）。**Gen-A3 重测进行中（EX-01），N_min 声明待重测结果定稿**；此前禁止
-> 把 0.030°/N_min=1 作为当前世代引用源。
+> **世代注记（FIX-01 + INC-0015 更新）**：旧表"极差 0.030°"出自旧消融世代（resA/albOff）
+> n_curve 子采样协议，与 Gen-A3 不可比（裁决 E8）。**Gen-A3 校准后曲线（EX-01）已冻结为
+> S-02 引用源：N1–N5 极差 0.017°（scene 级），N_min=1 保留**；0.030° 仅作历史消融世代记录。
 
 ### 4.3 消融与判别实验（进行中）
 

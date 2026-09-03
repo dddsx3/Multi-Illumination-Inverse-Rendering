@@ -7,22 +7,22 @@
 
 ## 卡片区
 
-- 【S-01】合成 v3 test（124 场景）主结果——Gen-A3 世代（FIX-02 终稿回填）
-  - 一句话：固定 N=5 线性域多光照（几何已知、物理约束 clamp 头、bs4）下，Gen-A3 复现臂（A3-0）在合成 v3 test 124 场景上达到 normal MAE 10.30° / PSNR 32.55 dB / albedo si-MAE 0.1482 / 物理违规率 0.0000%。
-  - 数值（Gen-A3 主行）：normal MAE 10.3039±3.7507°；PSNR 32.546±3.499 dB；albedo si-MAE 0.14819±0.04458；depth_rmse_aligned 0.3377±0.0636
-  - 来源文件：eval_output/A3-0_f_n5gray_seed42_test/eval_summary.json
-  - 复现命令：python evaluate_model.py --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --data_root D:/data/synthetic_v3 --split test --split_manifest splits/synthetic_v3.json --out_dir eval_output/A3-0_f_n5gray_seed42_test
-  - reference-only 对照（历史世代 bs8、pre-constraint、ckpt 永久缺失，禁作对比基准）：F-N5 gray 7.792°/36.09/0.1279（p2_t22_f_n5gray_test）；F-N5 rgb v2 8.177°/37.25/0.1304（p2_t22_f_n5rgb_v2_test）；R0 gray 10.66°/36.04/0.0548（p2_r0_v3gray_test）
-  - 口径：允许——"Gen-A3 世代（bs4 + 物理约束）"标注后引用本卡主行；**禁止**——无世代标注直接引用历史数字、把 bs8 历史世代与 Gen-A3 数字同格混比、joint recoverability 类措辞。
-  - 登记日期：2026-09-03（数值终稿回填 FIX-02 2026-09-04）
+- 【S-01】合成 v3 test（124 场景）主结果——Gen-A3 世代（INC-0015 scene 级校准版，2026-09-04）
+  - 一句话：固定 N=5 线性域多光照（几何已知、物理约束 clamp 头、bs4）下，Gen-A3 复现臂（A3-0）在合成 v3 test 124 场景（scene 级口径）达到 normal MAE 14.89° / PSNR 32.54 dB / albedo si-MAE 0.0543 / 物理违规率 0.0000%。
+  - 数值（Gen-A3 主行 · scene 级）：normal MAE 14.8866±12.6212°；PSNR 32.5424±7.5312 dB；albedo si-MAE 0.05432±0.0451；depth_rmse_aligned 0.235
+  - 来源文件：eval_output/A3-0_f_n5gray_seed42_test_v2_scenelevel/eval_summary.json（旧 batch 池化版 *_test 已作废，INC-0015）
+  - 复现命令：python evaluate_model.py --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --data_root D:/data/synthetic_v3 --split test --split_manifest splits/synthetic_v3.json --out_dir eval_output/A3-0_f_n5gray_seed42_test_v2_scenelevel
+  - reference-only 对照（历史世代 bs8、pre-constraint、ckpt 永久缺失，禁作对比基准）：F-N5 gray 7.792°/36.09/0.1279（p2_t22_f_n5gray_test）；F-N5 rgb v2 8.177°/37.25/0.1304（p2_t22_f_n5rgb_v2_test）；R0 gray 10.66°/36.04/0.0548（p2_r0_v3gray_test）——注：历史数字为 batch 池化口径（INC-0015），与 Gen-A3 scene 级比较需先同口径化
+  - 口径：允许——"Gen-A3 世代（bs4 + 物理约束 + scene 级评估）"标注后引用本卡主行；**禁止**——无世代/口径标注直接引用任何数字、把历史世代与 Gen-A3 同格混比、joint recoverability 类措辞。
+  - 登记日期：2026-09-03（scene 级校准版 2026-09-04 INC-0015）
 
-- 【S-02】合成 v3 N 敏感性曲线——N_min=1（**世代注记：待 EX-01 重测定稿**）
-  - 一句话：合成 v3 test 124 场景 × N=1–5 × 3 随机子集，normal MAE 极差 0.030°（<0.3%）——N=1 不退化。
-  - 数值：MAE 极差 0.030°；相对 <0.3%（**数值出自旧消融世代 resA/albOff n_curve，协议与 Gen-A3 主臂不可比；EX-01 重测前禁止作为 N_min=1 的当前世代引用源**）
-  - 来源文件：eval_output/n_curve_synth_v3/{n_curve_agg.json, n_curve_raw.json}；解读报告 docs/design/t2_5_n_sensitivity_report.md
-  - 复现命令：python eval_n_curve.py --checkpoint ckpt/<run>.pt --ns "1,2,3,4,5" --subsets_per_n 3
+- 【S-02】合成 v3 N 敏感性曲线——N_min=1（**Gen-A3 冻结版 · EX-01 + INC-0015 校准，2026-09-04**）
+  - 一句话：Gen-A3（A3-0，scene 级）合成 v3 test 124 场景 × N=1–5，normal MAE 极差 0.017°（14.875→14.887）——N=1 不退化，**N_min=1 保留**。
+  - 数值：N1 14.875 / N2 14.870 / N3 14.880 / N4 14.886 / N5 14.887°；极差 0.017°（<0.5° 判据，平坦）
+  - 来源文件：eval_output/A3-0_f_n5gray_seed42_n_curve/{n_curve_agg.json, n_curve_raw.json}（scene 级，INC-0015 校准有效）；旧消融世代 eval_output/n_curve_synth_v3/（0.030°，仅历史记录，非引用源）
+  - 复现命令：python eval_n_curve.py --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --data_root D:/data/synthetic_v3 --ns "1,2,3,4,5" --subsets_per_n 3 --out_dir eval_output/A3-0_f_n5gray_seed42_n_curve
   - 口径：允许——"subset-sensitivity saturation / relative subset-sensitivity"；**禁止**——noise-floor saturation / hits the noise floor / render noise floor / N curve is projection of conditioning（禁词替换为 solver-repeat noise / repeatability floor）。
-  - 登记日期：2026-09-03
+  - 登记日期：2026-09-03（Gen-A3 冻结版 2026-09-04）
 
 - 【S-03】物理断言违规率 0%
   - 一句话：已训 3 臂（albOff/resA 等）物理约束断言违规率 0.0000%（Sigmoid/Softplus 约束，INC-0012）。

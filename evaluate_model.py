@@ -169,14 +169,12 @@ def main():
         residual.load_state_dict(r_sd)
     model.to(device).eval(); renderer.to(device).eval(); residual.to(device).eval()
 
-    loader = create_data_loader(dataset, batch_size=args.batch_size,
+    # INC-0015（2026-09-04，选项 A 裁决）：scene 级为唯一评估口径——batch>1 时
+    # compute_all 返回 batch 级标量被复制给各 scene（per_scene 名不副实），且
+    # albedo scale-invariant 归一化被跨 scene 池化污染。统一 batch=1，逐 scene 真值。
+    loader = create_data_loader(dataset, batch_size=1,
                                 shuffle=False, num_workers=args.num_workers,
                                 pin_memory=True)
-    if eval_num_lights < num_images:
-        # N 子集模式：每场景 3 子集，batch 1 跑得快
-        loader = create_data_loader(dataset, batch_size=1,
-                                    shuffle=False, num_workers=args.num_workers,
-                                    pin_memory=True)
 
     per_scene = {}
     n = 0
