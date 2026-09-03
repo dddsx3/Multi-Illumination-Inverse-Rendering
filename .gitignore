@@ -89,3 +89,4 @@ obj_models/
 models_list.txt
 obj_models_list.txt
 docs/incidents/*_host_monitor.log
+docs/incidents/*_host_monitor*.log
