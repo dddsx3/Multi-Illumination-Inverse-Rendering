@@ -1,0 +1,20 @@
+{
+  "run": "A3-0_f_n5gray_seed42_diligent",
+  "kind": "DiLiGenT zero-shot 重测",
+  "code_commit_sha": "unrecorded（同 A3-0）",
+  "config": {
+    "run": "A3-0 diligent EX-02",
+    "checkpoint": "D:/MIR_Archive_20260829/checkpoints/A3-0_f_n5gray_seed42/best_model.pth",
+    "root": "D:/data/DiLiGenT/pmsData",
+    "num_lights": 5,
+    "num_lights_subsets": 3
+  },
+  "config_sha256": null,
+  "data_manifest_sha256": null,
+  "outputs": [
+    "diligent_results.json"
+  ],
+  "agg_mae": 40.4136,
+  "produced": "2026-09-04",
+  "status": "ok"
+}

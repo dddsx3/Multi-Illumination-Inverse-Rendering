@@ -34,12 +34,12 @@
 
 - 【S-04】DiLiGenT 迁移量级（合成→真实零样本）~40°
   - 一句话：DiLiGenT 10 物体零样本迁移 normal MAE 中位约 40°（球 47°/熊 40°/佛 41°/…；README N=5 子集零样本 39.41°），任务书 §B 25° 门槛未达——如实作为迁移困难披露，不作主 claim。
-  - 数值：中位 ~40°（W2-B.1 cell-1 baseline，R4″ 复用）；N=5 零样本 39.41°
-  - 来源文件：eval_diligent/diligent_results.json（R4″ 实测）；README §4.1；r5_compute_audit/W2B1_cell1_baseline.md
-  - 复现命令：python evaluate_diligent.py --checkpoint ckpt/<run>.pt …（零样本协议）
-  - **世代注记（FIX-02）**：数值出自历史世代 ckpt（R4″ 复用），Gen-A3 世代未跑 DiLiGenT——EX-02 重测后回填；此前仅作 reference，禁止作为当前世代迁移结论。
+  - 数值：Gen-A3（A3-0，EX-02 重测 2026-09-04）= **MAE 40.41°**（median 40.18；10 物体 36.36–46.07，ball 46.07/bear 40.10/buddha 40.71）；历史世代 N=5 零样本 = 39.41°（R4″/W2-B.1，中位 ~40°）
+  - 来源文件：eval_output/A3-0_f_n5gray_seed42_diligent/diligent_results.json（Gen-A3）；eval_diligent/diligent_results.json（历史）
+  - 复现命令：python evaluate_diligent.py --root D:/data/DiLiGenT/pmsData --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --num_lights 5 --num_lights_subsets 3 --out_dir eval_output/<run>_diligent
+  - **世代注记（EX-02 已回填）**：Gen-A3 40.41° vs 历史 39.41°——同量级（+1.0° 无实质漂移），与"合成→真实迁移困难（~40°）"叙事一致；仍仅作 reference，不作达标 claim。
   - 口径：允许——标"zero-shot / reference / 固定子集"；**禁止**——将 40° 表述为达标性能、把 25° 门槛说成已达成、与 matched 重训数字混淆（matched 表须另列 reference-only）。
-  - 登记日期：2026-09-03（注记 2026-09-04 FIX-02）
+  - 登记日期：2026-09-03（Gen-A3 回填 2026-09-04 EX-02）
 
 - 【S-05】GSIQ 排名稳定性（albedo 不敏感 + held-out 保持）与 GBR 主导性
   - 一句话：GSIQ（Gauge-Schur Information Quality）排名在 albedo 绝对量变化下稳定、在 held-out scene 保持；任意残差优先沿 GBR 群方向展开。
