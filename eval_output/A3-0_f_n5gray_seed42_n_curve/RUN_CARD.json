@@ -1,0 +1,23 @@
+{
+  "run": "A3-0_f_n5gray_seed42_n_curve",
+  "kind": "n_curve补测",
+  "code_commit_sha": "unrecorded（同 A3-0 启动时刻无法回溯，诚实注记）",
+  "config": {
+    "run": "A3-0 n_curve EX-01",
+    "checkpoint": "D:/MIR_Archive_20260829/checkpoints/A3-0_f_n5gray_seed42/best_model.pth",
+    "data_root": "D:/data/synthetic_v3",
+    "split_manifest": "splits/synthetic_v3.json",
+    "ns": "1,2,3,4,5",
+    "subsets_per_n": 3,
+    "seed": 42
+  },
+  "config_sha256": "47cb9ff79de5145163dd4ab83d2d6915eab690e61fc8d7a7534eed85e87fb9c9",
+  "data_manifest_sha256": "853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094",
+  "outputs": [
+    "n_curve_agg.json",
+    "n_curve_raw.json"
+  ],
+  "note": "INC-0015: N=5 与 test eval 有 4.6° 级差待校准",
+  "produced": "2026-09-04",
+  "status": "ok(待校准)"
+}
