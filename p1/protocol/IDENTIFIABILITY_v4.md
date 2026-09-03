@@ -43,12 +43,14 @@ albedo 在 F_eff 上可辨识（`dim ker F_eff = 1`，仅 gauge）⟺ 条件 X �
 - **near_zero 与 min_positive 在每个 scene 内跨 5 config 完全恒定**（见 §2.1 表）⇒
   是**场景结构属性**，非采样/求解随机性——与"结构残留、非求解噪声"的命题一致。
 
-**命题（草案）**：合成场景中 ker F_eff 的实测维数满足
-`1 ≤ dim ker F_eff ≤ 1 + (9 − rank_pixel_normal_gram(S))` 的量级刻画，
-其中 rank_pixel_normal_gram(S) = rank(Σ_{p 有效} Y_p Y_pᵀ)（像素法线 Gram，≤9）；
-逐光补偿族交集在合成场景中"收缩不足"的程度由场景法线分布的结构性退化决定：
-法线 Gram 满秩（光滑凸/自对称单物体）→ 交集收缩到 gauge（dim=1）；
-法线受限到低维流形（回转体/棱柱/复合体）→ 相应 SH 方向进入共同核，dim>1。
+**命题（草案，OPEN-5 一稿后修订为"两类机制"口径）**：合成场景中 ker F_eff 的实测维数
+`satisfies 1 ≤ dim ker F_eff`，其上界由两类机制叠加（不再写死 1+(9−rank) 等式）：
+- **机制 (a) 像素法线 SH 子空间缺陷**：rank_pixel_normal_gram(S) = rank(Σ_{p 有效} Y_p Y_pᵀ) < 9
+  （法线受限到低维流形：回转体/棱柱/立方）⇒ 未观测 SH 方向进入逐光共同核 → dim 增；
+- **机制 (b) 复合场景光度退化**（法线满秩时仍发生）：多组件场景存在"组件间光度再分配"
+  歧义方向（与组件曲率/遮挡结构相关）→ dim 增。
+
+OPEN-5 数值（§2.2）证实 (a) 对回转/棱柱类、(b) 对复合类；两类都 config 不变（纯结构）。
 
 **§2.1 逐一对照表（17 scene，含结构驱动假设；5/5 取值 + 17/17 scene 可解释）**
 
@@ -66,6 +68,26 @@ albedo 在 F_eff 上可辨识（`dim ker F_eff = 1`，仅 gauge）⟺ 条件 X �
 - 为什么"收缩不足"：逐光补偿族 ∩ 的收缩需要每像素被 ≥2 束独立光照且像素法线联合撑满
   SH；对称/回转/棱柱场景的法线只在 SH 的低维子空间取值，无论 N 如何，落在该子空间
   正交补的方向永不进入 F_eff 的可辨识谱 → near_zero 恒为该结构值（解释了 config 不变性）。
+  复合类场景另经机制 (b)（见 §2.2 反例）。
+
+**§2.2 OPEN-5 数值一稿（2026-09-03，r5_compute_audit/open5_normal_gram_check.py，CPU）**
+
+测度：对 17 scene 前景像素（mask>0.5）计算 9-D SH-2 加权法线 Gram 的数值秩
+（normal_mesh 与 normal_depth 两种法线源）。
+
+| 结论 | 数字 |
+|---|---|
+| 相关 | Spearman(9−rankMesh, near_zero−1) = **0.806**（normal_mesh）|
+| 机制 (a) 精确命中 | cylinder_r03_d12 / cylinder_r06_d06：rankMesh=5 → 9−5=4 = near_zero−1 ✓✓ |
+| 机制 (a) 近似 | cube_axis / prism8：rankMesh=5 → 4 vs near_zero−1=5（差 1）；cone rankMesh=8 → 1 vs 4 |
+| 机制 (a) 下界吻合 | near_zero=1 的 9 个场景全部 rankMesh=9（0 残差）✓ |
+| **反例（机制 (b)）** | cube_plus_cone(4)/cyl_plus_sphere(2)/sphere_on_cube(2)：rankMesh=9（法线满秩）但 near_zero>1 |
+| 备注 | normal_depth 秩 17/17 全为 9 ⇒ 深度法线噪声掩盖结构；near_zero 反映的不是
+  像素法线 Gram 本身，而是"光照结构 × 法线结构"下的逐光共同核维数 |
+
+**一稿裁定**：等式版假设被复合类反例否决 → 采纳"两类机制 (a)/(b)"口径（见 §2 命题修订）。
+near_zero 结构假设对 13/17 scene 直接成立（9 个 near_zero=1 + 4 个对称/棱柱），
+4 个复合场景转由 (b) 解释（建模见 OPEN-6）。normal_mesh 是这类结构探针的正确法线源。
 
 ## 3. 引理引用清单（证明中使用，均已存在）
 
@@ -94,13 +116,13 @@ albedo 在 F_eff 上可辨识（`dim ker F_eff = 1`，仅 gauge）⟺ 条件 X �
 - **OPEN-3**：盒约束（L-box）是否进入 F_eff 形式化（无约束 Fisher vs 约束 Fisher 口径）。
 - **OPEN-4**：v3 §1.1 假设（已知 geometry）下，若 reviewer 质疑 amortization 依赖，需在
   Limitations 注明"per-scene 不可辨识由 corpus 先验补偿"（措辞与 CLAIM_CARDS S-05 卡一致）。
-- **OPEN-5**（T2-2 数值证伪项，CPU 可做）：对 17 scene 计算像素法线 Gram
-  rank(Σ_{p 有效} Y_p Y_pᵀ)，与 near_zero 做 Spearman/序数核对——若秩差与 near_zero−1
-  高度相关，则 §2 结构假设成立；否则修正驱动假设。数据源：synthetic_v3 场景 normal.npy
-  + splits 划分；工具可参考 gauge_fisher_v2.py。
+- **OPEN-5**（T2-2 数值证伪项）：**已执行一稿**（见 §2.2，脚本 r5_compute_audit/
+  open5_normal_gram_check.py；Spearman 0.806，等式版假设被复合类反例否决 → 两类机制口径）。
+  二稿可做：按组件/曲率分块法线 Gram + 光照遮挡加权，提升 cube/prism/cone 的拟合。
+- **OPEN-6**（OPEN-5 引出的新缺口）：复合类场景"组件间光度再分配"歧义的形式化建模——
+  猜测：等价于按组件分块 albedo 的低秩再分配方向（Σ 补偿方向使各组件总反射率不变）。
+  数值候选：构造 δa 支持在单一组件上、配 δc 验证 J_a δa + J_c δc=0 的近似零方向。
 
 ---
 
-*草案 v0.2 · 2026-09-03（T2-2 一稿：实证基础修正 near_zero∈{1,2,4,5,6}、config 不变性、
-§2.1 逐 scene 对照 5/5+17/17、OPEN-2 部分落地、新增 OPEN-5 数值证伪）· 未经外部核对，
-禁止引用为已证结论。下一步：OPEN-5 数值核对（CPU 可做）或提交主智能体。*
+*草案 v0.3 · 2026-09-03（T2-2 OPEN-5 一稿：normal_mesh Gram 秩 vs near_zero，Spearman 0.806；等式假设被复合类反例否决 → 两类机制 (a)/(b) 口径；新增 OPEN-6）· 未经外部核对，禁止引用为已证结论。下一步：OPEN-6 复合机制建模或提交主智能体。*
