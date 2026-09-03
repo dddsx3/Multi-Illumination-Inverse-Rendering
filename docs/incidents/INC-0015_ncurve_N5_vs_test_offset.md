@@ -30,7 +30,22 @@ metric 函数同 compute_all —— **唯一实质差异 = 推理批量（batch>
 **影响面**：历史与 A3-0 的 test 主表数字均为 batch 池化口径（非 scene 级）；凡涉及
 "per_scene 级"使用（n_curve 判据 1 参照系、逐 scene 分析）须以 scene 级口径为准。
 
-**残余验证项（EX-02 结束后单场景 A/B）**：batch=1 跑 evaluate_model 的单场景数值应与
-n_curve N=5 单场景一致（闭环即达成）。
+## 升级：albdeo 归一化证据——主表口径本身存疑（需作者裁决，2026-09-04 EX-02 后）
 
-*2026-09-04 · INC-15-1 完成（主因定位）· INC-15-2 修复重跑待 EX-02 结束（GPU 复用窗口）。*
+- 同 ckpt N=5：n_curve 的 **albedo si-MAE=0.0543**（逐 scene 归一）vs A3-0 test **0.1482**
+  （evaluate_model batch 池化）。scale-invariant 指标**必须逐 scene 归一**，batch 内跨 scene
+  池化会系统性污染 → test 的 albedo 数字可能被 batch 放大（≈2.7×）。
+- 推论：evaluate_model 的 batch 池化 + per_scene 复制不仅影响 n_curve 对齐，**可能使
+  A3-0 主表（10.30°/0.1482，FIX-01/02 已发布）的"scene 级含义"不成立**；normal MAE
+  scene 级真实值或接近 n_curve 的 ~14.9°（未确认，需 batch=1 A/B）。
+
+**因此 INC-15-2 的修复方向不能单方面执行**——"把 n_curve 对齐到 evaluate_model"会把
+scene 级口径拖回已知有缺陷的 batch 池化。必须作者裁决口径基准：
+- **选项 A（推荐）**：以 **scene 级（batch=1）**为唯一评估口径——修 evaluate_model
+  （batch=1 + per_scene 真值），重跑 A3-0 test（~10min）→ 主表数字可能更新
+  （albedo→~0.054、normal MAE 待测），README/S-01/判据包同步刷新；
+- **选项 B**：维持 batch 池化为主表口径（视为"全像素加权平均"），n_curve 改为同口径
+  （batch 池化 + per_scene 复制），albedo 行加注"batch 池化口径"——接受 albedo 0.15 级别；
+- 无论 A/B：EX-02（DiLiGenT 40.41°）已闭合不受影响；EX-03 待本 INC 闭合后启动。
+
+*2026-09-04 · INC-15-1 完成（主因定位）+ 口径基准升级待裁决 · INC-15-2 暂停等裁决。*
