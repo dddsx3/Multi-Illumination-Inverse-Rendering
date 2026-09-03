@@ -584,7 +584,9 @@ def package(args, merged):
     """回传包：best_model + 评估 json/csv + 日志 + TB + 计划/进度。"""
     out = Path(args.package_dir)
     if out.exists():
-        shutil.rmtree(out)
+        # INC-0014 续：环境级 safe-delete（回收站不可用）可能让 rmtree 抛 OSError
+        # 打爆收尾。打包目录为自产临时目录，ignore_errors=True 无数据风险。
+        shutil.rmtree(out, ignore_errors=True)
     for sub in ("checkpoints", "eval_output", "logs"):
         (out / sub).mkdir(parents=True)
     for run_id in merged:

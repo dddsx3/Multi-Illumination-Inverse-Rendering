@@ -1076,7 +1076,32 @@ class InverseRenderTrainer:
         path = Path(path)
         tmp = path.with_suffix(path.suffix + '.tmp')
         torch.save(obj, tmp)
-        os.replace(tmp, path)
+        self._atomic_replace(tmp, path)
+
+    @staticmethod
+    def _atomic_replace(tmp: Path, path: Path, retries: int = 3):
+        """os.replace 的 Windows 韧性版（INC-0014 续：陈旧目标被占用/锁定→WinError5）。
+
+        首次失败时尝试把已存在的旧目标改名挪开（.stale_<ts>）再替换；带退避重试；
+        最终仍失败才抛错（由调用方决定降级策略）。
+        """
+        last = None
+        for attempt in range(retries):
+            try:
+                os.replace(tmp, path)
+                return
+            except OSError as exc:
+                last = exc
+            try:
+                if os.path.exists(path):
+                    alt = path.with_name(f"{path.name}.stale_{int(time.time())}_{attempt}")
+                    os.rename(path, alt)
+                    os.replace(tmp, path)
+                    return
+            except OSError:
+                pass
+            time.sleep(0.6 * (attempt + 1))
+        raise last
 
     def _rng_state(self) -> Dict:
         """收集全部随机源状态，供中途续跑还原。"""
@@ -1153,7 +1178,14 @@ class InverseRenderTrainer:
             'config': self.config,
         }
         path = self.checkpoint_dir / INTERRUPT_STATE
-        self._atomic_save(state, path)
+        try:
+            self._atomic_save(state, path)
+        except OSError as exc:
+            # 存档文件被占用/锁定等（INC-0014 续：WinError5）：本次停机降级为
+            # "按 epoch 粒度续跑"——上层仍抛 ThermalStop/MemoryStop，rc=42 让
+            # 编排器从最近 checkpoint_epoch_* 续起，不阻断停机通道。
+            print(f"⚠️  中途状态存档失败（{exc}）：{path}——本次按 epoch 粒度续跑，"
+                  f"最后完好存档 = checkpoint_epoch_*")
         print(f"\n{'=' * 80}")
         print(f"🌡️  温度墙触发：{reason}")
         print(f"已强制存档 epoch {self.current_epoch} 第 {batches_done}/{num_batches} "
