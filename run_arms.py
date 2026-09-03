@@ -588,7 +588,8 @@ def package(args, merged):
         # 打爆收尾。打包目录为自产临时目录，ignore_errors=True 无数据风险。
         shutil.rmtree(out, ignore_errors=True)
     for sub in ("checkpoints", "eval_output", "logs"):
-        (out / sub).mkdir(parents=True)
+        # INC-0014 续：rmtree(ignore_errors) 可能留残目录，mkdir 必须 exist_ok=True
+        (out / sub).mkdir(parents=True, exist_ok=True)
     for run_id in merged:
         src = Path(args.ckpt_root) / run_id / "best_model.pth"
         if src.is_file():
