@@ -242,8 +242,29 @@ class State:
 
     def set(self, run_id, **kw):
         self.d.setdefault(run_id, {}).update(kw)
-        self.path.write_text(json.dumps(self.d, ensure_ascii=False, indent=1),
-                             encoding="utf-8")
+        # 2026-09-04 加固：写 progress 用原子替换 + 退避重试——夜跑实测被瞬时
+        # 文件锁/扫描打成 Errno13 段末崩溃（丢 ~10 epoch 窗口）。禁止直接覆写。
+        data = json.dumps(self.d, ensure_ascii=False, indent=1)
+        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        last = None
+        for attempt in range(4):
+            try:
+                tmp.write_text(data, encoding="utf-8")
+                os.replace(tmp, self.path)
+                return
+            except OSError as exc:
+                last = exc
+                try:
+                    if self.path.exists():
+                        alt = self.path.with_name(f"{self.path.name}.stale_{int(time.time())}_{attempt}")
+                        os.rename(self.path, alt)
+                        tmp.write_text(data, encoding="utf-8")
+                        os.replace(tmp, self.path)
+                        return
+                except OSError:
+                    pass
+                time.sleep(0.5 * (attempt + 1))
+        print(f"[state] progress 写入失败（{last}）：{self.path}")
 
     @staticmethod
     def merge(paths):
