@@ -1,0 +1,38 @@
+{
+  "run": "A3-0_f_n5gray_seed42",
+  "code_commit_sha": "unrecorded (2026-09-03 13:34 启动；该时刻 HEAD 无法回溯，诚实注记不伪造)",
+  "config": {
+    "run_id": "A3-0_f_n5gray_seed42",
+    "generation": "Gen-A3",
+    "model": "fusion",
+    "modality": "gray",
+    "num_lights": 5,
+    "image_size": [
+      256,
+      256
+    ],
+    "batch_size": 4,
+    "total_epochs": 100,
+    "stage1": 30,
+    "stage2": 30,
+    "amp": "bf16",
+    "seed": 42,
+    "split_manifest": "splits/synthetic_v3.json",
+    "sh_constraint": "clamp",
+    "res_hidden": 64,
+    "residual_off": false,
+    "data_root": "D:/data/synthetic_v3"
+  },
+  "config_sha256": "edd11c6fe1e8cd66cebb268fb6daeb651c6eac31716aed033e0c7a9ca85995b9",
+  "data_manifest_sha256": "853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094",
+  "data_dir": {
+    "scene_dirs": 620,
+    "total_mb": 1003
+  },
+  "eval": {
+    "test": "eval_output/A3-0_f_n5gray_seed42_test/eval_summary.json"
+  },
+  "ckpt_sha256": "（best_model.pth 在库外 checkpoints/，见 run_card_howto 计算法）",
+  "produced": "2026-09-03",
+  "status": "ok"
+}
