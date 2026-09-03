@@ -14,8 +14,8 @@ import time
 
 import runtime_safety as rs
 
-CRIT_PHYS_GB = 1.2
-CRIT_PF_GB = 2.0
+CRIT_PHYS_GB = 1.0
+CRIT_PF_GB = 1.5
 CRIT_STRIKES = 3
 
 
