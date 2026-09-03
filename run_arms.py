@@ -41,8 +41,12 @@ PLAN_JSON = HERE / "arms_plan.json"
 
 TOTAL_EPOCHS = 100
 SEGMENT_EPOCHS = 10
-BATCH_SIZE = 8               # 与既有基线一致；禁止为提速改动（D10）
-BATCHES_PER_EPOCH = 56       # 447 训练场景 / bs8，上取整
+# INC-0014（2026-09-03）：本机 12GB 5070Ti Laptop 上 bs8+bf16+renderer@256² 实测
+# 正向即 CUDA OOM（官方 bs=8 基线在本机不可复现）。允许环境变量降配：
+# RUN_ARMS_BATCH=4。默认仍 8（外部/历史 GPU 环境语义不变）；本机启动一律走
+# run_safe_arms.sh，由 runtime_safety 判定并自动降配。
+BATCH_SIZE = int(os.environ.get("RUN_ARMS_BATCH", "8"))
+BATCHES_PER_EPOCH = 56       # 447 训练场景 / bs8，上取整（预算按实际批次数自动校正）
 STAGE1, STAGE2 = 30, 30
 CKPT_MB = 157                # 单个 checkpoint 实测体积
 
@@ -69,6 +73,14 @@ REFERENCE_ARM = (
 
 # (run_id, 训练旗标, 评估旗标, 门禁价值)　顺序即优先级：预算不足从后往前砍
 ARMS = [
+    # A3-0 F-N5 复现臂（任务书 T v2.0 · 2026-09-03 裁定）：
+    # R4″ 世代主交付 F-N5-gray ckpt 未归档（永久缺失），论文主表基线需可复现。
+    # 同协议（fusion+gray+N5+bf16@bs8·256²·v3 划分·seed42）重训；对照
+    # eval_output/p2_t22_f_n5gray_test 的历史数字，偏差超阈即 INC + 统一刷新叙事。
+    ("A3-0_f_n5gray_seed42",
+     ["--model", "fusion", "--modality", "gray"],
+     ["--model", "fusion", "--modality", "gray"],
+     "A3-0 F-N5 复现臂：闭合主表基线 ckpt 缺失的可复现性缺口"),
     ("p2_t25_f_resA",
      ["--model", "fusion", "--modality", "gray", "--residual_off"],
      ["--model", "fusion", "--residual_off"],

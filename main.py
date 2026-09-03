@@ -23,6 +23,7 @@ from residual_modules import HierarchicalResidual
 from loss_functions import LossCalculator
 from trainer import InverseRenderTrainer
 from thermal_guard import ThermalStop
+from runtime_safety import MemoryStop
 
 # 温度墙停机专用退出码。区别于普通失败（非 0 且非 42）：编排器看到 42
 # 就知道"训练状态完好、只是太热了"，等冷却后重跑同一条命令即可续上；
@@ -254,10 +255,12 @@ def train_mode(config: Config, resume_checkpoint: Optional[str] = None):
     print("\n开始训练...\n")
     try:
         trainer.train()
-    except ThermalStop as stop:
-        # 温度墙触发：trainer 已在 train_epoch 内把 epoch 中途状态落盘。
-        # 以 rc=42 退出，编排器据此等待冷却后自动续跑。
-        print(f"\n[thermal] 温度墙停机（{stop}），状态已存档，退出码 {EXIT_THERMAL_STOP}")
+    except (ThermalStop, MemoryStop) as stop:
+        # 温度墙 / 主机内存越界（INC-0014 新增内存通道）：trainer 已在
+        # train_epoch 内把 epoch 中途状态落盘。以 rc=42 退出，编排器据此
+        # 等待（冷却/内存恢复）后自动续跑。
+        kind = "thermal" if isinstance(stop, ThermalStop) else "host-memory"
+        print(f"\n[{kind}] 安全停机（{stop}），状态已存档，退出码 {EXIT_THERMAL_STOP}")
         try:
             trainer.writer.close()
         except Exception:

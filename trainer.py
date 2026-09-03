@@ -26,6 +26,7 @@ from residual_modules import HierarchicalResidual
 from evaluate import compute_all
 from stability import StabilityGuard
 from thermal_guard import ThermalGuard, ThermalStop, read_gpu_temp, wait_until_cool
+from runtime_safety import check_host_memory, MemoryStop
 
 # 热停机存档文件名。与 checkpoint_epoch_XXXX.pth 分开放：后者是"已完成 epoch"
 # 的正式存档（评估与对比矩阵只认它），前者是"epoch 中途"的续跑状态，
@@ -742,11 +743,14 @@ class InverseRenderTrainer:
             if batch_idx % self.config.get('log_interval', 10) == 0:
                 self._log_training_step(batch_idx, num_batches, loss_dict, total_loss, grad_norm)
 
-            # 温度墙巡检（低散热平台）：放在本 batch 全部状态更新之后，
-            # 保证越线时落盘的是一个自洽的"已完成 N 个 batch"状态。
+            # 温度墙巡检 + 主机内存熔断（INC-0014 后新增内存项）：放在本 batch
+            # 全部状态更新之后，保证越线时落盘的是一个自洽的"已完成 N 个 batch"状态。
+            # 任一越线 → 存档 interrupt_state → raise → main 以 rc=42 退出续跑。
             try:
                 self.thermal.poll()
-            except ThermalStop as stop:
+                if batch_idx % 10 == 0:      # 约每 10 batch（数十秒）查一次主机内存
+                    check_host_memory()
+            except (ThermalStop, MemoryStop) as stop:
                 done = resumed_batches + batch_idx + 1
                 self._save_interrupt_state(
                     batches_done=done, num_batches=num_batches,
@@ -754,7 +758,7 @@ class InverseRenderTrainer:
                     albedo_grad_l1_total=albedo_grad_l1_total,
                     albedo_image_corr_total=albedo_image_corr_total,
                     quality_metric_count=quality_metric_count,
-                    reason=str(stop), temp_c=stop.temp_c)
+                    reason=str(stop), temp_c=getattr(stop, 'temp_c', None))
                 raise
                 # 计算平均质量指标
         if quality_metric_count > 0:
