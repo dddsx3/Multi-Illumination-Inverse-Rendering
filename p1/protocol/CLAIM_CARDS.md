@@ -3,21 +3,22 @@
 > 归属：任务书 T v2.0 条例 T0-3 / OP-2 · 本文件每张共享事实卡一个条目。
 > 格式（OP-2）：`【S-编号】一句话 | 数值 | 来源文件(相对路径) | 复现命令 | 口径(允许/禁用的措辞) | 登记日期`
 > 口径栏照抄 CLAIM_REGISTRY（v0.7 实测裁决段）禁词约束；每产出/登记一次 S 资产，10 分钟内追加并提交。
-> 审计注记：CLAIM_REGISTRY.md 文件头版本号仍写 v0.6（正文已含 v0.7 裁决段、git 提交亦标 v0.7）——版本头待主智能体确认后统一，本文件不擅自修改"宪法"。
+> 注记：CLAIM_REGISTRY 版本头已随 FIX-03（2026-09-04）统一为 v0.7；本文件世代口径以 Gen-A3 为准（FIX-02）。
 
 ## 卡片区
 
-- 【S-01】合成 v3 test（124 场景）主结果——历史世代基准，A3-0 复现中
-  - 一句话：固定 N=5 线性域多光照（几何已知）下，fusion 前向逆渲染在合成 v3 test 124 场景上达到 normal MAE 7.792° / PSNR 36.09 dB / albedo si-MAE 0.1279（F-N5-gray 世代）。
-  - 数值：normal MAE 7.792°；PSNR 36.0905；albedo si-MAE 0.1279（README §4.1 的 albedo 0.0532 系跨臂混标，见 docs/G0_资产清点表.md）
-  - 来源文件：eval_output/p2_t22_f_n5gray_test/eval_summary.json
-  - 复现命令：python evaluate_model.py --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --data_root D:/data/synthetic_v3 --split test --split_manifest splits/synthetic_v3.json --out_dir eval_output/A3-0_f_n5gray_seed42_test（A3-0 bs4 世代产出后按同协议重评）
-  - 口径：允许——normal MAE/PSNR/albedo si-MAE，口径与 CLAIM_REGISTRY System Claim 一致（known geometry、feed-forward、fixed-N、linear-domain）；**禁止**——joint recoverability 类、把 bs8 历史世代与 A3-0 bs4 世代数字直接混比而不注明 batch 口径、将 DiLiGenT 迁移量级与合成数字并列为主结果。
-  - 登记日期：2026-09-03（A3-0 完成后数值终稿）
+- 【S-01】合成 v3 test（124 场景）主结果——Gen-A3 世代（FIX-02 终稿回填）
+  - 一句话：固定 N=5 线性域多光照（几何已知、物理约束 clamp 头、bs4）下，Gen-A3 复现臂（A3-0）在合成 v3 test 124 场景上达到 normal MAE 10.30° / PSNR 32.55 dB / albedo si-MAE 0.1482 / 物理违规率 0.0000%。
+  - 数值（Gen-A3 主行）：normal MAE 10.3039±3.7507°；PSNR 32.546±3.499 dB；albedo si-MAE 0.14819±0.04458；depth_rmse_aligned 0.3377±0.0636
+  - 来源文件：eval_output/A3-0_f_n5gray_seed42_test/eval_summary.json
+  - 复现命令：python evaluate_model.py --checkpoint ckpt/A3-0_f_n5gray_seed42.pt --data_root D:/data/synthetic_v3 --split test --split_manifest splits/synthetic_v3.json --out_dir eval_output/A3-0_f_n5gray_seed42_test
+  - reference-only 对照（历史世代 bs8、pre-constraint、ckpt 永久缺失，禁作对比基准）：F-N5 gray 7.792°/36.09/0.1279（p2_t22_f_n5gray_test）；F-N5 rgb v2 8.177°/37.25/0.1304（p2_t22_f_n5rgb_v2_test）；R0 gray 10.66°/36.04/0.0548（p2_r0_v3gray_test）
+  - 口径：允许——"Gen-A3 世代（bs4 + 物理约束）"标注后引用本卡主行；**禁止**——无世代标注直接引用历史数字、把 bs8 历史世代与 Gen-A3 数字同格混比、joint recoverability 类措辞。
+  - 登记日期：2026-09-03（数值终稿回填 FIX-02 2026-09-04）
 
-- 【S-02】合成 v3 N 敏感性曲线——N_min=1
+- 【S-02】合成 v3 N 敏感性曲线——N_min=1（**世代注记：待 EX-01 重测定稿**）
   - 一句话：合成 v3 test 124 场景 × N=1–5 × 3 随机子集，normal MAE 极差 0.030°（<0.3%）——N=1 不退化。
-  - 数值：MAE 极差 0.030°；相对 <0.3%
+  - 数值：MAE 极差 0.030°；相对 <0.3%（**数值出自旧消融世代 resA/albOff n_curve，协议与 Gen-A3 主臂不可比；EX-01 重测前禁止作为 N_min=1 的当前世代引用源**）
   - 来源文件：eval_output/n_curve_synth_v3/{n_curve_agg.json, n_curve_raw.json}；解读报告 docs/design/t2_5_n_sensitivity_report.md
   - 复现命令：python eval_n_curve.py --checkpoint ckpt/<run>.pt --ns "1,2,3,4,5" --subsets_per_n 3
   - 口径：允许——"subset-sensitivity saturation / relative subset-sensitivity"；**禁止**——noise-floor saturation / hits the noise floor / render noise floor / N curve is projection of conditioning（禁词替换为 solver-repeat noise / repeatability floor）。
@@ -35,9 +36,10 @@
   - 一句话：DiLiGenT 10 物体零样本迁移 normal MAE 中位约 40°（球 47°/熊 40°/佛 41°/…；README N=5 子集零样本 39.41°），任务书 §B 25° 门槛未达——如实作为迁移困难披露，不作主 claim。
   - 数值：中位 ~40°（W2-B.1 cell-1 baseline，R4″ 复用）；N=5 零样本 39.41°
   - 来源文件：eval_diligent/diligent_results.json（R4″ 实测）；README §4.1；r5_compute_audit/W2B1_cell1_baseline.md
-  - 复现命令：python evaluate_diligent.py --checkpoint ckpt/<run>.pt …（零样本协议；A3-0 完成后复核）
+  - 复现命令：python evaluate_diligent.py --checkpoint ckpt/<run>.pt …（零样本协议）
+  - **世代注记（FIX-02）**：数值出自历史世代 ckpt（R4″ 复用），Gen-A3 世代未跑 DiLiGenT——EX-02 重测后回填；此前仅作 reference，禁止作为当前世代迁移结论。
   - 口径：允许——标"zero-shot / reference / 固定子集"；**禁止**——将 40° 表述为达标性能、把 25° 门槛说成已达成、与 matched 重训数字混淆（matched 表须另列 reference-only）。
-  - 登记日期：2026-09-03
+  - 登记日期：2026-09-03（注记 2026-09-04 FIX-02）
 
 - 【S-05】GSIQ 排名稳定性（albedo 不敏感 + held-out 保持）与 GBR 主导性
   - 一句话：GSIQ（Gauge-Schur Information Quality）排名在 albedo 绝对量变化下稳定、在 held-out scene 保持；任意残差优先沿 GBR 群方向展开。
