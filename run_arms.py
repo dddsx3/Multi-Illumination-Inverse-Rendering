@@ -41,11 +41,9 @@ PLAN_JSON = HERE / "arms_plan.json"
 
 TOTAL_EPOCHS = 100
 SEGMENT_EPOCHS = 10
-# INC-0014（2026-09-03）：本机 12GB 5070Ti Laptop 上 bs8+bf16+renderer@256² 实测
-# 正向即 CUDA OOM（官方 bs=8 基线在本机不可复现）。允许环境变量降配：
-# RUN_ARMS_BATCH=4。默认仍 8（外部/历史 GPU 环境语义不变）；本机启动一律走
-# run_safe_arms.sh，由 runtime_safety 判定并自动降配。
-BATCH_SIZE = int(os.environ.get("RUN_ARMS_BATCH", "8"))
+# FIX-06（2026-09-04）：默认 batch 8 → 4。bs8 需 ≥16GB 显存机器；本机 12GB 实测不可行
+# （INC-0014）。保留 RUN_ARMS_BATCH 环境变量覆盖通道（外部 ≥16GB 机器可显式 RUN_ARMS_BATCH=8）。
+BATCH_SIZE = int(os.environ.get("RUN_ARMS_BATCH", "4"))
 BATCHES_PER_EPOCH = 56       # 447 训练场景 / bs8，上取整（预算按实际批次数自动校正）
 STAGE1, STAGE2 = 30, 30
 CKPT_MB = 157                # 单个 checkpoint 实测体积
