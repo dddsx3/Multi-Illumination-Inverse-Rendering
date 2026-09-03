@@ -2,10 +2,12 @@
 
 > **本文件是论文的宪法**：R5-B′ 阶段任何实验、图表、章节都必须服务于以下四句 claim（C1–C4）。
 > 修改本文件 = 修改论文核心 = 需要 R5 级证据 + 显式版本号。
-> **版本**：v0.6（R5-B′ P1-C + D 实测后；**论文方向从 "selection method" 转为
-> "identifiability diagnostic"**；v0.5 假设的 "selection 收益" 假说被 D 实验
-> 反例否决 — 不再写 "enables subset selection" / "predicts reconstruction"）。
-> **落盘**：2026-09-03 · R5-P1-C + D 实测点（本机, P0 修复后）。
+> **版本**：v0.7（R5-B′ P1-C + D 实测 + W2 阶段 1 实测后；论文方向自 v0.6 起为
+> "identifiability diagnostic"；v0.5 假设的 "selection 收益" 假说被 D 实验反例否决 —
+> 不再写 "enables subset selection" / "predicts reconstruction"；v0.7 并入 W2-A.1 P-A1
+> GBR 主导 PASS、W2-A.2 P-A2 Fisher 谱 WEAK 裁决与闸门评估）。
+> **落盘**：2026-09-03 · R5-P1-C + D 实测点（本机, P0 修复后）；版本头 v0.6→v0.7 统一于
+> 2026-09-04（FIX-03，正文 v0.7 裁决段与提交信息一致）。
 > **上游继承**：v0.5（R5-P1-C 单点）；v0.6 删除 v0.5 的 C3 升级路径 claim，
 > 重写 C3 为 "rank stability under albedo variation"（Q1+Q3 已通过）
 > 并新增 v0.6 实测裁决段（Q1 ✓, Q2 Case 2 ✓, Q3 ✓, D FAIL → 转 diagnostic）。
