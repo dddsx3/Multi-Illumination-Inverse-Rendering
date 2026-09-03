@@ -47,20 +47,22 @@
 **投**: CVPR/ICCV analysis track, 或 TPAMI/IJCV identifiability 类工作
 **禁止**: 投 main track 声称 "selection method" / "outperforms random"
 
-## 4. 阶段 A (P1-A full) - 本地资源不足
+## 4. 阶段 A (P1-A full) - 本地资源不足 (最终完成率如实注记)
 
-- P=2000: 启动 10 min 内 OOM
-- P=1000: 启动后 500 行 (~1 scene 25%), 后续 OOM
-- 物理 15.2GB + 24GB commit 限额, 单进程实际 ~2-3GB
+**最终现场 (2026-09-03 复查)**: `r5/r5_p1a_full.csv` 含 **37,128 行干净数据 = 任务书 §R5-P1-A 目标 (6 scene × 83,520 行) 的 44.5%**。
+- 已完成 3/6 scene: conf_sphere_r05 (N3+N5)、conf_cube_axis (N3+N5)、conf_prism8 (仅 N3; P=2000 OOM 中断)
+- 整批缺失 3 scene: conf_egg / conf_cylinder_r06_d06 / conf_ellipsoid_z06 (OOM 反复 kill + 24GB commit 配额不足)
+- 复查时清理 1 行截断脏数据 (原行 6962, scene='8' subset_id 字段错位, I_A 列丢失)
+- 根因: 物理 15.2GB + 24GB commit 限额, 单进程实际 ~2-3GB; P=2000 启动 10 min 内 OOM
 - **不阻断论文主结论** (Q1+Q3 已独立验证, 任务书 §R5-P1-A 通过)
-- 若 reviewer 要求 P1-A full: 需 GPU 实例 (A10/H100), 5-6 h
+- 若 reviewer 要求补齐 P1-A full: 需 GPU 实例 (A10/H100), 补 3 scene 约 5-6 h
 
 ## 5. 产物索引 (本次会话)
 
 | 路径 | 内容 |
 |---|---|
 | r5/r5_p1_albedo_ablation.csv | P1-A smoke 1 scene @ P=500 (6,000 rows) |
-| r5/r5_p1a_full.csv | P1-A full @ P=1000 失败 500 rows (label 为 partial) |
+| r5/r5_p1a_full.csv | P1-A full 3/6 scene × N{3,5} = 37,128 rows (44.5%, 脏行已清; 缺 conf_egg/conf_cylinder/conf_ellipsoid) |
 | **r5/r5_d_selection.csv** | **D C3 selection 12 scene × 100 run = 1,200 rows (FAIL 数据)** |
 | r4pp/07_local_vs_global_init.csv | Task G 240 run (Case 2 数据) |
 | r5/r5_p2_heldout.csv | P2 held-out 12 scene × 2 N × 500 (12,000 rows) |
