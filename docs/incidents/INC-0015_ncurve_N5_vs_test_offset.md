@@ -1,6 +1,6 @@
 # INC-0015 · EX-01 n_curve N=5 与 test 评估同 ckpt 数值偏移（14.89° vs 10.30°）
 
-> 日期：2026-09-04 · 严重度：🟠（判据 1 参照系 & S-02 冻结前必须校准）· 状态：待作者裁决
+> 日期：2026-09-04 · 严重度：🟠（判据 1 参照系 & S-02 冻结前必须校准）· 状态：INC-15-1 根因已定位（batch 池化 vs scene 级）；裁决(2026-09-04)=选(a)校准后重跑
 > 关联：EX-01（v2.1 §2）、S-02、R-F/R-G 判据包回填
 
 ## 时间线
@@ -11,15 +11,26 @@
 - 同一 ckpt 的 N=5（全 5 光子集，输入应与 test 评估一致）聚合 normal MAE：**n_curve=14.887±12.60** vs **test eval=10.304±3.75**（eval_output/A3-0_f_n5gray_seed42_test/eval_summary.json），偏移 +4.58°；median 9.12 vs 2.93 亦系统性偏移。
 - n_curve per-subset 重尾（mean≫median）提示存在高分位 scene 大误差；test 评估 std 仅 3.75。
 
-## 候选成因（未验证，供裁决方向）
-1. eval_n_curve 对 N<5 用 `sel = combo + [combo[0]]*(num_images−N)` 重复补光喂入 5 输入模型——N=5 时无重复，理论应与 test 等价，故偏移更像 loader/协议级差异；
-2. 两脚本对 GT normal/深度或遮罩、或 albedo/图像重投影（recon_target）的取法差异（需 diff data_loader 调用与 compute_all 入参）；
-3. 聚合口径：n_curve 以 per-(scene,subset) 等权平均；test 为 per-scene 单次——N=5 均单子集，口径相同，排除。
+## 根因定位（INC-15-1 静态 diff + 数据对照，2026-09-04）
 
-## 处置（执行方已做 / 待裁决）
-- ✅ EX-01 产物与 RUN_CARD 补测行入库（commit 见 git log）。
-- ✅ S-02/判据 1 参照系：**暂缓以 n_curve 绝对值为冻结数字**；曲线平坦性结论可用于 N_min 叙事，但 R-F 判据 1 参照系需与主表同口径。
-- 待作者裁决：(a) 校准 eval_n_curve 协议至与 evaluate_model 一致后重跑（~1–2h GPU）；(b) 接受 n_curve 自成体系但判据 1 参照系改用"主表 test 单次数字 + 平坦性引 n_curve"，绝对级差在 S-02 注记。
-- 推荐 (a)：判据包/主图 1 需要口径自洽。
+**主因（证据强）——evaluate_model 的 batch 级聚合 + per_scene 名义错标**：
+- test `per_scene_metrics.csv` 的 normal_mae_deg 按每 4 个相邻 scene 一组完全同值
+  （9.013×4、8.000×4、12.615×4…）：evaluate_model 以 batch>1 推理，`compute_all` 返回
+  **batch 级标量**，第 331–341 行把该标量复制给 batch 内每个 scene → per_scene 行名不副实；
+- n_curve 逐 scene `compute_all`（batch=1）→ 单 scene 级数值。两者不可比：
+  - std：test 3.75（batch 内像素池化抹平 scene 间方差）vs n_curve 12.6（scene 级）；
+  - 相关性 Pearson(n_curve N5, test per_scene) = **0.365**（池化 vs scene 级被稀释）；
+  - 均值 +4.6° 与 albedo si-MAE（test 0.148 vs n_curve 0.054）疑似 albedo 的
+    scale-invariant 归一化在 batch 池化下被跨 scene 污染（si-MAE 须逐 scene 归一）。
 
-*2026-09-04 · 未校准前 S-02 数值行保持"待定"状态。*
+**链路 diff 清单（其余项均一致）**：加载（同 MultiLightingDataset is_training=False）✓；
+GT normal/mask 源同（normal.npy/mask.npy）✓；前向与 renderer/residual stage3 同 ✓；
+metric 函数同 compute_all —— **唯一实质差异 = 推理批量（batch>1 池化+复制 vs scene 级）**。
+
+**影响面**：历史与 A3-0 的 test 主表数字均为 batch 池化口径（非 scene 级）；凡涉及
+"per_scene 级"使用（n_curve 判据 1 参照系、逐 scene 分析）须以 scene 级口径为准。
+
+**残余验证项（EX-02 结束后单场景 A/B）**：batch=1 跑 evaluate_model 的单场景数值应与
+n_curve N=5 单场景一致（闭环即达成）。
+
+*2026-09-04 · INC-15-1 完成（主因定位）· INC-15-2 修复重跑待 EX-02 结束（GPU 复用窗口）。*
