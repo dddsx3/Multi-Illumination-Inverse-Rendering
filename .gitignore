@@ -88,3 +88,4 @@ obj_models/
 # 资产下载清单（download_objaverse.py 运行时生成）
 models_list.txt
 obj_models_list.txt
+docs/incidents/*_host_monitor.log
