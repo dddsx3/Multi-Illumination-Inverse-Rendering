@@ -202,6 +202,162 @@ def tag_run(run_id, amp_dtype):
     return run_id if amp_dtype == "bf16" else f"{run_id}_{amp_dtype}"
 
 
+# ── FIX-08-4（2026-09-04）：启动自动三指纹，禁人工回填 ─────────────────────
+# 事由：A3-0/A3-1 的 RUN_CARD 三指纹均为事后人工回填，code_commit_sha 因
+# 启动时刻不可回溯只能写 unrecorded（run_card_howto 允许但属于纪律降级）。
+# 条例要求（任务书 v2.2 FIX-08-4/G1）：run 名确定后、训练循环前，自动计算
+# 三个指纹写入 run 日志首行 + RUN_CARD 模板，从"人工回填"升级为"启动即落盘"。
+def _sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _sha256_json(obj):
+    import hashlib
+    return hashlib.sha256(
+        json.dumps(obj, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+
+def _git_head():
+    """取 HEAD；无仓库/打包上下文失败 → 降级 UNRECORDED-AUTO 并明示，不静默。"""
+    try:
+        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=HERE,
+                           capture_output=True, text=True, timeout=15)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip(), None
+        return ("UNRECORDED-AUTO",
+                f"git rev-parse HEAD rc={r.returncode}: {r.stderr.strip()[:200]}")
+    except Exception as exc:                       # FileNotFoundError/超时等
+        return "UNRECORDED-AUTO", f"git 不可用: {exc}"
+
+
+def _data_manifest(args):
+    """splits/synthetic_v3.json 哈希 + 数据目录 scene 数/总大小。"""
+    sha = _sha256_file(MANIFEST) if MANIFEST.is_file() else "UNRECORDED-AUTO"
+    scene_dirs, total_mb = 0, 0
+    root = Path(args.data_root) if args.data_root else None
+    if root and root.is_dir():
+        for p in root.iterdir():
+            if p.is_dir():
+                scene_dirs += 1
+                for f in p.rglob("*"):
+                    if f.is_file():
+                        total_mb += f.stat().st_size
+        total_mb = round(total_mb / (1 << 20))
+    else:
+        sha = "UNRECORDED-AUTO"
+    return sha, {"scene_dirs": scene_dirs, "total_mb": total_mb}
+
+
+def record_fingerprints(args, run_id, train_extra):
+    """run 启动时（run 名确定后、训练循环前）自动落盘三指纹。
+
+    产物：① run 日志首行（_arm_<run>_log.txt）；② RUN_CARD.json 增量模板
+    （eval_output/<run>_test/RUN_CARD.json，eval 后由人复核补 eval 段——
+    三指纹与时间字段本身不再人工回填）。幂等：每次启动重算覆盖。
+    """
+    import datetime
+    head, git_err = _git_head()
+    if git_err:
+        print(f"[fingerprint][WARN] code_commit_sha 降级 UNRECORDED-AUTO：{git_err}",
+              flush=True)
+    config = {
+        "run_id": run_id, "generation": "Gen-A3",
+        "model": "fusion",
+        "modality": "gray",
+        "num_lights": 5, "image_size": [256, 256],
+        "batch_size": BATCH_SIZE, "total_epochs": TOTAL_EPOCHS,
+        "stage1": STAGE1, "stage2": STAGE2,
+        "amp": args.amp_dtype, "seed": 42,
+        "split_manifest": "splits/synthetic_v3.json",
+        "train_extra": [str(x) for x in train_extra],
+        "data_root": str(args.data_root),
+    }
+    if "--disable_film" in train_extra:
+        config["disable_film"] = True
+    if "--residual_off" in train_extra:
+        config["residual_off"] = True
+    for key, flag in (("modality", "--modality"),
+                      ("sh_constraint", "--sh_constraint"),
+                      ("res_hidden", "--res_hidden")):
+        if flag in train_extra:
+            i = train_extra.index(flag)
+            if i + 1 < len(train_extra):
+                config[key] = str(train_extra[i + 1])
+    for flag in ("--albedo_smooth_stage1",):
+        if flag in train_extra:
+            i = train_extra.index(flag)
+            if i + 1 < len(train_extra):
+                config[flag.lstrip("-")] = train_extra[i + 1]
+    man_sha, data_dir = _data_manifest(args)
+    fps = {
+        "run": run_id,
+        "code_commit_sha": head,
+        "config": config,
+        "config_sha256": _sha256_json(config),
+        "data_manifest_sha256": man_sha,
+        "data_dir": data_dir,
+        "train_start": datetime.datetime.now().isoformat(timespec="seconds"),
+        "train_end": None,
+        "epochs_done": 0,
+        "produced": datetime.date.today().isoformat(),
+        "status": "auto_fingerprint_at_start (FIX-08-4)",
+    }
+    line = (f"[fingerprint] {run_id} | code_commit_sha={head} | "
+            f"config_sha256={fps['config_sha256']} | "
+            f"data_manifest_sha256={man_sha} | "
+            f"data_dir={data_dir['scene_dirs']}scenes/{data_dir['total_mb']}MB")
+    log = HERE / f"_arm_{run_id}_log.txt"
+    try:
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+        print(line, flush=True)
+    except OSError as exc:
+        print(f"[fingerprint][WARN] run 日志写入失败（{exc}），指纹见 RUN_CARD", flush=True)
+    card_dir = HERE / "eval_output" / f"{run_id}_test"
+    card_dir.mkdir(parents=True, exist_ok=True)
+    card = card_dir / "RUN_CARD.json"
+    try:
+        if card.is_file():
+            try:
+                old = json.loads(card.read_text(encoding="utf-8"))
+                # 保留人工/后续写入的 eval 段与 train_end/epochs_done 完成态
+                for k in ("eval", "train_end", "epochs_done", "status", "note"):
+                    if k in old and old[k]:
+                        fps[k] = old[k]
+            except (json.JSONDecodeError, OSError):
+                pass
+        card.write_text(json.dumps(fps, ensure_ascii=False, indent=1),
+                        encoding="utf-8")
+    except OSError as exc:
+        print(f"[fingerprint][WARN] RUN_CARD 写入失败：{exc}", flush=True)
+    return fps
+
+
+def _finish_run_card(run_id, ok, n_epochs):
+    """FIX-08-4：臂完成/中断时回写 train_end + epochs_done（RUN_CARD 模板
+    时间字段的完成态；warn-only，失败不阻断主流程）。"""
+    import datetime
+    card = HERE / "eval_output" / f"{run_id}_test" / "RUN_CARD.json"
+    if not card.is_file():
+        return
+    try:
+        d = json.loads(card.read_text(encoding="utf-8"))
+        d["train_end"] = datetime.datetime.now().isoformat(timespec="seconds")
+        d["epochs_done"] = int(n_epochs)
+        d["status"] = ("completed_epochs_done" if ok
+                       else "interrupted_resumable")
+        card.write_text(json.dumps(d, ensure_ascii=False, indent=1),
+                        encoding="utf-8")
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"[run-card][WARN] 完成态回写失败：{exc}", flush=True)
+
+
 def epochs_done(ckpt_root, run_id):
     d = Path(ckpt_root) / run_id
     if not d.is_dir():
@@ -774,9 +930,12 @@ def main():
         for base_id, tr, ev, _ in todo:
             run_id = tag_run(base_id, args.amp_dtype)
             print(f"\n===== ARM {run_id}（精度 {args.amp_dtype}）=====", flush=True)
+            # FIX-08-4：启动即落盘三指纹（run 日志首行 + RUN_CARD），禁人工回填
+            record_fingerprints(args, run_id, tr)
             ok = train_arm(args, run_id, tr, deadline, rate, state)
             state.set(run_id, complete=ok,
                       epochs_done=epochs_done(args.ckpt_root, run_id))
+            _finish_run_card(run_id, ok, epochs_done(args.ckpt_root, run_id))
             if ok:
                 state.set(run_id, eval_rc=eval_arm(args, run_id, ev))
             else:
