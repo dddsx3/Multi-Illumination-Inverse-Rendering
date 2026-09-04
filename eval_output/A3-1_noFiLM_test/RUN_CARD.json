@@ -1,0 +1,40 @@
+{
+ "run": "A3-1_noFiLM",
+ "code_commit_sha": "unrecorded (A3-1 启动时刻 HEAD 不可回溯，诚实注记不伪造；同 A3-0 做法)",
+ "config": {
+  "run_id": "A3-1_noFiLM",
+  "generation": "Gen-A3",
+  "model": "fusion",
+  "modality": "gray",
+  "num_lights": 5,
+  "image_size": [
+   256,
+   256
+  ],
+  "batch_size": 4,
+  "total_epochs": 100,
+  "stage1": 30,
+  "stage2": 30,
+  "amp": "bf16",
+  "seed": 42,
+  "split_manifest": "splits/synthetic_v3.json",
+  "sh_constraint": "clamp",
+  "res_hidden": 64,
+  "residual_off": false,
+  "disable_film": true,
+  "data_root": "D:/data/synthetic_v3"
+ },
+ "config_sha256": "14584fb35df85879dd0db1bee04c76c38e169d541e2b8e9ababeca10f626c4cd",
+ "data_manifest_sha256": "853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094",
+ "data_dir": {
+  "scene_dirs": 620,
+  "total_mb": 1003
+ },
+ "eval": {
+  "test": "eval_output/A3-1_noFiLM_test/eval_summary.json"
+ },
+ "ckpt_sha256": "（best_model.pth 在库外 checkpoints/，见 run_card_howto 计算法；本臂 best@02:30 早停最优）",
+ "ablation": "FiLM 条件层关闭（--disable_film）；与 A3-0 唯一差异变量",
+ "produced": "2026-09-04",
+ "status": "completed_100_epochs_eval_done (run_arms 打包阶段 PermissionError 退出，评估产物完整；latest_model.pth 指针因 WinError5 未更新，不影响 best/eval；checkpoint 0000-0099 = 100 epoch 0索引末位)"
+}

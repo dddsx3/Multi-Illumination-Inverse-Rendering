@@ -49,10 +49,19 @@
   - 口径：允许——"GSIQ 作为 F_eff 的 ill-conditioning audit / rank stability under albedo & scene variation / 提供 identifiability diagnostic 工具"；**禁止**——"measures absolute information"、未升级前使用 "predicts reconstruction quality" / "enables subset selection" / "outperforms random"（C3 升级路径 + D FAIL 判定：selection 假说已否）。
   - 登记日期：2026-09-03
 
-- 【S-06 / S-07 / S-09】A3 世代新卡（占位）：随 A3-0~A3-5 各 run 评估产出登记（S-06 主结果新世代 / S-07 GSIQ 定义与口径标注 / S-09 FW 融合）。A4-1 归因图须引用 S-07 卡口径（GSIQ 定义 + 不衡量 absolute information）。
+- 【S-06·A3-1】FiLM 消融（noFiLM）对照——Gen-A3 世代（2026-09-04 EX-03）
+  - 一句话：Gen-A3 配置下去除 FiLM 条件层（--disable_film），合成 v3 test 124 场景 scene 级 normal MAE 13.5730° / albedo si-MAE 0.05401 / PSNR 26.5615 dB / 物理违规率 0.0000%；与 A3-0（14.8866°/0.05432/32.5424）对照 normal 差 +1.3136°（≤2.0°）、albedo 差 +0.00031（≤0.03）→ 按判定（法线/反照率口径）FiLM 非关键（消融成立）。
+  - 数值：normal MAE 13.5730±10.0464°；PSNR 26.5615±6.8646 dB；albedo si-MAE 0.05401±0.04709；depth_rmse_aligned 0.238。
+  - 披露（重要，须如实）：PSNR 由 32.54 跌至 26.56（−5.98 dB）。FiLM 关闭后**逆渲染估计头（法线/反照率）不受影响，但前向 RGB 重建保真度显著退化**——FiLM 对重建头（非估计头）关键。不得合并表述为"FiLM 整体无关"。
+  - 来源文件：eval_output/A3-1_noFiLM_test/eval_summary.json + RUN_CARD.json
+  - 复现命令：python evaluate_model.py --checkpoint checkpoints/A3-1_noFiLM/best_model.pth --data_root D:/data/synthetic_v3 --split test --split_manifest splits/synthetic_v3.json --out_dir eval_output/A3-1_noFiLM_test
+  - 口径：允许——"FiLM ablation：逆渲染估计头对 FiLM 不敏感，前向重建保真度（PSNR）依赖 FiLM"；禁止——把 A3-1 数字与历史 bs8 世代混比、未标 Gen-A3 世代直接引用、将 PSNR −6dB 退化表述为"无影响"。
+  - 登记日期：2026-09-04
+- 【S-06·A3-0】Gen-A3 主结果新世代（锚点）：主行见 S-01（14.8866°/32.5424/0.05432，scene 级，INC-0015 校准）；本卡仅作世代归属锚点，不与 S-01 重复计数。
+- 【S-07 / S-09】A3 世代新卡（占位）：随 A3-2~A3-5 各 run 评估产出登记（S-07 GSIQ 定义与口径标注 / S-09 FW 融合）。A4-1 归因图须引用 S-07 卡口径（GSIQ 定义 + 不衡量 absolute information）。
 
 ## 禁词自检（T0-3 验收）
 
 已对照 CLAIM_REGISTRY 字面禁词清单逐卡扫描本文件：无 noise-floor / joint recoverability / render noise floor / N-curve-as-projection / selection-method 升级措辞命中。新增卡一律沿用。
 
-*状态：S-01~S-05 建卡完成（2026-09-03）；A3-0 完成后回填 S-01/S-04 终稿与 S-06。*
+*状态：S-01~S-05 建卡完成（2026-09-03）；S-01/S-04 终稿与 S-06·A3-1（FiLM 消融）已登记（2026-09-04 EX-03，含 PSNR −5.98dB 披露）；S-07/S-09 待后续 run。*

@@ -1,0 +1,26 @@
+{
+ "a3_0": {
+  "normal_mae": 14.8866,
+  "albedo_si_mae": 0.05432,
+  "psnr": 32.5424
+ },
+ "a3_1": {
+  "normal_mae": 13.572998944790132,
+  "albedo_si_mae": 0.05401229607436577,
+  "psnr": 26.561502925811276,
+  "phys_violation": 0.0
+ },
+ "diff": {
+  "normal_mae": 1.3136010552098671,
+  "albedo_si_mae": 0.00030770392563422844,
+  "psnr": -5.980897074188725
+ },
+ "criteria": {
+  "normal_mae": 2.0,
+  "albedo_si_mae": 0.03
+ },
+ "film_noncritical": true,
+ "verdict": "FiLM 非关键（消融成立）：A3-1 noFiLM 与 A3-0 差异在判据内",
+ "run_card_present": false,
+ "run_card_sha256": null
+}

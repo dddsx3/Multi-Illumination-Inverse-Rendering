@@ -52,6 +52,7 @@ _SMOKE_*
 smoke_artifacts/
 _smoke_models/
 archive/
+arms_return_package/
 
 # 本地实验归档（不入库）
 

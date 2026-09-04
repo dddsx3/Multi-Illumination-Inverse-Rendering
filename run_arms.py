@@ -608,12 +608,10 @@ def eval_arm(args, run_id, eval_extra):
 def package(args, merged):
     """回传包：best_model + 评估 json/csv + 日志 + TB + 计划/进度。"""
     out = Path(args.package_dir)
-    if out.exists():
-        # INC-0014 续：环境级 safe-delete（回收站不可用）可能让 rmtree 抛 OSError
-        # 打爆收尾。打包目录为自产临时目录，ignore_errors=True 无数据风险。
-        shutil.rmtree(out, ignore_errors=True)
+    # 不再 rmtree 整个目录：环境级 safe-delete 对 >50 文件的批量删除需人工确认，
+    # 会阻断非交互收尾。改为「存在即覆盖」——copytree 用 dirs_exist_ok 覆盖、
+    # write_text/copy2 天然覆盖，幂等且无需删除旧目录（旧 zip 在 make_archive 前单文件删除）。
     for sub in ("checkpoints", "eval_output", "logs"):
-        # INC-0014 续：rmtree(ignore_errors) 可能留残目录，mkdir 必须 exist_ok=True
         (out / sub).mkdir(parents=True, exist_ok=True)
     for run_id in merged:
         src = Path(args.ckpt_root) / run_id / "best_model.pth"
@@ -621,7 +619,7 @@ def package(args, merged):
             shutil.copy2(src, out / "checkpoints" / f"{run_id}_best_model.pth")
         ev = HERE / "eval_output" / f"{run_id}_test"
         if ev.is_dir():
-            shutil.copytree(ev, out / "eval_output" / f"{run_id}_test")
+            shutil.copytree(ev, out / "eval_output" / f"{run_id}_test", dirs_exist_ok=True)
         for lg in HERE.glob(f"_arm_{run_id}*log.txt"):
             shutil.copy2(lg, out / "logs" / lg.name)
         tb = Path(args.log_root) / run_id
@@ -632,6 +630,14 @@ def package(args, merged):
     for f in (PLAN_JSON, HERE / "_arms_bench.json"):
         if f.is_file():
             shutil.copy2(f, out / f.name)
+    # make_archive 在目标 zip 已存在时会抛 FileExistsError，先单文件删除旧 zip
+    # （单文件删除不触发 safe-delete 批量确认阈值）。
+    _zip = Path(str(out) + ".zip")
+    if _zip.exists():
+        try:
+            _zip.unlink()
+        except OSError:
+            pass
     z = shutil.make_archive(str(out), "zip", root_dir=out)
     print(f"[package] 回传包 -> {z}（{Path(z).stat().st_size/1e6:.0f} MB）")
     return z
@@ -672,10 +678,18 @@ def main():
     ap.add_argument("--plan-only", dest="plan_only", action="store_true")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--skip-package", dest="skip_package", action="store_true")
+    ap.add_argument("--package-only", dest="package_only", action="store_true",
+                    help="仅重新生成回传包（不训练/不评估），用于打包阶段崩溃后补打")
     ap.add_argument("--smoke-epochs", dest="smoke_epochs", type=int, default=0,
                     help="仅用于管线自检：把目标 epoch 数临时改成该值，"
                          "跑通 训练→评估→打包 全链路。产物不得进对比矩阵。")
     args = ap.parse_args()
+    if args.package_only:
+        # 崩溃后补打回传包：仅合并进度并打包，不训练/不评估（评估产物已落盘时复用）
+        merged = State.merge(list(HERE.glob("arms_progress*.json")))
+        out = package(args, merged)
+        print(f"[package-only] 回传包已生成 -> {out}")
+        return
     if not args.assume_peak_gb:
         args.assume_peak_gb = PEAK_GB_BY_DTYPE.get(args.amp_dtype, 8.63)
 
