@@ -85,6 +85,15 @@ ARMS = [
      ["--model", "fusion", "--modality", "gray", "--disable_film"],
      ["--model", "fusion"],
      "EX-03 A3-1 noFiLM：FiLM 调制关闭判别（Gen-A3 同协议）"),
+    # A3-1b lowSmooth（任务书 v2.2 EX-04 · INC-0013(c) 升正臂）：
+    # 检验 albedo_smooth=10.0 是否把 albedo 输出压向常数。唯一差异变量
+    # --albedo_smooth_stage1 1.0（默认 10.0），其余同 A3-0 协议。
+    # 观测基线（A3-0 scene 级）：phys_albedo_mean 0.545 / range 0.252 / std 0.059。
+    ("A3-1b_lowSmooth",
+     ["--model", "fusion", "--modality", "gray",
+      "--albedo_smooth_stage1", "1.0"],
+     ["--model", "fusion"],
+     "EX-04 A3-1b lowSmooth：INC-0013(c) albedo_smooth=1.0 权重验证"),
     ("p2_t25_f_resA",
      ["--model", "fusion", "--modality", "gray", "--residual_off"],
      ["--model", "fusion", "--residual_off"],
