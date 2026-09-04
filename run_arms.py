@@ -209,8 +209,14 @@ def _safe_num_workers(requested, lanes=None, modality=None):
     16GB RAM + pf 总量有限，bs4 小 batch 下 1 worker 的 prefetch 已足够
     喂满 GPU（实测 288–292 s/epoch 与 2 worker 世代同速），把内存预算
     让给系统稳定性。显式 requested>0 仍原样返回（用户自担）。
+
+    INC-0016 P0 重开（2026-09-04 22:3x，EX-05 A3-2 epoch 0）：自动档再降
+    1→**0**——spawn 通道本身可无告警死锁（worker 25 线程全 Wait、GPU 8W
+    空转、熔断与预热巡检均未及进入 batch 循环，见 INC-0016 §6）。本机默认
+    单进程加载（bs4 数据集小，GPU 每 batch ~0.6s 远大于读盘，吞吐无显著
+    损失）；≥16GB 且需要并行加载的机器显式传 --num_workers 解除。
     """
-    HARD_CAP = 1  # INC-0016：自动档单车道 ≤ 1 worker（原 2，FIX-08-5 收紧）
+    HARD_CAP = 0  # INC-0016 P0：本机自动档 0 worker（单进程加载，spawn 通道死锁绕开）
     if requested and requested > 0:
         return int(requested)
     cpu = os.cpu_count() or 8
