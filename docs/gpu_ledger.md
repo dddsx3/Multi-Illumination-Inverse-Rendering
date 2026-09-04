@@ -8,6 +8,7 @@
 | 2026-09-03 | A3-0_f_n5gray_seed42（含冒烟） | 11.0 | ~8.9（13:34→23:0x 完成） | complete | INC-0014 后 bs4 降配；100/100 epoch + eval_rc=0（scene 级主表见 *_test_v2_scenelevel，INC-0015）|
 | 2026-09-04 | FIX-01..07 批次 | 0 GPU | 0 | **完成** | 强制修复书全绿；tag gate-FIX-20260904 已推送（fb6a95e）；EX-01/02 已闭合（INC-0015 scene 级口径）|
 | 2026-09-04 | 世代变更行 Gen-A3 内 → A3-1 noFiLM | — | — | 登记 | 理由=判别 FiLM 必要性（v2.1 R-C）；训练代码与 A3-0 同语义（FIX-06 默认 bs4 一致；INC-0015 仅改评估链路 batch=1，不影响训练）；相关 commit=FIX-06/INC-0015(eval-only)/run_arms A3-1 臂 |
+| 2026-09-04 | A3-1_noFiLM（EX-03，含冒烟+eval） | ~10（估） | **~8.1 有效 / 10.3 墙钟** | complete | 训练窗口 2026-09-04 00:32→10:48（approximate，从 logs/A3-1_noFiLM tfevents 时间戳重建：00:32 首epoch、02:39 ep16 ckpt、04:05 run_arms 续跑、10:48 ep99 ckpt+eval 10:49）；epoch 0–17 段有两段长停（4895s+7928s≈3.6h，原因未记录——疑似加载窗口熔断盲区，INC-0016 在案）；实际 epoch 速度 **287.8–292 s/epoch**（夜间+白天连续段一致，无昼夜分速证据）——**显著快于白天锚点 370.6s（bench proxy 保守值），CALIBRATION 已以 292s 为新基准锚点**（R-D 双锚点裁定：不分昼夜单锚点）；eval_rc=0 + RUN_CARD 已入库 |
 
 ## T0-4 · 情景裁定（2026-09-03，草案 → G0 裁决书确认）
 
