@@ -11,6 +11,9 @@
 | 2026-09-04 | A3-1_noFiLM（EX-03，含冒烟+eval） | ~10（估） | **~8.1 有效 / 10.3 墙钟** | complete | 训练窗口 2026-09-04 00:32→10:48（approximate，从 logs/A3-1_noFiLM tfevents 时间戳重建：00:32 首epoch、02:39 ep16 ckpt、04:05 run_arms 续跑、10:48 ep99 ckpt+eval 10:49）；epoch 0–17 段有两段长停（4895s+7928s≈3.6h，原因未记录——疑似加载窗口熔断盲区，INC-0016 在案）；实际 epoch 速度 **287.8–292 s/epoch**（夜间+白天连续段一致，无昼夜分速证据）——**显著快于白天锚点 370.6s（bench proxy 保守值），CALIBRATION 已以 292s 为新基准锚点**（R-D 双锚点裁定：不分昼夜单锚点）；eval_rc=0 + RUN_CARD 已入库 |
 | 2026-09-04 | FIX-08 批次（R1–R7+G1–G3 清理加固） | 0 GPU | 0 | **完成** | 残留清理（README图注/R-C/清点表/EX-03 报告，85e8813）+ 账本 A3-1 回填（fde2f5b）+ diligent RUN_CARD hash 补算（d3880cd）+ run_arms 自动三指纹+时间字段 冒烟PASS（c6e354e）+ INC-0016 开立与三件套加固 冒烟PASS（8875962）；**tag gate-FIX08-20260904 已推送** → 进入 EX-04 |
 | 2026-09-04 | A3-1b_lowSmooth（EX-04，含冒烟 3ep） | 12（预算） | **7.68（13:31→21:07 墙钟）** | complete | 100/100 epoch 零中断零 rc42（FIX-08-5 加固后首个生产 run，INC-0016 加载窗口未复现）；273.7 s/epoch 实测；**RUN_CARD 自动三指纹首例**（HEAD=ba6ab76 启动即落盘）；判据全 PASS（normal 差 −1.69°≤2.0 / si-MAE 0.0558≤0.065 / phys 0%）；观测 **albedo range 0.168→0.363 压缩恢复改善，INC-0013(c) 闭环**；披露 PSNR −9.67dB；S-06·A3-1b 已登记 → 下一步 EX-05 seed123 |
+| 2026-09-04 | A3-2_seed123 第①次启动（EX-05 尝试一） | — | **0.75（21:46→22:30 诊断+kill）** | aborted | **INC-0016 再现升 P0**：epoch 0 DataLoader spawn 死锁（worker 25 线程全 Wait、GPU 8W 空转、熔断/预热巡检未及进入 batch 循环）→ 人工 kill，零 GPU 有效计算，无产物；证据归档 INC-0016_A3-2_spawn_deadlock_run_log.txt |
+| 2026-09-04 | A3-2_seed123 第②次启动（nw=0 尝试） | — | **~0.4（22:44→22:5x kill）** | aborted | 同款死锁再现——根因定位：main.py:804 把 `--num_workers 0` 当"未传"哨兵 → config 默认 4 spawn。INC-0009 镜像 bug，修复 6727ef9（哨兵 default=0→None） |
+| 2026-09-04 | A3-2_seed123 第③次启动（修复后 nw=0） | 12（预算） | 进行中（23:0x 起） | running | **死锁解除实证**：epoch 0/1/2 按 ~271s 节律落盘、GPU 周期计算 80°C；三指纹 HEAD=ebf126a；预计 ~05:30 完 |
 
 ## T0-4 · 情景裁定（2026-09-03，草案 → G0 裁决书确认）
 
