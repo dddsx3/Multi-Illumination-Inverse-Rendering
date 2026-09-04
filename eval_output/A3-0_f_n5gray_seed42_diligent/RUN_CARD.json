@@ -9,8 +9,10 @@
     "num_lights": 5,
     "num_lights_subsets": 3
   },
-  "config_sha256": null,
-  "data_manifest_sha256": null,
+  "config_sha256": "fadac7f28e1fab26d88463b0618085b4cf820d496957be2a41b9fc5ccbafd5f9",
+  "data_manifest_sha256": "04f61124eefc7c9e14c14bd508efdb244a550fbf0a0069e7bc3a1a5f1f147bf8",
+  "data_manifest_note": "DiLiGenT pmsData 目录清单哈希（10 物体场景目录名排序清单 + 根路径，FIX-08-3 补算 2026-09-04）；非 synthetic_v3 划分——推理级补测引用主 run 数据指纹见 A3-0 RUN_CARD（data_manifest_sha256=853ad794…0e3094）",
+  "data_dir": {"scene_dirs": 10, "total_mb": 742},
   "outputs": [
     "diligent_results.json"
   ],
