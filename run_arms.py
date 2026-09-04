@@ -186,8 +186,15 @@ def _safe_num_workers(requested, lanes=None, modality=None):
     2026-08-27 16:00+ 实测：n5rgb (rgb 模态) 在 2 train worker 下能稳定跑到
     epoch 5+，2 worker 路径不撞 win1455（_new_shared 共享内存申请走 32 GB
     提交上限内）。modality 参数仅作可观测性记录，不参与决策。
+
+    INC-0016 加固（2026-09-04，FIX-08-5）：自动档封顶由 2 收紧到 1——
+    Windows spawn worker 在数据加载窗口各自复制 Python/cuFFT 映射，
+    worker 数是 commit 尖峰的主放大器（INC-0008/0014 证据链）；本机
+    16GB RAM + pf 总量有限，bs4 小 batch 下 1 worker 的 prefetch 已足够
+    喂满 GPU（实测 288–292 s/epoch 与 2 worker 世代同速），把内存预算
+    让给系统稳定性。显式 requested>0 仍原样返回（用户自担）。
     """
-    HARD_CAP = 2  # INC-0008：单车道/单次 spawn 进程 ≤ 2 worker
+    HARD_CAP = 1  # INC-0016：自动档单车道 ≤ 1 worker（原 2，FIX-08-5 收紧）
     if requested and requested > 0:
         return int(requested)
     cpu = os.cpu_count() or 8
@@ -517,6 +524,31 @@ def preflight(args):
         blockers.append(f"磁盘可用 {free_gb:.1f}GB，单臂全量存档需 {per_arm_gb}GB"
                         f"（D5 每 epoch 存档）——请扩容或加 --ckpt-keep-last")
     info["disk_arms_affordable"] = int(free_gb // per_arm_gb)
+
+    # FIX-08-5（INC-0016）：启动前置断言——页面文件可用 ≥3GB 才允许开训。
+    # 事由：运行中熔断（check_host_memory pf<1.5GB）只在训练 batch 循环里生效，
+    # epoch 0 的 DataLoader/库加载窗口若已把 pf 吃到低水位，熔断第一次巡检
+    # 前就可能触发 WinError 1455 或系统级冻结（A3-1 夜间 00:32–02:39 两段
+    # 共 ~3.6h 长停即疑似该盲区）。3GB 取 INC-0014 复盘的安全余量。
+    mem = None
+    try:
+        from runtime_safety import host_memory
+        mem = host_memory()
+    except Exception:
+        pass
+    if mem is None:
+        warns.append("主机内存读取失败（runtime_safety.host_memory）——"
+                     "pf 前置断言跳过，运行中熔断仍生效")
+    else:
+        info["avail_pagefile_gb"] = round(mem["avail_pagefile_gb"], 2)
+        info["avail_phys_gb"] = round(mem["avail_phys_gb"], 2)
+        if mem["avail_pagefile_gb"] < 3.0 and not args.dry_run:
+            blockers.append(
+                f"页面文件可用 {mem['avail_pagefile_gb']:.2f}GB < 3GB 启动下限"
+                f"（INC-0016 前置断言）——请先关闭大内存应用或扩页面文件后再启动")
+        elif mem["avail_pagefile_gb"] < 3.0:
+            warns.append(f"dry-run 放行：页面文件可用 {mem['avail_pagefile_gb']:.2f}GB"
+                         f" < 3GB（INC-0016），正式启动会被拒")
     return info, blockers, warns
 
 

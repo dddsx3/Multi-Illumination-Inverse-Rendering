@@ -746,9 +746,15 @@ class InverseRenderTrainer:
             # 温度墙巡检 + 主机内存熔断（INC-0014 后新增内存项）：放在本 batch
             # 全部状态更新之后，保证越线时落盘的是一个自洽的"已完成 N 个 batch"状态。
             # 任一越线 → 存档 interrupt_state → raise → main 以 rc=42 退出续跑。
+            # INC-0016 加固：epoch 0 的 worker/库加载窗口（前 10 batch）内存曲线
+            # 最陡（cufft/cuDNN DLL 映射 + spawn worker 复制），该窗口内检查
+            # 频率加密为每 2 batch；10 个 batch 后恢复每 10 batch 的常态间隔。
             try:
                 self.thermal.poll()
-                if batch_idx % 10 == 0:      # 约每 10 batch（数十秒）查一次主机内存
+                if self.current_epoch == 0 and batch_idx < 10:
+                    if batch_idx % 2 == 0:
+                        check_host_memory()
+                elif batch_idx % 10 == 0:      # 约每 10 batch（数十秒）查一次主机内存
                     check_host_memory()
             except (ThermalStop, MemoryStop) as stop:
                 done = resumed_batches + batch_idx + 1
