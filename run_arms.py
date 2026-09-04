@@ -94,6 +94,13 @@ ARMS = [
       "--albedo_smooth_stage1", "1.0"],
      ["--model", "fusion"],
      "EX-04 A3-1b lowSmooth：INC-0013(c) albedo_smooth=1.0 权重验证"),
+    # A3-2 seed123（任务书 v2.2 EX-05 · 3-seed 噪声带第一臂）：唯一差异变量 = seed。
+    # 与 A3-0（seed42）对照得 seed 噪声；判据（R-J 重标定）：3-seed normal MAE 极差 ≤2.0°
+    # 且 albedo si-MAE 极差 ≤0.02 → 噪声带收敛，后续臂对照直接引用（S-01 加 σ_seed 注记）。
+    ("A3-2_seed123",
+     ["--model", "fusion", "--modality", "gray", "--seed", "123"],
+     ["--model", "fusion"],
+     "EX-05 A3-2 seed123：3-seed 噪声带（对照 A3-0 seed42）"),
     ("p2_t25_f_resA",
      ["--model", "fusion", "--modality", "gray", "--residual_off"],
      ["--model", "fusion", "--residual_off"],
@@ -289,7 +296,12 @@ def record_fingerprints(args, run_id, train_extra):
         "num_lights": 5, "image_size": [256, 256],
         "batch_size": BATCH_SIZE, "total_epochs": TOTAL_EPOCHS,
         "stage1": STAGE1, "stage2": STAGE2,
-        "amp": args.amp_dtype, "seed": 42,
+        # seed 从臂旗标提取（A3-2 世代起 seed 可变，EX-05 一臂一变量仅动 seed）；
+        # 未显式给 --seed 时与 main.py 默认一致（42）。
+        "amp": args.amp_dtype,
+        "seed": int(train_extra[train_extra.index("--seed") + 1])
+                if "--seed" in train_extra and train_extra.index("--seed") + 1 < len(train_extra)
+                else 42,
         "split_manifest": "splits/synthetic_v3.json",
         "train_extra": [str(x) for x in train_extra],
         "data_root": str(args.data_root),
