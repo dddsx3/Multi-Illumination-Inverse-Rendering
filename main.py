@@ -672,11 +672,13 @@ def parse_args():
                         help='启用反照率平滑激进疗法')
 
     # INC-0008 续补：让 run_arms.py 编排器把 worker 数注入子任务。
-    # 0 = 用 config.py 的默认值（直跑口径不变）；>0 = 显式覆盖。
-    # 详见 docs/incidents/INC-0008_win1455_n5rgb验证阶段spawn触发.md。
-    parser.add_argument('--num_workers', type=int, default=0,
-                        help='DataLoader worker 数；0=用 config.py 默认值，>0=覆盖'
-                             '（INC-0008：32GB 提交上限场景下本机单车道封顶 2）')
+    # 不传 = 用 config.py 的默认值（直跑口径不变）；传任意值（含 0）= 显式覆盖。
+    # INC-0016 P0：0 从"哨兵=未传"改为合法显式值（单进程加载，spawn 通道绕开）。
+    # 详见 docs/incidents/INC-0016_worker加载窗口熔断盲区.md §6 与
+    # docs/incidents/INC-0008_win1455_n5rgb验证阶段spawn触发.md。
+    parser.add_argument('--num_workers', type=int, default=None,
+                        help='DataLoader worker 数；不传=config.py 默认，'
+                             '显式传值(含 0)覆盖（INC-0016 P0：本机传 0 走单进程加载）')
 
     return parser.parse_args()
 
@@ -797,11 +799,13 @@ def main():
     config.residual_off = args.residual_off
     config.no_per_light_albedo = args.no_per_light_albedo
 
-    # INC-0008 续补：run_arms.py 通过 --num_workers 显式注入 worker 数
-    # （本机 32 GB 提交上限场景下走 2 worker 路径以避免 val 阶段 spawn 撑爆）。
-    # 直跑 `python main.py` 不传时 args.num_workers=0 → 不覆盖 config 默认值（4），
-    # 保持「直跑口径不变」。
-    if args.num_workers and args.num_workers > 0:
+    # INC-0008 续补：run_arms.py 通过 --num_workers 显式注入 worker 数。
+    # INC-0016 P0 根因修复（2026-09-04 22:5x）：原判断 `if args.num_workers > 0`
+    # 把 --num_workers 0 当"未传"→ config 默认 4 生效 → spawn 死锁再现（第二次）。
+    # 0 是合法显式值（单进程加载，绕开 spawn 通道）。改用 argparse 区分
+    # "未传"(default=None)与"显式传 0"：显式传任何值(含 0)都覆盖 config；
+    # 直跑 `python main.py` 不传 → config 默认值（4）→ 直跑口径不变。
+    if args.num_workers is not None:
         config.data.num_workers = args.num_workers
 
     # T2.0（INC-0003）：产物目录参数化——缺省按 run_id 独立目录，
