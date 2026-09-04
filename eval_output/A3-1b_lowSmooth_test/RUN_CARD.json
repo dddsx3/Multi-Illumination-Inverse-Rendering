@@ -1,0 +1,48 @@
+{
+ "run": "A3-1b_lowSmooth",
+ "code_commit_sha": "ba6ab7649ae8e20cbd7576fab733938c48b07320",
+ "config": {
+  "run_id": "A3-1b_lowSmooth",
+  "generation": "Gen-A3",
+  "model": "fusion",
+  "modality": "gray",
+  "num_lights": 5,
+  "image_size": [
+   256,
+   256
+  ],
+  "batch_size": 4,
+  "total_epochs": 100,
+  "stage1": 30,
+  "stage2": 30,
+  "amp": "bf16",
+  "seed": 42,
+  "split_manifest": "splits/synthetic_v3.json",
+  "train_extra": [
+   "--model",
+   "fusion",
+   "--modality",
+   "gray",
+   "--albedo_smooth_stage1",
+   "1.0"
+  ],
+  "data_root": "D:/data/synthetic_v3",
+  "albedo_smooth_stage1": "1.0"
+ },
+ "config_sha256": "1ec48ea495aa02c317a00748e5117f40f19c9ca89e88b1f05e48e265f8b829b8",
+ "data_manifest_sha256": "853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094",
+ "data_dir": {
+  "scene_dirs": 621,
+  "total_mb": 1003
+ },
+ "train_start": "2026-09-04T13:31:07",
+ "train_end": "2026-09-04T21:07:38",
+ "epochs_done": 100,
+ "produced": "2026-09-04",
+ "status": "completed_100_epochs_eval_done (FIX-08-4 自动三指纹首例；训练窗口 13:31→21:07 墙钟 7.6h 无中断零 rc42)",
+ "eval": {
+  "test": "eval_output/A3-1b_lowSmooth_test/eval_summary.json"
+ },
+ "ckpt_sha256": "（best_model.pth 在库外 checkpoints/，见 run_card_howto 计算法）",
+ "ablation": "INC-0013(c) lowSmooth：albedo_smooth_stage1 10.0→1.0；与 A3-0 唯一差异变量"
+}

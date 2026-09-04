@@ -10,6 +10,7 @@
 | 2026-09-04 | 世代变更行 Gen-A3 内 → A3-1 noFiLM | — | — | 登记 | 理由=判别 FiLM 必要性（v2.1 R-C）；训练代码与 A3-0 同语义（FIX-06 默认 bs4 一致；INC-0015 仅改评估链路 batch=1，不影响训练）；相关 commit=FIX-06/INC-0015(eval-only)/run_arms A3-1 臂 |
 | 2026-09-04 | A3-1_noFiLM（EX-03，含冒烟+eval） | ~10（估） | **~8.1 有效 / 10.3 墙钟** | complete | 训练窗口 2026-09-04 00:32→10:48（approximate，从 logs/A3-1_noFiLM tfevents 时间戳重建：00:32 首epoch、02:39 ep16 ckpt、04:05 run_arms 续跑、10:48 ep99 ckpt+eval 10:49）；epoch 0–17 段有两段长停（4895s+7928s≈3.6h，原因未记录——疑似加载窗口熔断盲区，INC-0016 在案）；实际 epoch 速度 **287.8–292 s/epoch**（夜间+白天连续段一致，无昼夜分速证据）——**显著快于白天锚点 370.6s（bench proxy 保守值），CALIBRATION 已以 292s 为新基准锚点**（R-D 双锚点裁定：不分昼夜单锚点）；eval_rc=0 + RUN_CARD 已入库 |
 | 2026-09-04 | FIX-08 批次（R1–R7+G1–G3 清理加固） | 0 GPU | 0 | **完成** | 残留清理（README图注/R-C/清点表/EX-03 报告，85e8813）+ 账本 A3-1 回填（fde2f5b）+ diligent RUN_CARD hash 补算（d3880cd）+ run_arms 自动三指纹+时间字段 冒烟PASS（c6e354e）+ INC-0016 开立与三件套加固 冒烟PASS（8875962）；**tag gate-FIX08-20260904 已推送** → 进入 EX-04 |
+| 2026-09-04 | A3-1b_lowSmooth（EX-04，含冒烟 3ep） | 12（预算） | **7.68（13:31→21:07 墙钟）** | complete | 100/100 epoch 零中断零 rc42（FIX-08-5 加固后首个生产 run，INC-0016 加载窗口未复现）；273.7 s/epoch 实测；**RUN_CARD 自动三指纹首例**（HEAD=ba6ab76 启动即落盘）；判据全 PASS（normal 差 −1.69°≤2.0 / si-MAE 0.0558≤0.065 / phys 0%）；观测 **albedo range 0.168→0.363 压缩恢复改善，INC-0013(c) 闭环**；披露 PSNR −9.67dB；S-06·A3-1b 已登记 → 下一步 EX-05 seed123 |
 
 ## T0-4 · 情景裁定（2026-09-03，草案 → G0 裁决书确认）
 

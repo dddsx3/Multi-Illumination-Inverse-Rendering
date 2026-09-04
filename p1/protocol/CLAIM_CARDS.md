@@ -58,10 +58,18 @@
   - 口径：允许——"FiLM ablation：逆渲染估计头对 FiLM 不敏感，前向重建保真度（PSNR）依赖 FiLM"；禁止——把 A3-1 数字与历史 bs8 世代混比、未标 Gen-A3 世代直接引用、将 PSNR −6dB 退化表述为"无影响"。
   - 登记日期：2026-09-04
 - 【S-06·A3-0】Gen-A3 主结果新世代（锚点）：主行见 S-01（14.8866°/32.5424/0.05432，scene 级，INC-0015 校准）；本卡仅作世代归属锚点，不与 S-01 重复计数。
+- 【S-06·A3-1b】lowSmooth 消融对照（INC-0013(c) 判别）——Gen-A3 世代（2026-09-04 EX-04）
+  - 一句话：Gen-A3 配置下仅改 stage1 albedo_smooth 10.0→1.0（--albedo_smooth_stage1 1.0），合成 v3 test 124 场景 scene 级 normal MAE 13.2014° / albedo si-MAE 0.05580 / PSNR 22.8726 dB / 物理违规率 0.0000%；与 A3-0（14.8866°/0.05432/32.5424）对照 normal 差 −1.6852°（|差|≤2.0°）、albedo si-MAE 0.05580 ≤0.065 → **判据双 PASS；观测指标 phys_albedo_range 由 0.168 恢复至 0.363（>0.30）→ 记"压缩恢复改善"，INC-0013(c) 闭环：albedo 值域压缩由平滑权重过高主导，10→1 恢复动态范围**。
+  - 数值：normal MAE 13.2014±9.2119°（median 9.72°）；PSNR 22.8726±4.9431 dB；albedo si-MAE 0.05580±0.04772；phys_albedo_range 0.3629±0.2427（A3-0 0.1681）；phys_albedo_std 0.0713（A3-0 0.0809）；phys_albedo_mean 0.7280。
+  - 披露（如实）：PSNR 由 32.54 降至 22.87（−9.67 dB）——平滑权重 10→1 后重建保真度显著退化（与 A3-1 noFiLM 的 −5.98dB 同向且更大）；判断性结论只限"估计头口径"：normal/albedo 判据内。range 恢复的机制解释（平滑项不再压平反照率）与 PSNR 退化的机制（重建正则减弱）分别注记，不合并。
+  - 来源文件：eval_output/A3-1b_lowSmooth_test/eval_summary.json + RUN_CARD.json（FIX-08-4 自动三指纹首例：code_commit_sha=ba6ab76…，train_start/end 自动落盘）
+  - 复现命令：bash run_safe_arms.sh --data_root D:/data/synthetic_v3 --budget-hours 12 --max-lanes 1 --only A3-1b_lowSmooth --amp-dtype bf16 --skip-package（评估由 run_arms 自动接续）
+  - 口径：允许——"albedo_smooth_stage1=10 把 albedo 输出压向常数，权重降为 1 恢复动态范围（range 0.168→0.363）且估计头指标在判据内"；禁止——与历史 bs8 世代混比、未标 Gen-A3 世代直接引用、将 PSNR −9.67dB 略去不报、把 range 恢复表述为"质量提升"（仅动态范围恢复）。
+  - 登记日期：2026-09-04
 - 【S-07 / S-09】A3 世代新卡（占位）：随 A3-2~A3-5 各 run 评估产出登记（S-07 GSIQ 定义与口径标注 / S-09 FW 融合）。A4-1 归因图须引用 S-07 卡口径（GSIQ 定义 + 不衡量 absolute information）。
 
 ## 禁词自检（T0-3 验收）
 
 已对照 CLAIM_REGISTRY 字面禁词清单逐卡扫描本文件：无 noise-floor / joint recoverability / render noise floor / N-curve-as-projection / selection-method 升级措辞命中。新增卡一律沿用。
 
-*状态：S-01~S-05 建卡完成（2026-09-03）；S-01/S-04 终稿与 S-06·A3-1（FiLM 消融）已登记（2026-09-04 EX-03，含 PSNR −5.98dB 披露）；S-07/S-09 待后续 run。*
+*状态：S-01~S-05 建卡完成（2026-09-03）；S-01/S-04 终稿、S-06·A3-1（FiLM 消融，含 PSNR −5.98dB 披露）与 S-06·A3-1b（lowSmooth，含 PSNR −9.67dB 披露、range 恢复 0.363 注记）已登记（2026-09-04）；S-07/S-09 待后续 run。*
