@@ -20,8 +20,9 @@
 **FiLM 非关键（消融成立）：A3-1 noFiLM 与 A3-0 差异在判据内**
 
 ## 三指纹（RUN_CARD）
-- A3-1 RUN_CARD.json：未生成（需补）
-- config_sha256：N/A
+- A3-1 RUN_CARD.json：已入库（`eval_output/A3-1_noFiLM_test/RUN_CARD.json`，2026-09-04 04:03；此前"未生成"表述有误，本行修正）
+- config_sha256：`14584fb35df85879dd0db1bee04c76c38e169d541e2b8e9ababeca10f626c4cd`；data_manifest_sha256：`853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094`
+- code_commit_sha：unrecorded（启动时刻 HEAD 不可回溯，诚实注记不伪造；同 A3-0 做法）
 
 ## 来源
 - A3-0：eval_output/A3-0_f_n5gray_seed42_test_v2_scenelevel/eval_summary.json

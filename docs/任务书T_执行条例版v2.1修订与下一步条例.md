@@ -11,7 +11,7 @@
 |---|---|---|---|
 | R-A | §1 OP-2 · RUN_CARD | 升级**三指纹**：`code_commit_sha` + `config_hash` + `data_manifest_sha`（命令见 docs/run_card_howto.md，FIX-05 已落地）；世代切换（任何代码改动后首训）须在账本登记"世代变更行" | ✅ FIX-05 |
 | R-B | 全局 | 世代协议冻结：**Gen-A3 = bs4 + 物理约束头 + gray + synthetic_v3 划分 + bf16**。一切 A3 世代实验（A3-1~A3-5、A3-3 FW）锁死此协议，一臂一变量；历史 bs8 世代数字全部 reference-only，禁作对比基准（FIX-01/02 已落地） | ✅ FIX-01/02 |
-| R-C | §3 阶段 A · A3 臂表 | 臂清单与排序重排：**A3-0（已完成，Gen-A3 首个 100ep 训练，10.30°/32.55/0.1482/phys 0%）→ A3-1 noFiLM → A3-1b lowSmooth（INC-0013(c)，从"备"升正）→ A3-2 3-seed（seed 123/2024）→ A3-4 MeanPool → A3-3 FW 主臂 → A3-5 FW seed2**；备臂 **resC / physcon 删除**（物理约束头已承担 physcon 使命；resC 无叙事位） | ✅ 生效 |
+| R-C | §3 阶段 A · A3 臂表 | 臂清单与排序重排：**A3-0（已完成，Gen-A3 首个 100ep 训练，scene 级 14.887°/32.54/0.0543/phys 0%，INC-0015）→ A3-1 noFiLM → A3-1b lowSmooth（INC-0013(c)，从"备"升正）→ A3-2 3-seed（seed 123/2024）→ A3-4 MeanPool → A3-3 FW 主臂 → A3-5 FW seed2**；备臂 **resC / physcon 删除**（物理约束头已承担 physcon 使命；resC 无叙事位） | ✅ 生效 |
 | R-D | 单臂时长锚点 | **9.8–10.3h / 100 epoch（bs4 实测 370.6s/epoch，CALIBRATION）**；旧 4–6h（bs8）作废 | ✅ 生效 |
 | R-E | GPU 总账 | A 阶段（含 A3-0 的 11h）：A3-1/1b/4/3/5 ×~10h + A3-2 ×2 臂 20h + 补测 ~3h ≈ **~90h**；全生命周期 **~175–195h**（情景 A 容量 480–600h 富余 2.5×，G1 11-15 不变；白天 8.4h 无人值守模式计入排期） | ✅ 生效 |
 | R-F | A3-3 判据包 | 判据 4（albedo 保护）基线：~~1.2×0.0532=0.064~~ → **1.2×A3-0 albedo（scene 级 0.0543）= 0.065**（INC-0015 校准后定稿）；判据 1 参照系：~~F-N5 全平 0.03°~~ → **Gen-A3 n_curve 实测曲线（EX-01 校准版，N1–N5 极差 0.017°，N_min=1 保留）** | ✅ 定稿（EX-01 + INC-0015） |

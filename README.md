@@ -139,7 +139,7 @@
 </p>
 <p align="center">
   <em>左：R0 对照臂（原 U-Net, gray, bs8）训练曲线 — 历史世代 reference（test normal MAE 10.66°，p2_r0_v3gray_test）<br/>
-  右：F-N5-gray 训练曲线 — 历史世代 reference（7.792°，ckpt 缺失）；Gen-A3 复现（bs4）见 §4.1（10.30°）</em>
+  右：F-N5-gray 训练曲线 — 历史世代 reference（7.792°，ckpt 缺失）；Gen-A3 复现（bs4）见 §4.1（scene 级 14.89°，INC-0015）</em>
 </p>
 
 ---
