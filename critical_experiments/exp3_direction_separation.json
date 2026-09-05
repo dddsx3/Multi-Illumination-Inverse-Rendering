@@ -1,0 +1,632 @@
+{
+ "runs": [
+  {
+   "scene": "sphere",
+   "res": 64,
+   "N": 5,
+   "P": 4092,
+   "scale_gauge_rayleigh": [
+    1.9072351056532726e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.9072351056532726e-09,
+   "per_light_contrast_rayleigh": [
+    0.22931661583105173,
+    0.03963112186106533,
+    0.061666998487357454,
+    0.16784282531638403,
+    0.03954784631678178
+   ],
+   "GY_rank": 9,
+   "GY_cond": 96252.8775551181,
+   "GY_eigs": [
+    0.008959298347112359,
+    0.44013629080183847,
+    2.462548739576537,
+    2.471741142525658,
+    12.784029211293326,
+    12.789016391281406,
+    13.12732352731973,
+    22.67238712864583,
+    862.3582467843779
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 3,
+   "residual_gbr_candidate": 2,
+   "principal_angles_deg": [
+    0.07247604926394353
+   ],
+   "max_principal_angle_deg": 0.07247604926394353,
+   "n_eig_below_1em3": 21,
+   "t_sec": 0.2924070358276367,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 2
+  },
+  {
+   "scene": "cube",
+   "res": 64,
+   "N": 5,
+   "P": 4096,
+   "scale_gauge_rayleigh": [
+    5.342745271972917e-10
+   ],
+   "scale_gauge_max_rayleigh": 5.342745271972917e-10,
+   "per_light_contrast_rayleigh": [
+    0.23710705678534688,
+    0.012411887190002788,
+    0.0646630605665527,
+    0.1708793439567637,
+    0.012669526191554158
+   ],
+   "GY_rank": 9,
+   "GY_cond": 1275022.3425718695,
+   "GY_eigs": [
+    0.0006778249339305187,
+    0.0044578654217953045,
+    0.3709441655419776,
+    3.225669022863872,
+    10.338537737722497,
+    13.182108367534177,
+    16.240839493107718,
+    22.604648210071623,
+    864.2419351137127
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 14,
+   "residual_gbr_candidate": 13,
+   "principal_angles_deg": [
+    84.32592623345123
+   ],
+   "max_principal_angle_deg": 84.32592623345123,
+   "n_eig_below_1em3": 31,
+   "t_sec": 0.2434065341949463,
+   "n_gy_edge_band_1e8_1e5": 2,
+   "decomposition_64_formula": "1(global gauge) + 5x2(SH edge) + gbr",
+   "gbr_dim_estimate": 3
+  },
+  {
+   "scene": "cylinder",
+   "res": 64,
+   "N": 5,
+   "P": 4096,
+   "scale_gauge_rayleigh": [
+    1.2720847027881498e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.2720847027881498e-09,
+   "per_light_contrast_rayleigh": [
+    0.24067230031218254,
+    0.029045317698942502,
+    0.06240704892735824,
+    0.1693640850877849,
+    0.030837821427948033
+   ],
+   "GY_rank": 9,
+   "GY_cond": 1118855.7851776718,
+   "GY_eigs": [
+    0.0007713093427943365,
+    0.0023325690830131455,
+    0.3742717638141322,
+    3.898036795763113,
+    10.101292482426503,
+    13.181389247190673,
+    16.836651891543397,
+    22.83115582202754,
+    862.9839203470315
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 14,
+   "residual_gbr_candidate": 13,
+   "principal_angles_deg": [
+    81.26682562863036
+   ],
+   "max_principal_angle_deg": 81.26682562863036,
+   "n_eig_below_1em3": 30,
+   "t_sec": 0.2810840606689453,
+   "n_gy_edge_band_1e8_1e5": 2,
+   "decomposition_64_formula": "1(global gauge) + 5x2(SH edge) + gbr",
+   "gbr_dim_estimate": 3
+  },
+  {
+   "scene": "hemisphere",
+   "res": 64,
+   "N": 5,
+   "P": 4092,
+   "scale_gauge_rayleigh": [
+    1.90809103648345e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.90809103648345e-09,
+   "per_light_contrast_rayleigh": [
+    0.2295538181069885,
+    0.039565902849882005,
+    0.06187915023730831,
+    0.16769256349051426,
+    0.03954575458915172
+   ],
+   "GY_rank": 9,
+   "GY_cond": 91026.9192809111,
+   "GY_eigs": [
+    0.009470484479565928,
+    0.4522302540806738,
+    2.4954411962793106,
+    2.5104379558624768,
+    12.853944147715513,
+    12.86405722486379,
+    13.108465038607541,
+    22.621172865934255,
+    862.0690262725691
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 2,
+   "residual_gbr_candidate": 1,
+   "principal_angles_deg": [
+    0.061760068813911655
+   ],
+   "max_principal_angle_deg": 0.061760068813911655,
+   "n_eig_below_1em3": 21,
+   "t_sec": 0.2743253707885742,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 1
+  },
+  {
+   "scene": "sphere",
+   "res": 128,
+   "N": 5,
+   "P": 6178,
+   "scale_gauge_rayleigh": [
+    1.3229366672936684e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.3229366672936684e-09,
+   "per_light_contrast_rayleigh": [
+    0.24255822767730037,
+    0.024935227739725334,
+    0.06138702031119268,
+    0.1738979486141404,
+    0.026635790508485666
+   ],
+   "GY_rank": 9,
+   "GY_cond": 15234.03653917716,
+   "GY_eigs": [
+    0.08348516277361889,
+    8.415894028034215,
+    8.452399244786438,
+    12.477489100250342,
+    15.873699916939188,
+    17.131225957968137,
+    29.124987285789267,
+    29.24658960985804,
+    1271.816020172463
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 3,
+   "residual_gbr_candidate": 2,
+   "principal_angles_deg": [
+    0.6098689886572517
+   ],
+   "max_principal_angle_deg": 0.6098689886572517,
+   "n_eig_below_1em3": 13,
+   "t_sec": 0.633124828338623,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 2
+  },
+  {
+   "scene": "cube",
+   "res": 128,
+   "N": 5,
+   "P": 13406,
+   "scale_gauge_rayleigh": [
+    5.132526027749638e-10
+   ],
+   "scale_gauge_max_rayleigh": 5.132526027749638e-10,
+   "per_light_contrast_rayleigh": [
+    0.23913706971750442,
+    0.009842802394641076,
+    0.0637025353871461,
+    0.17130987092444916,
+    0.010816444624622158
+   ],
+   "GY_rank": 9,
+   "GY_cond": 21401.21483236238,
+   "GY_eigs": [
+    0.12914639756748872,
+    0.4225278211962401,
+    3.0775086994920478,
+    11.543087836397882,
+    16.131204538708467,
+    22.95349174616307,
+    32.039416415468764,
+    183.99265148630957,
+    2763.8897991675085
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 8,
+   "residual_gbr_candidate": 7,
+   "principal_angles_deg": [
+    4.708048939530375
+   ],
+   "max_principal_angle_deg": 4.708048939530375,
+   "n_eig_below_1em3": 23,
+   "t_sec": 1.5443358421325684,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 7
+  },
+  {
+   "scene": "cylinder",
+   "res": 128,
+   "N": 5,
+   "P": 7503,
+   "scale_gauge_rayleigh": [
+    1.2670733972752364e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.2670733972752364e-09,
+   "per_light_contrast_rayleigh": [
+    0.24234281193506235,
+    0.022869256428869406,
+    0.0582372202792403,
+    0.16665225898873265,
+    0.02842661566098768
+   ],
+   "GY_rank": 8,
+   "GY_cond": 8490433809255.784,
+   "GY_eigs": [
+    1.8614526055295515e-10,
+    0.08086517760327874,
+    6.095698099037276,
+    9.232930253870764,
+    10.357597315781955,
+    13.544699745594594,
+    25.442441920548475,
+    45.3818366137028,
+    1580.4540136315375
+   ],
+   "predicted_near0": 6,
+   "measured_near0": 14,
+   "residual_gbr_candidate": 8,
+   "principal_angles_deg": [
+    4.901582837263244e-05,
+    0.0001625065680111765,
+    0.005191808495836609,
+    0.013186585708225644,
+    0.04743235453119318,
+    78.62525154214333
+   ],
+   "max_principal_angle_deg": 78.62525154214333,
+   "n_eig_below_1em3": 20,
+   "t_sec": 0.693023681640625,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 13
+  },
+  {
+   "scene": "hemisphere",
+   "res": 128,
+   "N": 5,
+   "P": 6150,
+   "scale_gauge_rayleigh": [
+    1.3306817712601053e-09
+   ],
+   "scale_gauge_max_rayleigh": 1.3306817712601053e-09,
+   "per_light_contrast_rayleigh": [
+    0.24267308438534355,
+    0.025206056824686945,
+    0.061549099603540755,
+    0.17392036231978494,
+    0.026943237365380873
+   ],
+   "GY_rank": 9,
+   "GY_cond": 14549.822435720986,
+   "GY_eigs": [
+    0.08694408216562548,
+    8.41937686371779,
+    8.46273468297582,
+    12.485209000886334,
+    15.906184016876583,
+    17.17783355469406,
+    29.11398612197752,
+    29.63327097268446,
+    1265.0209573465863
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 3,
+   "residual_gbr_candidate": 2,
+   "principal_angles_deg": [
+    0.5343105802377701
+   ],
+   "max_principal_angle_deg": 0.5343105802377701,
+   "n_eig_below_1em3": 13,
+   "t_sec": 0.5850613117218018,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 2
+  },
+  {
+   "scene": "000faf2e43534b8fa99497190d4b0a08",
+   "res": 128,
+   "N": 5,
+   "P": 3179,
+   "scale_gauge_rayleigh": [
+    1.349456157373373e-10
+   ],
+   "scale_gauge_max_rayleigh": 1.349456157373373e-10,
+   "per_light_contrast_rayleigh": [
+    0.26509574841201977,
+    0.25706951734210337,
+    0.250515104983755,
+    0.2541074543085196,
+    0.26305912728893743
+   ],
+   "GY_rank": 9,
+   "GY_cond": 4134.102986473781,
+   "GY_eigs": [
+    0.013079157388254749,
+    0.25322969504899806,
+    0.6033004928884614,
+    0.753413252094078,
+    0.8634718652512421,
+    1.1367906387691071,
+    2.1940431011728783,
+    3.1392305126203532,
+    54.070583619344575
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 6,
+   "residual_gbr_candidate": 5,
+   "principal_angles_deg": [
+    0.3242160913971894
+   ],
+   "max_principal_angle_deg": 0.3242160913971894,
+   "n_eig_below_1em3": 26,
+   "t_sec": 0.31653285026550293,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 5
+  },
+  {
+   "scene": "003715596f13472c877ee3a622782d5a",
+   "res": 128,
+   "N": 5,
+   "P": 16384,
+   "scale_gauge_rayleigh": [
+    1.8782815418872265e-10
+   ],
+   "scale_gauge_max_rayleigh": 1.8782815418872265e-10,
+   "per_light_contrast_rayleigh": [
+    0.25814819102924685,
+    0.2494560826809657,
+    0.25264933877048845,
+    0.2634379147041771,
+    0.26690193892374414
+   ],
+   "GY_rank": 9,
+   "GY_cond": 4217680.205426222,
+   "GY_eigs": [
+    0.00016917972909770602,
+    0.0024285319516652265,
+    0.008733017451243306,
+    0.05696225618677466,
+    2.0683547535905236,
+    5.175841458922435,
+    7.218229521000243,
+    11.167406622438897,
+    713.5459945747654
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 33,
+   "residual_gbr_candidate": 32,
+   "principal_angles_deg": [
+    88.20983704921247
+   ],
+   "max_principal_angle_deg": 88.20983704921247,
+   "n_eig_below_1em3": 41,
+   "t_sec": 1.7285618782043457,
+   "n_gy_edge_band_1e8_1e5": 2,
+   "decomposition_64_formula": "1(global gauge) + 5x2(SH edge) + gbr",
+   "gbr_dim_estimate": 22
+  },
+  {
+   "scene": "008184a22de846be9062e98ac3d174e8",
+   "res": 128,
+   "N": 5,
+   "P": 6907,
+   "scale_gauge_rayleigh": [
+    6.689708505366626e-11
+   ],
+   "scale_gauge_max_rayleigh": 6.689708505366626e-11,
+   "per_light_contrast_rayleigh": [
+    0.25332375546794667,
+    0.2569429407862649,
+    0.26246494442905377,
+    0.2577736479251811,
+    0.24958071234416182
+   ],
+   "GY_rank": 9,
+   "GY_cond": 409.25807445669994,
+   "GY_eigs": [
+    0.003938892635922564,
+    0.06627626683360929,
+    0.09160650450640402,
+    0.23380768662136442,
+    0.3085863525178325,
+    0.3207967145054555,
+    0.3307422954426857,
+    0.43484819911453704,
+    1.6120236156693437
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 2,
+   "residual_gbr_candidate": 1,
+   "principal_angles_deg": [
+    0.024333856208377667
+   ],
+   "max_principal_angle_deg": 0.024333856208377667,
+   "n_eig_below_1em3": 15,
+   "t_sec": 0.478679895401001,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 1
+  },
+  {
+   "scene": "000faf2e43534b8fa99497190d4b0a08",
+   "res": 256,
+   "N": 5,
+   "P": 4410,
+   "scale_gauge_rayleigh": [
+    1.374957005869764e-10
+   ],
+   "scale_gauge_max_rayleigh": 1.374957005869764e-10,
+   "per_light_contrast_rayleigh": [
+    0.2632191536443792,
+    0.256726919367837,
+    0.25229782895491504,
+    0.2554415177215036,
+    0.26221255275567673
+   ],
+   "GY_rank": 9,
+   "GY_cond": 3702.756983411003,
+   "GY_eigs": [
+    0.016880974855722302,
+    0.3197102675619598,
+    0.6364577164547464,
+    0.7613580610926447,
+    1.0330833139452902,
+    1.4153981060964664,
+    2.6888713436418845,
+    3.624953655542714,
+    62.50614753381131
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 6,
+   "residual_gbr_candidate": 5,
+   "principal_angles_deg": [
+    1.1353163366917358
+   ],
+   "max_principal_angle_deg": 1.1353163366917358,
+   "n_eig_below_1em3": 25,
+   "t_sec": 1.1142196655273438,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 5
+  },
+  {
+   "scene": "003715596f13472c877ee3a622782d5a",
+   "res": 256,
+   "N": 5,
+   "P": 44553,
+   "scale_gauge_rayleigh": [
+    2.192303369925898e-10
+   ],
+   "scale_gauge_max_rayleigh": 2.192303369925898e-10,
+   "per_light_contrast_rayleigh": [
+    0.25790819343982324,
+    0.25567608865475494,
+    0.2567670120666384,
+    0.26012873480785853,
+    0.26106397201058185
+   ],
+   "GY_rank": 9,
+   "GY_cond": 408644.95093818667,
+   "GY_eigs": [
+    0.004298802881986975,
+    0.11957647344039174,
+    0.7668523256608649,
+    2.420520744045992,
+    3.8983517605932856,
+    4.249944364266265,
+    8.568424982761343,
+    17.068063700896342,
+    1756.6840928025028
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 21,
+   "residual_gbr_candidate": 20,
+   "principal_angles_deg": [
+    86.94130590802561
+   ],
+   "max_principal_angle_deg": 86.94130590802561,
+   "n_eig_below_1em3": 36,
+   "t_sec": 8.186742544174194,
+   "n_gy_edge_band_1e8_1e5": 1,
+   "decomposition_64_formula": "1(global gauge) + 5x1(SH edge) + gbr",
+   "gbr_dim_estimate": 15
+  },
+  {
+   "scene": "008184a22de846be9062e98ac3d174e8",
+   "res": 256,
+   "N": 5,
+   "P": 10197,
+   "scale_gauge_rayleigh": [
+    6.457775842051099e-11
+   ],
+   "scale_gauge_max_rayleigh": 6.457775842051099e-11,
+   "per_light_contrast_rayleigh": [
+    0.2540659193122718,
+    0.253345994235096,
+    0.2590981905672188,
+    0.26083435202029576,
+    0.2560887175743493
+   ],
+   "GY_rank": 9,
+   "GY_cond": 435.52041641747735,
+   "GY_eigs": [
+    0.005681442624296484,
+    0.11094245076063255,
+    0.1377762425025428,
+    0.32557642490516175,
+    0.4519245179302823,
+    0.46774258656584505,
+    0.48908253607313823,
+    0.6135126343479639,
+    2.4743842575856103
+   ],
+   "predicted_near0": 1,
+   "measured_near0": 2,
+   "residual_gbr_candidate": 1,
+   "principal_angles_deg": [
+    0.028403987717914223
+   ],
+   "max_principal_angle_deg": 0.028403987717914223,
+   "n_eig_below_1em3": 15,
+   "t_sec": 1.1128249168395996,
+   "n_gy_edge_band_1e8_1e5": 0,
+   "decomposition_64_formula": "1(global gauge) + 5x0(SH edge) + gbr",
+   "gbr_dim_estimate": 1
+  }
+ ],
+ "dense_F_check": "S-side gauge validation is exact (see scale_gauge_rayleigh)",
+ "summary": {
+  "clean_64_decomposition": {
+   "sphere": {
+    "measured": 3,
+    "gauge": 1,
+    "sh_edge_xN": 0,
+    "gbr_visible": 2
+   },
+   "cube": {
+    "measured": 14,
+    "gauge": 1,
+    "sh_edge_xN": 10,
+    "gbr_visible": 3,
+    "note": "1+5×2+3=14 完美闭合"
+   },
+   "cylinder": {
+    "measured": 14,
+    "gauge": 1,
+    "sh_edge_xN": 10,
+    "gbr_visible": 3,
+    "note": "1+5×2+3=14 完美闭合"
+   },
+   "hemisphere": {
+    "measured": 2,
+    "gauge": 1,
+    "sh_edge_xN": 0,
+    "gbr_visible": 1
+   }
+  },
+  "scale_gauge_is_global": "1 个全局方向(ρ→tρ, 全部 C_k→C_k/t 同时)，非逐光独立——exp3 初版逐光设定是设计错误，已修正；Rayleigh 1e-9~1e-11 全场景",
+  "gbr_caveat": "GBR 在 SH-2 截断下非精确对称（朗伯投影核的对称性被 L≤2 截断破坏）→ 3 维中部分被推到 1e-6 以上；cube/cylinder 全 3 维可见，sphere/hemisphere 1-2 维可见",
+  "res_128_256_note": "128/256 级（裁剪引入边界/mask 碎片像素）近零数超出三类解释的部分标为「分辨率相关未分类病态」，如实上报不硬凑",
+  "threshold_note": "近零计数阈值 1e-6(相对) 与 GY 秩阈值 1e-8 的边缘带 [1e-8,1e-5] × N 是 SH 病态的贡献主体——硬阈值计数天然不稳，谱连续性报告见 eig_rel 字段"
+ }
+}
