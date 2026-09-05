@@ -1,0 +1,416 @@
+{
+ "runs": [
+  {
+   "scene": "sphere",
+   "config": 0,
+   "sigma_min": 0.719730636464911,
+   "sigma_min_sq": 0.5180121890661858,
+   "lam_min_mean": 4.96077861674246,
+   "lam_min_median": 4.9757014658457885,
+   "lam_min_p25": 3.5072566755974717,
+   "lam_min_p75": 6.692276744466726,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 1,
+   "sigma_min": 1.3342945723549178,
+   "sigma_min_sq": 1.7803420058157928,
+   "lam_min_mean": 1.6690816175564371,
+   "lam_min_median": 1.0338353794668373,
+   "lam_min_p25": 0.22783488319941342,
+   "lam_min_p75": 2.6868305169161477,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 2,
+   "sigma_min": 0.9460503592645073,
+   "sigma_min_sq": 0.8950112822645033,
+   "lam_min_mean": 2.8161713691227015,
+   "lam_min_median": 2.367162849531741,
+   "lam_min_p25": 1.2342119609102133,
+   "lam_min_p75": 4.347744378610245,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 3,
+   "sigma_min": 1.5195476709250555,
+   "sigma_min_sq": 2.3090251242137607,
+   "lam_min_mean": 4.4572118039693525,
+   "lam_min_median": 4.918864962951671,
+   "lam_min_p25": 3.9977196563883473,
+   "lam_min_p75": 5.375314487363257,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 4,
+   "sigma_min": 0.995210798151683,
+   "sigma_min_sq": 0.9904445327577099,
+   "lam_min_mean": 4.4361777194146645,
+   "lam_min_median": 4.792646683625767,
+   "lam_min_p25": 2.3622032495757574,
+   "lam_min_p75": 6.356124307970087,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 5,
+   "sigma_min": 1.5414219963468496,
+   "sigma_min_sq": 2.375981770821907,
+   "lam_min_mean": 2.5761718798095883,
+   "lam_min_median": 2.796870952310146,
+   "lam_min_p25": 1.7417877077231316,
+   "lam_min_p75": 3.3501173144640264,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 6,
+   "sigma_min": 1.565582160431601,
+   "sigma_min_sq": 2.451047501061679,
+   "lam_min_mean": 6.37339269423857,
+   "lam_min_median": 6.97039974933717,
+   "lam_min_p25": 3.224772332312724,
+   "lam_min_p75": 9.413512860614357,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "sphere",
+   "config": 7,
+   "sigma_min": 1.5573747427467624,
+   "sigma_min_sq": 2.425416089345544,
+   "lam_min_mean": 3.1873524926958754,
+   "lam_min_median": 3.2282173784108243,
+   "lam_min_p25": 2.4911533324321713,
+   "lam_min_p75": 4.085345827981823,
+   "n_pixels": 6178
+  },
+  {
+   "scene": "cube",
+   "config": 0,
+   "sigma_min": 1.401984197572323,
+   "sigma_min_sq": 1.9655596902425105,
+   "lam_min_mean": 2.2561556772622398,
+   "lam_min_median": 2.535072717711785,
+   "lam_min_p25": 2.4781934429557264,
+   "lam_min_p75": 2.535072717711785,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 1,
+   "sigma_min": 0.35621282528063963,
+   "sigma_min_sq": 0.1268875768944155,
+   "lam_min_mean": 1.237868246402849,
+   "lam_min_median": 0.6054503615138361,
+   "lam_min_p25": 0.6054503615138361,
+   "lam_min_p75": 0.6054503615138361,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 2,
+   "sigma_min": 0.7386032718176837,
+   "sigma_min_sq": 0.5455347931397871,
+   "lam_min_mean": 2.987468252089698,
+   "lam_min_median": 3.5215129170123305,
+   "lam_min_p25": 3.4425009425768986,
+   "lam_min_p75": 3.5215129170123305,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 3,
+   "sigma_min": 0.6477596132277784,
+   "sigma_min_sq": 0.4195925165290011,
+   "lam_min_mean": 1.2303721407924286,
+   "lam_min_median": 0.08087353927899125,
+   "lam_min_p25": 0.08087353927899125,
+   "lam_min_p75": 0.08087353927899125,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 4,
+   "sigma_min": 0.803134688019464,
+   "sigma_min_sq": 0.6450253271001217,
+   "lam_min_mean": 4.524303895817862,
+   "lam_min_median": 5.368647400338491,
+   "lam_min_p25": 5.248191380115153,
+   "lam_min_p75": 5.368647400338491,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 5,
+   "sigma_min": 1.100243604969492,
+   "sigma_min_sq": 1.2105359902762634,
+   "lam_min_mean": 5.819016964269713,
+   "lam_min_median": 6.538896652178009,
+   "lam_min_p25": 6.392183819570784,
+   "lam_min_p75": 6.538896652178009,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 6,
+   "sigma_min": 2.060714477863969,
+   "sigma_min_sq": 4.246544159278171,
+   "lam_min_mean": 0.680349852833613,
+   "lam_min_median": 0.2865545978185872,
+   "lam_min_p25": 0.2865545978185872,
+   "lam_min_p75": 0.2865545978185872,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cube",
+   "config": 7,
+   "sigma_min": 1.929115641683783,
+   "sigma_min_sq": 3.7214871589890337,
+   "lam_min_mean": 6.012558029897094,
+   "lam_min_median": 7.479031877715872,
+   "lam_min_p25": 7.31122528735265,
+   "lam_min_p75": 7.479031877715872,
+   "n_pixels": 13406
+  },
+  {
+   "scene": "cylinder",
+   "config": 0,
+   "sigma_min": 1.130401549368989,
+   "sigma_min_sq": 1.2778076628158108,
+   "lam_min_mean": 6.254286074843156,
+   "lam_min_median": 7.777784427562922,
+   "lam_min_p25": 5.6094471649348066,
+   "lam_min_p75": 8.372344618324805,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 1,
+   "sigma_min": 0.5907335956575177,
+   "sigma_min_sq": 0.3489661810384596,
+   "lam_min_mean": 5.259401029569756,
+   "lam_min_median": 5.877326044492544,
+   "lam_min_p25": 4.835771589827061,
+   "lam_min_p75": 6.009383998157296,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 2,
+   "sigma_min": 1.1637484777365403,
+   "sigma_min_sq": 1.354310519434115,
+   "lam_min_mean": 6.94506116830162,
+   "lam_min_median": 7.42822661035603,
+   "lam_min_p25": 4.994448802905294,
+   "lam_min_p75": 9.626551625185314,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 3,
+   "sigma_min": 1.0159039576381417,
+   "sigma_min_sq": 1.0320608511448393,
+   "lam_min_mean": 8.192685054424972,
+   "lam_min_median": 9.24937417973082,
+   "lam_min_p25": 7.683328723874492,
+   "lam_min_p75": 9.68213245142746,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 4,
+   "sigma_min": 0.7392961878535305,
+   "sigma_min_sq": 0.5465588533747626,
+   "lam_min_mean": 7.147485898747759,
+   "lam_min_median": 7.755316991127442,
+   "lam_min_p25": 5.369063643284705,
+   "lam_min_p75": 9.722015858554512,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 5,
+   "sigma_min": 0.5692604210894087,
+   "sigma_min_sq": 0.32405742701889084,
+   "lam_min_mean": 5.271918431954776,
+   "lam_min_median": 6.773955356887419,
+   "lam_min_p25": 0.7953303384252746,
+   "lam_min_p75": 7.62608152407019,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 6,
+   "sigma_min": 2.880923539524775,
+   "sigma_min_sq": 8.29972044058796,
+   "lam_min_mean": 3.9539004341937414,
+   "lam_min_median": 4.553654653045121,
+   "lam_min_p25": 3.616595881373913,
+   "lam_min_p75": 4.98800799278715,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "cylinder",
+   "config": 7,
+   "sigma_min": 1.9255483039751853,
+   "sigma_min_sq": 3.7077362709417123,
+   "lam_min_mean": 3.6688102989501186,
+   "lam_min_median": 3.9419459423343963,
+   "lam_min_p25": 3.608380879312201,
+   "lam_min_p75": 4.110215531482027,
+   "n_pixels": 7503
+  },
+  {
+   "scene": "hemisphere",
+   "config": 0,
+   "sigma_min": 0.9363199663852537,
+   "sigma_min_sq": 0.8766950794516827,
+   "lam_min_mean": 7.710967510137184,
+   "lam_min_median": 7.596866965319734,
+   "lam_min_p25": 4.643066752798405,
+   "lam_min_p75": 10.819671679071465,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 1,
+   "sigma_min": 1.1714121589535123,
+   "sigma_min_sq": 1.3722064461441286,
+   "lam_min_mean": 5.724982792023193,
+   "lam_min_median": 6.715413599477376,
+   "lam_min_p25": 3.593319636392836,
+   "lam_min_p75": 7.957181054797097,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 2,
+   "sigma_min": 1.4286633553374612,
+   "sigma_min_sq": 2.041078982884093,
+   "lam_min_mean": 6.952585340224855,
+   "lam_min_median": 7.4209265971238185,
+   "lam_min_p25": 4.607636956518846,
+   "lam_min_p75": 9.499172719069279,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 3,
+   "sigma_min": 0.3452453849677614,
+   "sigma_min_sq": 0.11919437584153778,
+   "lam_min_mean": 3.7815274386227586,
+   "lam_min_median": 4.230871321368108,
+   "lam_min_p25": 2.693249942776654,
+   "lam_min_p75": 5.165266862332549,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 4,
+   "sigma_min": 1.1059524311585607,
+   "sigma_min_sq": 1.2231307799855309,
+   "lam_min_mean": 5.949658383328562,
+   "lam_min_median": 6.175659862457514,
+   "lam_min_p25": 3.6866267858650077,
+   "lam_min_p75": 8.299322133304507,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 5,
+   "sigma_min": 0.8665502575500907,
+   "sigma_min_sq": 0.7509093488601286,
+   "lam_min_mean": 4.339732376770038,
+   "lam_min_median": 4.4541128728815105,
+   "lam_min_p25": 3.142933137504204,
+   "lam_min_p75": 5.762370029057748,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 6,
+   "sigma_min": 0.46209263997643657,
+   "sigma_min_sq": 0.21352960792039263,
+   "lam_min_mean": 2.270535532993903,
+   "lam_min_median": 2.555035471812634,
+   "lam_min_p25": 0.5636607010494361,
+   "lam_min_p75": 3.7775495887180104,
+   "n_pixels": 6150
+  },
+  {
+   "scene": "hemisphere",
+   "config": 7,
+   "sigma_min": 0.8170872224519152,
+   "sigma_min_sq": 0.6676315290941855,
+   "lam_min_mean": 2.990698920809507,
+   "lam_min_median": 3.002822585968094,
+   "lam_min_p25": 1.7273645380970848,
+   "lam_min_p75": 4.273771667085787,
+   "n_pixels": 6150
+  }
+ ],
+ "meta": {
+  "caliber": "per-pixel local normal Fisher λ_min(F_p), 3×3 tangent, geometry-known",
+  "rationale": "exp5 主实验证明全局 λ_min⁺ 被低秩扰动保护(B·F⁺·Bᵀ 秩≤45); 经典预期的正确对象是逐像素局部信息——G_p 的条件数直接由 C 的行相关性控制"
+ },
+ "spearman_all": {
+  "rho": 0.07624633431085043,
+  "p": 0.6783184478144481,
+  "n": 32
+ },
+ "spearman_per_scene": {
+  "sphere": {
+   "rho": 0.09523809523809526,
+   "p": 0.8225054302036114,
+   "n": 8
+  },
+  "cube": {
+   "rho": 0.1666666666666667,
+   "p": 0.693238811728395,
+   "n": 8
+  },
+  "cylinder": {
+   "rho": -0.3571428571428572,
+   "p": 0.38512064355625614,
+   "n": 8
+  },
+  "hemisphere": {
+   "rho": 0.7619047619047621,
+   "p": 0.028004939153071794,
+   "n": 8
+  }
+ },
+ "verdict": {
+  "all_samples": "Spearman(λ_loc_mean, σ_min²) = 0.076 (p=0.68, n=32) — 不显著",
+  "per_scene": {
+   "sphere": {
+    "rho": 0.09523809523809526,
+    "p": 0.8225054302036114,
+    "n": 8
+   },
+   "cube": {
+    "rho": 0.1666666666666667,
+    "p": 0.693238811728395,
+    "n": 8
+   },
+   "cylinder": {
+    "rho": -0.3571428571428572,
+    "p": 0.38512064355625614,
+    "n": 8
+   },
+   "hemisphere": {
+    "rho": 0.7619047619047621,
+    "p": 0.028004939153071794,
+    "n": 8
+   }
+  },
+  "activated_subset_hemisphere": "Spearman(λ_loc, σ_min(激活子集)²) = -0.976 (p<1e-3) — 强【负】相关, 方向与经典预期相反",
+  "final_conclusion": "三个口径(全局极值/逐像素均值/激活子集)给出不一致甚至反向信号 → 「σ_min(C)² 是几何信息正确标量预测子」的经典命题在本 SH-2 模型中不成立。机制: SH-2 截断 + ReLU 激活结构使 C 的谱与法线信息通道解耦——单像素信息由激活光的 (C_kᵀdY) 切向分量决定, 与 C 行间线性无关度(σ_min)无单调关系。停止追加口径(避免 p-hacking)",
+  "implication": "P-A2b 的\"光照散布度→横截信息\"叙事在本模型无实证支撑; 论文应改用实验3的【结构机制(G_Y秩/GBR)】与实验4的【CRB有效性】作为可辨识性诊断的支柱, 放弃散布度预测主线",
+  "honesty_note": "hemisphere 激活子集的强负相关(-0.98)是 8 个点的探索性发现, 未做多场景确认, 不足以作为正面结论——只作为\"方向反直觉\"的记录"
+ }
+}
