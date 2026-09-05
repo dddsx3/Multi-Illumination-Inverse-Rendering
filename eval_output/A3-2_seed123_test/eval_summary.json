@@ -1,0 +1,118 @@
+{
+ "checkpoint": "D:\\MIR_Archive_20260829\\checkpoints\\A3-2_seed123\\best_model.pth",
+ "data_root": "D:/data/synthetic_v3",
+ "split": "test",
+ "split_manifest": "D:\\MIR_Archive_20260829\\Multi-Illumination-Inverse-Rendering\\splits\\synthetic_v3.json",
+ "architecture": "fusion",
+ "modality": "gray",
+ "sh_constraint": "clamp",
+ "res_hidden": 64,
+ "residual_off": false,
+ "num_lights_eval": 5,
+ "num_lights_subsets": 0,
+ "scenes": 124,
+ "metrics_mean_std": {
+  "albedo_mae": {
+   "mean": 0.2779695102644543,
+   "std": 0.13691358959556613
+  },
+  "albedo_mse": {
+   "mean": 0.10532619938397059,
+   "std": 0.0880473923302175
+  },
+  "albedo_si_mae": {
+   "mean": 0.054176265459377204,
+   "std": 0.04464593260385972
+  },
+  "depth_mae": {
+   "mean": 0.42704904524068676,
+   "std": 0.2335702061716972
+  },
+  "depth_mae_aligned": {
+   "mean": 0.18264357739638898,
+   "std": 0.09186022675522273
+  },
+  "depth_rmse": {
+   "mean": 0.5103491679314645,
+   "std": 0.2419626225338231
+  },
+  "depth_rmse_aligned": {
+   "mean": 0.23000535218706053,
+   "std": 0.1020938174902567
+  },
+  "depth_si_rmse": {
+   "mean": 0.5681934116348144,
+   "std": 0.47933589034341856
+  },
+  "image_psnr": {
+   "mean": 39.406157538198656,
+   "std": 4.780574498062088
+  },
+  "image_ssim": {
+   "mean": 0.981795284921123,
+   "std": 0.05489062537365754
+  },
+  "normal_acc_11_25": {
+   "mean": 0.8617004714906216,
+   "std": 0.13274378758457434
+  },
+  "normal_acc_22_5": {
+   "mean": 0.8984156820562578,
+   "std": 0.0981930286321752
+  },
+  "normal_acc_30": {
+   "mean": 0.9094962773303832,
+   "std": 0.09018345691380242
+  },
+  "normal_mae_deg": {
+   "mean": 10.78871690457867,
+   "std": 8.33694464802195
+  },
+  "normal_median_deg": {
+   "mean": 3.578580960150688,
+   "std": 7.925589773362376
+  },
+  "phys_albedo_mean": {
+   "mean": 0.5128598326156216,
+   "std": 0.10677760263051232
+  },
+  "phys_albedo_range": {
+   "mean": 0.12291906169059896,
+   "std": 0.12112019351701547
+  },
+  "phys_albedo_std": {
+   "mean": 0.08716437852971497,
+   "std": 0.038871463503533155
+  },
+  "phys_albedo_violation_ratio": {
+   "mean": 0.0,
+   "std": 0.0
+  },
+  "phys_depth_mean": {
+   "mean": 1.579705907452491,
+   "std": 0.12017576687552255
+  },
+  "phys_depth_range": {
+   "mean": 0.7367400618330124,
+   "std": 0.5047762126614485
+  },
+  "phys_depth_std": {
+   "mean": 0.10335726807675054,
+   "std": 0.1023716035073935
+  },
+  "phys_depth_violation_ratio": {
+   "mean": 0.0,
+   "std": 0.0
+  }
+ },
+ "physical_assertions": {
+  "albedo_violation_ratio": {
+   "mean": 0.0,
+   "std": 0.0
+  },
+  "depth_violation_ratio": {
+   "mean": 0.0,
+   "std": 0.0
+  }
+ }
+}

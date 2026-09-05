@@ -66,6 +66,13 @@
   - 复现命令：bash run_safe_arms.sh --data_root D:/data/synthetic_v3 --budget-hours 12 --max-lanes 1 --only A3-1b_lowSmooth --amp-dtype bf16 --skip-package（评估由 run_arms 自动接续）
   - 口径：允许——"albedo_smooth_stage1=10 把 albedo 输出压向常数，权重降为 1 恢复动态范围（range 0.168→0.363）且估计头指标在判据内"；禁止——与历史 bs8 世代混比、未标 Gen-A3 世代直接引用、将 PSNR −9.67dB 略去不报、把 range 恢复表述为"质量提升"（仅动态范围恢复）。
   - 登记日期：2026-09-04
+- 【S-06·A3-2_seed123】3-seed 噪声带第一点对照——Gen-A3 世代（2026-09-05 EX-05）
+  - 一句话：Gen-A3 配置下仅改 seed 42→123，合成 v3 test 124 场景 scene 级 normal MAE 10.7887° / albedo si-MAE 0.05418 / PSNR 39.4062 dB / 物理违规 0%；与 A3-0（14.8866°/0.05432/32.5424）对照 **normal 差 −4.10°（超 R-J 预期带 2.0°，已上报主智能体复核臂对照阈值）**、si-MAE 差 −0.00014（噪声极小）、PSNR +6.86 dB；median 8.18° vs 8.41°（差仅 0.23°，极差由右尾驱动）。
+  - 数值：normal MAE 10.7887±8.3369°（median 8.18°）；PSNR 39.4062±4.7806 dB；albedo si-MAE 0.05418±0.04465；phys_albedo_range 0.1229（A3-0 0.1681，注记）。
+  - 披露：① normal 差超阈——按 v2.2 判据路径如实上报，3-seed 终判待 seed2024；② PSNR +6.86dB 与 A3-1/A3-1b 序列合并印证"重建头敏感、估计头稳健"的双头口径；③ 第③次启动（前两次 INC-0016 spawn 死锁 abort，账本在案）。
+  - 来源文件：eval_output/A3-2_seed123_test/eval_summary.json + RUN_CARD.json（自动三指纹 HEAD=6727ef9）
+  - 口径：允许——"seed 42→123 使 normal MAE 14.89→10.79（同协议 scene 级），噪声带超预期待 seed2024 终判"；禁止——将 10.79° 写成"主结果改进"（A3-0 仍是主表锚点，seed123 是噪声带测量点）、与历史 bs8 世代混比。
+  - 登记日期：2026-09-05
 - 【S-07 / S-09】A3 世代新卡（占位）：随 A3-2~A3-5 各 run 评估产出登记（S-07 GSIQ 定义与口径标注 / S-09 FW 融合）。A4-1 归因图须引用 S-07 卡口径（GSIQ 定义 + 不衡量 absolute information）。
 
 ## 禁词自检（T0-3 验收）

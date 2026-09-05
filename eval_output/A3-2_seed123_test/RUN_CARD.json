@@ -1,0 +1,46 @@
+{
+ "run": "A3-2_seed123",
+ "code_commit_sha": "6727ef9568cfdb9da77c4385c4bf54e2ef294cba",
+ "config": {
+  "run_id": "A3-2_seed123",
+  "generation": "Gen-A3",
+  "model": "fusion",
+  "modality": "gray",
+  "num_lights": 5,
+  "image_size": [
+   256,
+   256
+  ],
+  "batch_size": 4,
+  "total_epochs": 100,
+  "stage1": 30,
+  "stage2": 30,
+  "amp": "bf16",
+  "seed": 123,
+  "split_manifest": "splits/synthetic_v3.json",
+  "train_extra": [
+   "--model",
+   "fusion",
+   "--modality",
+   "gray",
+   "--seed",
+   "123"
+  ],
+  "data_root": "D:/data/synthetic_v3"
+ },
+ "config_sha256": "04372e2dc6166b9f4e137a91e97886ec7da4c492fc286edbe11759633bda94ee",
+ "data_manifest_sha256": "853ad794abca707d75db40f4492a1dfc6a395e40104e6c51235e304beb0e3094",
+ "data_dir": {
+  "scene_dirs": 621,
+  "total_mb": 1003
+ },
+ "train_start": "2026-09-04T23:02:02",
+ "train_end": "2026-09-05T06:37:54",
+ "epochs_done": 100,
+ "produced": "2026-09-04",
+ "status": "completed_100_epochs_eval_done (夜跑 23:02→06:38 零中断零 rc42；INC-0016 根因修复 nw=0 后首个全程 run；RUN_CARD 自动三指纹 HEAD=6727ef9=启动时刻 HEAD)",
+ "eval": {
+  "test": "eval_output/A3-2_seed123_test/eval_summary.json"
+ },
+ "ablation": "EX-05 3-seed 第一臂：唯一差异变量 = seed 42→123（对照 A3-0）；第③次启动（前两次 INC-0016 spawn 死锁 abort，见账本）"
+}
