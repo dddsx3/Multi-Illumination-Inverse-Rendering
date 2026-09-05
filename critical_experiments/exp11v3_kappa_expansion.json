@@ -1,0 +1,591 @@
+{
+ "scenes": {
+  "_canary_run1_degenerate": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": 0.015037593984962403,
+     "p": 0.9498276950483329
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.22556390977443608,
+     "p": 0.33897093917086674
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.19248120300751878,
+     "p": 0.41620647341979894
+    },
+    "schur:kappa_weighted": {
+     "rho": 0.015037593984962403,
+     "p": 0.9498276950483329
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.22556390977443608,
+     "p": 0.33897093917086674
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.19248120300751878,
+     "p": 0.41620647341979894
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cone_r04_d12": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.11879699248120301,
+     "p": 0.6178918280262935
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.24812030075187969,
+     "p": 0.29152268710345763
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.12932330827067667,
+     "p": 0.5868527244899819
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.11879699248120301,
+     "p": 0.6178918280262935
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.24812030075187969,
+     "p": 0.29152268710345763
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.12932330827067667,
+     "p": 0.5868527244899819
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cube_axis": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.13984962406015036,
+     "p": 0.5564935505662203
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.35488721804511275,
+     "p": 0.12468812756013885
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": 0.17142857142857143,
+     "p": 0.46988617281087525
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.13984962406015036,
+     "p": 0.5564935505662203
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.35488721804511275,
+     "p": 0.12468812756013885
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": 0.17142857142857143,
+     "p": 0.46988617281087525
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cube_plus_cone": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.16691729323308271,
+     "p": 0.4818249184315467
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": 0.030075187969924807,
+     "p": 0.8998365956859304
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": 0.007518796992481202,
+     "p": 0.97490250199334
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.16691729323308271,
+     "p": 0.4818249184315467
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": 0.030075187969924807,
+     "p": 0.8998365956859304
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": 0.007518796992481202,
+     "p": 0.97490250199334
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cyl_plus_sphere": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.24812030075187969,
+     "p": 0.29152268710345763
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.7624060150375939,
+     "p": 9.311509889394973e-05
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.33383458646616543,
+     "p": 0.15029922707342813
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.2646616541353383,
+     "p": 0.2594693699285377
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.7368421052631579,
+     "p": 0.00021080775336363295
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.2601503759398496,
+     "p": 0.2679803337219606
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cylinder_r03_d12": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.3142857142857143,
+     "p": 0.17716966765175685
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.31729323308270674,
+     "p": 0.17283688640714231
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.12481203007518797,
+     "p": 0.6000744184144978
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.3142857142857143,
+     "p": 0.17716966765175685
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.31729323308270674,
+     "p": 0.17283688640714231
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.12481203007518797,
+     "p": 0.6000744184144978
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_cylinder_r06_d06": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.3684210526315789,
+     "p": 0.10996436611637704
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.78796992481203,
+     "p": 3.6994064734938586e-05
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.4030075187969925,
+     "p": 0.07809346645156456
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.3684210526315789,
+     "p": 0.10996436611637704
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.78796992481203,
+     "p": 3.6994064734938586e-05
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.4030075187969925,
+     "p": 0.07809346645156456
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_egg": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.02857142857142857,
+     "p": 0.9048224147367736
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.5157894736842105,
+     "p": 0.019919763459703674
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.3969924812030075,
+     "p": 0.08307130670785144
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.02857142857142857,
+     "p": 0.9048224147367736
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.5157894736842105,
+     "p": 0.019919763459703674
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.3969924812030075,
+     "p": 0.08307130670785144
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_ellipsoid_x13z07": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.21654135338345865,
+     "p": 0.35914578257040025
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.5864661654135337,
+     "p": 0.006570618371105351
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.23157894736842105,
+     "p": 0.32589862703879297
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.24060150375939846,
+     "p": 0.30686109167827574
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.5819548872180451,
+     "p": 0.007104437545100437
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.2571428571428572,
+     "p": 0.27375050350001545
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_ellipsoid_z06": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.3684210526315789,
+     "p": 0.10996436611637704
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.5428571428571428,
+     "p": 0.013387205428015156
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.2706766917293233,
+     "p": 0.2483905691366973
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.37744360902255636,
+     "p": 0.10087319118710482
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.5533834586466165,
+     "p": 0.011370353471172339
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.29323308270676685,
+     "p": 0.2095713888030253
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_hemisphere_sq": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.08120300751879699,
+     "p": 0.733607630478017
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.6120300751879698,
+     "p": 0.004129875210325546
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.5458646616541353,
+     "p": 0.012783628876204716
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.07669172932330826,
+     "p": 0.74793344754194
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.6075187969924812,
+     "p": 0.004495101001748822
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.5413533834586466,
+     "p": 0.013697495397047697
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_icosphere_sub3": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.19999999999999998,
+     "p": 0.3978729793519615
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.7744360902255639,
+     "p": 6.119579516446203e-05
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.44360902255639095,
+     "p": 0.0500892217229562
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.19999999999999998,
+     "p": 0.3978729793519615
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.7744360902255639,
+     "p": 6.119579516446203e-05
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.44360902255639095,
+     "p": 0.0500892217229562
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_prism8": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.29774436090225564,
+     "p": 0.2023199860189742
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.4541353383458646,
+     "p": 0.04427910416289475
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.4857142857142857,
+     "p": 0.029920782525592465
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.29473684210526313,
+     "p": 0.2071354208521537
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.4526315789473684,
+     "p": 0.045075688783048344
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.4631578947368421,
+     "p": 0.039724966457935766
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_snowman": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.20751879699248119,
+     "p": 0.37999323699324683
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.437593984962406,
+     "p": 0.05366144000429179
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.29774436090225564,
+     "p": 0.2023199860189742
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.1819548872180451,
+     "p": 0.44262106677574986
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.4090225563909774,
+     "p": 0.07334086574364806
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.3142857142857143,
+     "p": 0.17716966765175685
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_sphere_on_cube": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.20150375939849624,
+     "p": 0.39426050476127356
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.7233082706766917,
+     "p": 0.00031340341734179553
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.30225563909774433,
+     "p": 0.19523758072220296
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.18796992481203004,
+     "p": 0.42742125802266395
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.7082706766917292,
+     "p": 0.0004746151082516954
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.28721804511278193,
+     "p": 0.2195043134627025
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_sphere_r05": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.5729323308270676,
+     "p": 0.008278787429483693
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.45563909774436084,
+     "p": 0.04349340980546598
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.29774436090225564,
+     "p": 0.2023199860189742
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.5774436090225563,
+     "p": 0.007673261374909007
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.4586466165413533,
+     "p": 0.04195431160933543
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.3037593984962406,
+     "p": 0.19291416827770458
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_torus_R05_r02": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": 0.11428571428571428,
+     "p": 0.6313917305184382
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.5593984962406015,
+     "p": 0.010333258461010717
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.3744360902255639,
+     "p": 0.10384052952246081
+    },
+    "schur:kappa_weighted": {
+     "rho": 0.13233082706766916,
+     "p": 0.5781074593622941
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.556390977443609,
+     "p": 0.010841753245056889
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.38796992481203,
+     "p": 0.09097286579754237
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_torus_R06_r035": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.5458646616541353,
+     "p": 0.012783628876204716
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.7007518796992479,
+     "p": 0.0005786641020194402
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.5774436090225563,
+     "p": 0.007673261374909007
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.5398496240601504,
+     "p": 0.014013555304583487
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.6962406015037594,
+     "p": 0.00064992440549734
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.5759398496240601,
+     "p": 0.007870940177445083
+    }
+   },
+   "kappa_weighted_positive": false
+  },
+  "conf_two_spheres_row": {
+   "n_rows": 20,
+   "stats": {
+    "conditional:kappa_weighted": {
+     "rho": -0.1639097744360902,
+     "p": 0.4898669433807743
+    },
+    "conditional:sigma_min_C1_sq": {
+     "rho": -0.5804511278195488,
+     "p": 0.0072900732244842075
+    },
+    "conditional:sigma_min_C_sq": {
+     "rho": -0.49323308270676686,
+     "p": 0.027114204941944223
+    },
+    "schur:kappa_weighted": {
+     "rho": -0.17744360902255638,
+     "p": 0.4542034838793192
+    },
+    "schur:sigma_min_C1_sq": {
+     "rho": -0.5639097744360902,
+     "p": 0.00960697153757662
+    },
+    "schur:sigma_min_C_sq": {
+     "rho": -0.46917293233082696,
+     "p": 0.0368965591814292
+    }
+   },
+   "kappa_weighted_positive": false
+  }
+ },
+ "meta": {
+  "n_configs": 20,
+  "n_lights": 5,
+  "seed": 20260905,
+  "data": "data_sun_confirmatory",
+  "purpose": "κ_weighted 预测力扩展(主智能体裁决执行)"
+ },
+ "verdict": {
+  "n_scenes": 19,
+  "n_kappa_weighted_positive": 0,
+  "frac": 0.0,
+  "classification": "cube 信号降级为孤例(<30%)",
+  "kappa_positive_scenes": [],
+  "note": "扩展实现被阻塞(5 次重试上限), 预注册回退判定生效: cube κ_weighted 信号降级为孤例"
+ },
+ "blocked": true,
+ "blocker_ref": "BLOCKERS_LOG.md#B-1"
+}
