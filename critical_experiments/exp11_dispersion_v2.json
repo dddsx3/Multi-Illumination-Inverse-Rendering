@@ -1493,7 +1493,7 @@
     "cylinder": "无",
     "hemisphere": "σ_min(C_1)² 负相关(−0.385)"
    },
-   "kappa_weighted_cube_signal": "cube 的 κ 加权版在双块(条件/Schur)一致显著正相关(0.516/0.518)——最坏法线切向覆盖的 ρ² 加权版在几何退化场景(cube 6 面法线)上有真实预测力; 这是三洞修正后浮现的【限定口径正面信号】",
+   "kappa_weighted_cube_signal": "cube 的 κ 加权版在双块(条件/Schur)一致显著正相关(0.516/0.518)——最坏法线切向覆盖的 ρ² 加权版在几何退化场景(cube 6 面法线)上有真实预测力; 这是三洞修正后浮现的【限定口径正面信号】 【exp11v3 扩展(19 场景)确认: κ_weighted 无一处显著正相关, cube 信号为孤例/假阳性】",
    "negative_family": "σ_min(C)² 全景负/不显著; σ_min(C_1)² hemisphere 负; κ(未加权 min 版)被近零退化主导(≈0)无变异——经典散布度经验法则在本 SH-2 模型的可辩护结论 = 仅 κ_weighted 在几何退化场景有限成立",
    "numerical_notes": "hemisphere cfg28 tr_schur 为负(Woodbury 中间阵近奇异, pinv 截断所致; 该配置如实保留); 其余 119/120 配置迹为正且量级一致",
    "process_notes": "exp11v2 共 6 轮实现迭代: ①gbr_generators 缺失 ②einsum 维序×2 ③CG 路径近奇异污染(弃用, 改解析 Woodbury)④逐配置全暗像素过滤 ⑤批式 pinv。全部留痕"

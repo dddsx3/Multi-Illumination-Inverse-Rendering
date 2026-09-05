@@ -582,10 +582,11 @@
   "n_scenes": 19,
   "n_kappa_weighted_positive": 0,
   "frac": 0.0,
-  "classification": "cube 信号降级为孤例(<30%)",
-  "kappa_positive_scenes": [],
-  "note": "扩展实现被阻塞(5 次重试上限), 预注册回退判定生效: cube κ_weighted 信号降级为孤例"
+  "classification": "cube 信号不复现——κ_weighted 扩展确证负结果",
+  "detail": "19/19 场景完成(n=20 配置/场景); 0 场景 κ_weighted 显著正相关; 2 场景显著负相关(sphere_r05 −0.577 p=0.008, torus_R06_r035 −0.540 p=0.014); cube_axis −0.140 不复现",
+  "conclusion": "κ_weighted 的 cube 正相关信号确认为【孤例/假阳性】; 散布度经验法则(σ_min 族与 κ 族)在本 SH-2 模型上全面不成立——\"谱即诊断\"主立场进一步强化(经验法则通道关闭, 谱结构通道(exp3)与 CRB 通道(exp4)为仅存有效诊断路径)"
  },
- "blocked": true,
- "blocker_ref": "BLOCKERS_LOG.md#B-1"
+ "blocked": false,
+ "blocker_ref": "BLOCKERS_LOG.md#B-1",
+ "blocker_note": "初记 BLOCKERS_LOG B-1 时误判为阻塞——实际 19 场景数据全部完成(打印过滤误导), 判据计数 bug(0/19)已澄清"
 }
