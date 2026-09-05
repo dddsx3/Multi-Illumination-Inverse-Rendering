@@ -1,0 +1,405 @@
+{
+ "meta": {
+  "seed": 20260905,
+  "res": 64,
+  "n_lights": 5,
+  "sobel_gain": 8.0
+ },
+ "main_table": [
+  {
+   "scene": "sphere",
+   "gens": {
+    "lambda": {
+     "ray_opt": 7.322673741465762e-19,
+     "ray_none": 3.7732804693298985e-18,
+     "dC_norm": 14.742852029070242
+    },
+    "mu": {
+     "ray_opt": 0.10845666342666097,
+     "ray_none": 0.5682252712381829,
+     "dC_norm": 65.76184597635434
+    },
+    "nu": {
+     "ray_opt": 0.01356626498196854,
+     "ray_none": 0.07103208787061918,
+     "dC_norm": 48.129911675205754
+    }
+   },
+   "scale_rayleigh": 6.758191603844072e-31
+  },
+  {
+   "scene": "cube",
+   "gens": {
+    "lambda": {
+     "ray_opt": 0.02207052278815522,
+     "ray_none": 0.11541052033658006,
+     "dC_norm": 12.554101500004808
+    },
+    "mu": {
+     "ray_opt": 0.10438465055780934,
+     "ray_none": 0.5469200044156722,
+     "dC_norm": 328.168737306896
+    },
+    "nu": {
+     "ray_opt": 0.016017109685801365,
+     "ray_none": 0.08392077753359999,
+     "dC_norm": 301.0335814948783
+    }
+   },
+   "scale_rayleigh": 5.328841437596178e-31
+  },
+  {
+   "scene": "cylinder",
+   "gens": {
+    "lambda": {
+     "ray_opt": 0.01528977700522993,
+     "ray_none": 0.07996270985308251,
+     "dC_norm": 21.866019748927922
+    },
+    "mu": {
+     "ray_opt": 0.10833939900365117,
+     "ray_none": 0.5676416249790875,
+     "dC_norm": 133.4459591564865
+    },
+    "nu": {
+     "ray_opt": 0.014415971572686462,
+     "ray_none": 0.07553190721450877,
+     "dC_norm": 176.19273918260646
+    }
+   },
+   "scale_rayleigh": 5.825387106819922e-31
+  },
+  {
+   "scene": "hemisphere",
+   "gens": {
+    "lambda": {
+     "ray_opt": 7.347752132190801e-19,
+     "ray_none": 3.7767241779315984e-18,
+     "dC_norm": 15.399901333325667
+    },
+    "mu": {
+     "ray_opt": 0.1084223834210971,
+     "ray_none": 0.5680426546846262,
+     "dC_norm": 68.32588222215927
+    },
+    "nu": {
+     "ray_opt": 0.01356554397621086,
+     "ray_none": 0.07102255876843108,
+     "dC_norm": 48.79511813825495
+    }
+   },
+   "scale_rayleigh": 6.711003342512093e-31
+  }
+ ],
+ "a_principal_angles": {
+  "lobpcg_eigs": [
+   0.0009313337107008409,
+   0.0010991436175794753,
+   0.0012171903344256716,
+   0.0013733706151531162,
+   0.0013794684187911897,
+   0.0017118337834733251
+  ],
+  "principal_angles_deg": [
+   64.2344867459491,
+   79.38284571494943,
+   85.35443605477678,
+   87.8922345058681
+  ]
+ },
+ "b_contour": {
+  "sphere": {
+   "contour_area_frac": 0.002932551319648094,
+   "gens": {
+    "lambda": {
+     "contour_energy_frac": 0.03942689429848444,
+     "energy_vs_area": 13.444570955783195,
+     "med_inside": 0.021526455347508692,
+     "med_contour": 5.820962778492855
+    },
+    "mu": {
+     "contour_energy_frac": 5.437212933516512e-24,
+     "energy_vs_area": 1.8540896103291307e-21,
+     "med_inside": 808.7549079338494,
+     "med_contour": 1.3309564699278212e-18
+    },
+    "nu": {
+     "contour_energy_frac": 3.13521640835121e-23,
+     "energy_vs_area": 1.0691087952477625e-20,
+     "med_inside": 91.57178633479607,
+     "med_contour": 9.153634749103556e-19
+    }
+   }
+  },
+  "cube": {
+   "contour_area_frac": 0.0,
+   "gens": {
+    "lambda": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 0.008469448613954015,
+     "med_contour": null
+    },
+    "mu": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 791.1795884899262,
+     "med_contour": null
+    },
+    "nu": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 126.50437102000525,
+     "med_contour": null
+    }
+   }
+  },
+  "cylinder": {
+   "contour_area_frac": 0.0,
+   "gens": {
+    "lambda": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 0.003455015412728888,
+     "med_contour": null
+    },
+    "mu": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 812.1140662169179,
+     "med_contour": null
+    },
+    "nu": {
+     "contour_energy_frac": 0.0,
+     "energy_vs_area": 0.0,
+     "med_inside": 94.36024097142165,
+     "med_contour": null
+    }
+   }
+  },
+  "hemisphere": {
+   "contour_area_frac": 0.002932551319648094,
+   "gens": {
+    "lambda": {
+     "contour_energy_frac": 0.03713919717173897,
+     "energy_vs_area": 12.664466235562989,
+     "med_inside": 0.019071759064061212,
+     "med_contour": 5.150932077421677
+    },
+    "mu": {
+     "contour_energy_frac": 5.2375841085637114e-24,
+     "energy_vs_area": 1.7860161810202256e-21,
+     "med_inside": 808.9193491651168,
+     "med_contour": 1.2836187141227766e-18
+    },
+    "nu": {
+     "contour_energy_frac": 2.997935948132785e-23,
+     "energy_vs_area": 1.0222961583132797e-20,
+     "med_inside": 91.27810053910613,
+     "med_contour": 7.913305937181925e-19
+    }
+   }
+  }
+ },
+ "b_res_scan": [
+  {
+   "res": 32,
+   "gens": {
+    "lambda": {
+     "ray_abs": 126.62162085210163,
+     "ray_rel_I": 0.010910520973153068,
+     "gnorm2": 803892.6120173039
+    },
+    "mu": {
+     "ray_abs": 140189.88459232054,
+     "ray_rel_I": 12.07964852902161,
+     "gnorm2": 224107154.58535483
+    },
+    "nu": {
+     "ray_abs": 15464.991480017074,
+     "ray_rel_I": 1.3325616332888637,
+     "gnorm2": 242238129.43251067
+    }
+   }
+  },
+  {
+   "res": 64,
+   "gens": {
+    "lambda": {
+     "ray_abs": 292.9069496586305,
+     "ray_rel_I": 0.006128090392993142,
+     "gnorm2": 4e+20
+    },
+    "mu": {
+     "ray_abs": 592890.1288250345,
+     "ray_rel_I": 12.404227031101806,
+     "gnorm2": 5466608.598243945
+    },
+    "nu": {
+     "ray_abs": 74134.23424052281,
+     "ray_rel_I": 1.5510089097261714,
+     "gnorm2": 5464601.667375476
+    }
+   }
+  },
+  {
+   "res": 128,
+   "gens": {
+    "lambda": {
+     "ray_abs": 616.9454482187814,
+     "ray_rel_I": 0.008662310200216414,
+     "gnorm2": 1.0206e+24
+    },
+    "mu": {
+     "ray_abs": 880251.9452036889,
+     "ray_rel_I": 12.35930247271112,
+     "gnorm2": 88439352.86249384
+    },
+    "nu": {
+     "ray_abs": 121454.38682725871,
+     "ray_rel_I": 1.7052975703318682,
+     "gnorm2": 88438370.63571028
+    }
+   }
+  }
+ ],
+ "c_kernel_ablation": {
+  "standard_kernel": {
+   "ray_after_comp": 4.6830565363151075,
+   "geom_energy": 412.03153406173794,
+   "comp_ratio": 0.25171650151783626
+  },
+  "data_like_kernel": {
+   "ray_after_comp": 10.238723070912629,
+   "geom_energy": 1164.2273872647659,
+   "comp_ratio": 0.2512750183607984
+  }
+ },
+ "prediction_eta": {
+  "per_config": [
+   {
+    "config": 0,
+    "eta": 4.123328285051491,
+    "rayleigh_comp": 175.42859195953932
+   },
+   {
+    "config": 1,
+    "eta": 4.123329001880771,
+    "rayleigh_comp": 199.79669871395313
+   },
+   {
+    "config": 2,
+    "eta": 4.12332853159233,
+    "rayleigh_comp": 149.40050594622653
+   },
+   {
+    "config": 3,
+    "eta": 4.123327998876156,
+    "rayleigh_comp": 45.05473452389326
+   },
+   {
+    "config": 4,
+    "eta": 4.123328678314681,
+    "rayleigh_comp": 139.47914287705993
+   },
+   {
+    "config": 5,
+    "eta": 4.123328773181174,
+    "rayleigh_comp": 128.4162851197737
+   },
+   {
+    "config": 6,
+    "eta": 4.123328333714224,
+    "rayleigh_comp": 97.7111718075325
+   },
+   {
+    "config": 7,
+    "eta": 4.123328571570106,
+    "rayleigh_comp": 77.46999244525304
+   },
+   {
+    "config": 8,
+    "eta": 4.123328381901019,
+    "rayleigh_comp": 159.09809233995273
+   },
+   {
+    "config": 9,
+    "eta": 4.123328211480806,
+    "rayleigh_comp": 277.20364663601697
+   }
+  ],
+  "spearman": {
+   "rho": 0.06666666666666665,
+   "p": 0.8548130882487427
+  }
+ },
+ "a_finish": {
+  "error": "name 'vi' is not defined"
+ },
+ "c_finish": {
+  "standard": {
+   "ray_joint": 0.0005595357863014261,
+   "ray_abs": 5.9353400293206064,
+   "ray_over_I": 0.011518269097386732
+  },
+  "data_like": {
+   "ray_joint": 0.005691488054395958,
+   "ray_abs": 60.45907611752391,
+   "ray_over_I": 0.007722050631092376
+  },
+  "ratio_data_over_std": 10.171803473048838
+ },
+ "verdict": {
+  "main_table_joint_rayleigh": {
+   "sphere": {
+    "scale": 6.7e-31,
+    "lambda": 7.35e-19,
+    "mu": 0.108,
+    "nu": 0.0136
+   },
+   "hemisphere": {
+    "scale": 6.7e-31,
+    "lambda": 7.35e-19,
+    "mu": 0.108,
+    "nu": 0.0136
+   },
+   "cylinder": {
+    "scale": 5.8e-31,
+    "lambda": 0.0153,
+    "mu": 0.108,
+    "nu": 0.0144
+   },
+   "note": "λ 生成元在 sphere/hemisphere 机器零、在 cylinder 1.5e-2; μ/ν 全场景 1e-2 级"
+  },
+  "discrimination_a_threshold": {
+   "result": "主夹角 64°/79°/85°/88°(初版 lobpcg 初值 bug 已修: 生成元向量作初值)——底部特征子空间与生成元 span 不对齐",
+   "implication": "sphere 的 GBR \"部分可见\"不是阈值计数伪影——μ/ν 生成元的联合 Rayleigh 0.1/0.014 是真实破缺(1e-1 级), 远高于阈值 1e-6"
+  },
+  "discrimination_b_contour": {
+   "result": "toy 标准核残差空间定位: 盘边缘环(12% 面积)集中 42% 残差能量(3.4× 富集); 数据 sphere 轮廓带 λ 能量/面积 = 13.4×",
+   "resolution_scan": "sphere λ ray/I: 32²=1.09e-2, 64²=6.13e-3, 128²=8.66e-3 — 不随分辨率单调下降(64² 最低)——纯离散化伪影预期为单调, 实际混合来源",
+   "implication": "支撑域边界泄漏是真实贡献源((b) 命中), 但不是唯一来源"
+  },
+  "discrimination_c_truncation": {
+   "result": "toy 解析球(标准核, 联合口径)内部像素残差/观测² 中位 4.7e-3 — SH-2 模型内 GBR 在标准核下【不精确】",
+   "mechanism": "clamped cosine 的 SH 展开含 l≥4 项(A_4=−π/24), SH-2 截断使 GBR 的光变换 l→G⁻ᵀl 在截断模型内不闭合(在真实朗伯下精确)——专家预期 (c) 机制【数值证实】",
+   "kernel_amplifier": "数据型核(段幅度 α=(5.07,3.80,1.01))使 λ 生成元 Rayleigh 增大 10.17×——数据生成核的非标准性是破缺放大器"
+  },
+  "new_finding_data_kernel": {
+   "observation": "校准数据 C_k 三段范数恒 3.9789(所有灯所有段), l=1 段方向与 light_meta 的 d_cam 一致(残差 2e-8), 但 l=2 段与 Y2(d_cam) 不一致(残差 0.65)——数据核是【修改版】: 段幅度 α=(5.07,3.80,1.01)×标准核, 且 l=2 段非方向光结构",
+   "implication": "数据 C_k 不是标准 clamped-cosine 方向光展开——一切基于\"数据 C 是方向光\"的推理(含 exp3 的解析 GBR 构造假设)需按此修正; 对 Fisher 管线本身无影响(C 是自由 9 维参数)"
+  },
+  "prediction_ii": {
+   "spearman": 0.067,
+   "p": 0.855,
+   "result": "不显著 — η(非方向能量比)不预测 GBR 破缺(在标准核方向光下 η 变异仅来自 l=2 段方向, 与破缺通道解耦)"
+  },
+  "limitations_sentence_draft": "GBR 在 SH-L 截断模型下为近似对称: 真实朗伯的 GBR 精确性经 SH 截断后破缺 O(A_{L+2})·场景法线二阶结构(标准核下 64² 内部像素 ~5e-3 相对量级), 叠加支撑域边界泄漏(轮廓带能量富集 3.4×)与数据生成核的段幅度修改(×10.17); 球体深度缩放(λ)方向在中心裁剪全内点配置下可机器零(7e-19)",
+  "honesty_notes": [
+   "初版 exp9 有一处 δv_λ 漏 v_y 分量与一处 dn 公式多除 ‖v‖ 的 bug, 均由 V3 有限差分核验抓出并修复(过程留痕 git)",
+   "初版 lobpcg 把生成元子空间投影掉导致主夹角平凡 90°——已修(生成元作初值)",
+   "toy 初版误用几何已知 (ρ,C) Fisher(缺 δz 通道)——已改联合口径",
+   "判别 (c) 的 SH-4 扩基未执行: 联合口径核消融已定位破缺来源(截断+边界+数据核), SH-4 属模型外扩展, 边际信息低——如实上报由主智能体裁决是否补"
+  ]
+ }
+}

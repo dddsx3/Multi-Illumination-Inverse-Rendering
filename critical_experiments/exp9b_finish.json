@@ -1,0 +1,18 @@
+{
+ "a": {
+  "error": "name 'vi' is not defined"
+ },
+ "c": {
+  "standard": {
+   "ray_joint": 0.0005595357863014261,
+   "ray_abs": 5.9353400293206064,
+   "ray_over_I": 0.011518269097386732
+  },
+  "data_like": {
+   "ray_joint": 0.005691488054395958,
+   "ray_abs": 60.45907611752391,
+   "ray_over_I": 0.007722050631092376
+  },
+  "ratio_data_over_std": 10.171803473048838
+ }
+}
