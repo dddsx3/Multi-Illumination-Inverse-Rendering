@@ -1,0 +1,96 @@
+{
+ "scenes": {
+  "conf_sphere_r05": {
+   "testA_rel_frobenius": 0.0,
+   "testA_max_element": 0.0,
+   "testB1_rayleigh_lambert_v": 0.36454821603270166,
+   "testB2_rayleigh_random_v": 0.2725575968791628,
+   "gf2_schur_gauge_rayleigh_deltaA": 2.0745792644151917e-14,
+   "gf2_schur_random_rayleigh": 0.04518949292415778,
+   "F_eigs": [
+    0.0044384365901350975,
+    0.19248956441879272,
+    0.21075166761875153,
+    3.334012746810913,
+    3.6845805644989014,
+    3.8960375785827637,
+    22.052732467651367,
+    22.16887092590332,
+    56.8740348815918
+   ]
+  },
+  "conf_cube_axis": {
+   "testA_rel_frobenius": 0.0,
+   "testA_max_element": 0.0,
+   "testB1_rayleigh_lambert_v": 0.3901868640642363,
+   "testB2_rayleigh_random_v": 0.1182454785899946,
+   "gf2_schur_gauge_rayleigh_deltaA": 6.849904889057225e-07,
+   "gf2_schur_random_rayleigh": 0.04484312760047392,
+   "F_eigs": [
+    -4.138291842537001e-05,
+    -2.2081814753952138e-17,
+    3.231169966446079e-17,
+    8.806500967440474e-17,
+    1.5861334759392776e-05,
+    0.0003973560524173081,
+    0.5514106154441833,
+    21.450183868408203,
+    91.055908203125
+   ]
+  },
+  "conf_ellipsoid_z06": {
+   "testA_rel_frobenius": 0.0,
+   "testA_max_element": 0.0,
+   "testB1_rayleigh_lambert_v": 0.34987261460302393,
+   "testB2_rayleigh_random_v": 0.41427005479475,
+   "gf2_schur_gauge_rayleigh_deltaA": 4.901912841228166e-15,
+   "gf2_schur_random_rayleigh": 0.04418923083564226,
+   "F_eigs": [
+    0.009265724569559097,
+    0.20583677291870117,
+    0.48829200863838196,
+    2.763092279434204,
+    5.435909748077393,
+    8.7130126953125,
+    17.074283599853516,
+    33.26876449584961,
+    44.714054107666016
+   ]
+  },
+  "conf_cone_r04_d12": {
+   "testA_rel_frobenius": 0.0,
+   "testA_max_element": 0.0,
+   "testB1_rayleigh_lambert_v": 0.3458071647806277,
+   "testB2_rayleigh_random_v": 0.2440021075258083,
+   "gf2_schur_gauge_rayleigh_deltaA": 1.6829424776215981e-06,
+   "gf2_schur_random_rayleigh": 0.04586951179103674,
+   "F_eigs": [
+    -3.6426627048058435e-06,
+    1.1510068361531012e-05,
+    1.516486554464791e-05,
+    0.00037670208257623017,
+    0.012899216264486313,
+    0.645168125629425,
+    7.587202548980713,
+    34.32056427001953,
+    69.52811431884766
+   ]
+  }
+ },
+ "cross_check_gf2": {},
+ "meta": {
+  "tested_function": "r5_compute_audit/w2a2_fisher.py::compute_fisher_for_config",
+  "seed": 20260905,
+  "n_scenes": 4,
+  "omega_angle_check_deg": 142.87838348523036
+ },
+ "verdict": {
+  "testA_light_perturbation_invariant": true,
+  "testA_conclusion": "F 与光照配置完全无关（相对差 <1e-10）→ P-A2 的 F 是『albedo+normal 已知』口径的 Σ a²Y(n)Y(n)ᵀ，光照 ω 是死变量",
+  "testB1_mean": 0.3626037148701474,
+  "testB2_mean": 0.2622688094474289,
+  "testB_conclusion": "‖Fv‖ 与随机方向同量级（非零）→ 该 9×9 F 把 albedo 当已知量，没做过 Schur 补；不存在尺度 gauge 零方向",
+  "gf2_conclusion": "gauge_fisher_v2.schur_full 满足解析恒等式 F_eff·a=0（Rayleigh 5.9e-07，随机方向 4.5e-02）→ GA-ISI v2 是 albedo-未知 的真 Schur 补口径，与 w2a2 判然两物",
+  "implication_for_259": "2.59/0.37 的 P-A2 数字 = 法线 SH 子空间 Gram 的谱统计（结构量），不含光照信息、不涉 Schur 补——『近零维数 2.59 < 4』的异常是口径错位（拿 albedo-已知的 Gram 去对 albedo-未知 的歧义维数预测），不是理论 4 维零空间的证伪。GA-ISI v2（真 Schur）不受此影响。"
+ }
+}
