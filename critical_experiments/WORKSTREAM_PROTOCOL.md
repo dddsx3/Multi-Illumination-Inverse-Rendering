@@ -19,10 +19,16 @@
 2. 每个实验文档含"待绘图数据点"小节：明确图的类型（log-log/双Y轴/散点/热力）、数据文件路径、X/Y 轴定义、期望标注（斜率参考线、阈值带等）；
 3. 执行 agent 不产出最终图——只保证数值正确 + 绘图所需的全部数据与轴定义在案。
 
-## 已完成（数值层）
+## 状态更新（2026-09-05 晚）
 
-- 实验 1：`exp1_pa2_what_was_computed.py` + `exp1_pa2_verdict.json`（测试A 光照不变性 0.00e+00 逐元素不变 / 测试B Fv 非零 0.26–0.41 / GFv2 交叉验证 gauge δa 1e-6~1e-15）——P-A2 口径判定完成
+**七项实验全部完成（数值层+图表层）**：
+- 实验 1 ✅ P-A2 判定 / 实验 2 ✅ 联合 Fisher+Schur / 实验 3 ✅ 三类分离(64级 1+10+3 闭合)
+- 实验 4 ✅ CRB 有效性(12/12 PASS) / 实验 5 ✅ 负结果+低秩机制 / 实验 5b ✅ 局部口径扩展(σ_min 预测子命题不成立, 负结果族)
+- 实验 6 ✅ 网络三前向(复制漂移 0.01°) / 实验 7 ✅ CRB-vs-N 同图数据
+- 汇总报告：`CRITICAL_EXPERIMENTS_SUMMARY.md`
 
-## 待做（按优先级）
-
-实验 2（联合 Fisher+稀疏 Schur）→ 实验 3（三类方向分离）→ 实验 4（CRB 有效性）→ 实验 5（散布度修正）→ 实验 6（网络前向三测试）→ 实验 7（CRB-vs-N 同图数据）
+**图表层（本轮由执行 agent 完成并视觉检查, 多模态 agent 可直接复用或精修）**：
+- `figures/exp2_spectrum.png` S 谱 / `figures/exp3_decomposition.png` 三类分解堆叠柱
+- `figures/exp4_spectral_crb.png` CRB log-log 谱 / `figures/exp5_dispersion.png` 双口径散点
+- `figures/exp6_forward_tests.png` 三前向测试 / `figures/exp7_crb_vs_n.png` 双轴对比
+- 视觉检查已闭环: 中文字体(Microsoft YaHei)、mathtext 标题、图例位置、exp6 能量份额口径 bug(范数份额→能量份额)均已修正
