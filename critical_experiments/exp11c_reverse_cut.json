@@ -180,6 +180,60 @@
    "kappa_weighted_cross": "κ_weighted 跨几何信号弱且方向不稳(3/10 显著, 均值 −0.147)——加权版的 cube 信号在跨几何方向不复现",
    "negative_control": "σ_min(C_1)² 光照固定时恒定(阴性对照 ✓)——部分配置报 nan 因 σ_min=0 导致 std=0",
    "synthesis": "κ(未加权)跨几何有预测力(meta-p=4.6e-7) → \"几何感知标量的适用域\"节成立; 但效应方向不稳定, 需结合谱全貌。散布度经验法则(σ_min)彻底失败; κ 作为几何感知标量的限定结论入文"
-  }
+  },
+  "_SUPERSEDED": "20260906: Fisher's method 误用, 见 verdict_v2"
+ },
+ "corrected_tests": {
+  "kappa_unweighted": {
+   "per_config_rho": [
+    0.343,
+    -0.695,
+    -0.061,
+    0.046,
+    0.666,
+    0.517,
+    -0.622,
+    -0.119,
+    0.643,
+    0.573
+   ],
+   "significant_configs": [
+    -0.695,
+    0.666,
+    0.517,
+    -0.622,
+    0.643,
+    0.573
+   ],
+   "weighted_combined_z": 1.749,
+   "weighted_combined_p": 0.08,
+   "unweighted_fisher_z_t": 0.759,
+   "unweighted_p": 0.467,
+   "wilcoxon_p": 0.625,
+   "direction_count": "6:4",
+   "sign_test_p": 0.754,
+   "cochran_Q": 47.8,
+   "Q_df": 9,
+   "Q_p": "<1e-4",
+   "I_squared": 0.81,
+   "conclusion": "无稳定跨几何效应(异质性 81% 污染, 方向不一致)"
+  },
+  "kappa_weighted": {
+   "fixed_effect_combined_z": -2.024,
+   "fixed_effect_p": 0.043,
+   "direction": "负向",
+   "I_squared": 0.73,
+   "unweighted_t": -1.057,
+   "unweighted_p": 0.318,
+   "direction_count": "3:7",
+   "conclusion": "同无稳定效应(I²=73%, 非加权不显著)"
+  },
+  "method_note": "Fisher's method 检验'至少一个配置非零'、对方向不敏感——正负两端强信号都被奖励, 原meta-p=4.6e-7为异质性奖励, 作废"
+ },
+ "verdict_v2": {
+  "supersedes": "verdict (原 Fisher method meta-p 判读)",
+  "judgment_reversal": true,
+  "final": "κ(未加权): 加权合并 p=0.080(被 I²=81% 污染), 非加权 t p=0.467, Wilcoxon p=0.625, 方向 6:4(符号检验 p=0.754) → 不显著; κ_weighted: 固定效应合并 p=0.043 为负向、I²=73%, 非加权不显著 → 判决翻转: 两个几何感知标量均无稳定跨几何效应",
+  "wording": "几何感知标量 κ 在跨几何比较中同样不存在稳定效应: 逐配置相关方向不一致(−0.70 至 +0.67, I²=81%), 跨配置平均效应不显著(Fisher-z 单样本 p=0.47)。连同经典散布度(exp11)在内, 我们尝试了给手工标量找出路的两种设计(跨配置、跨几何), 均以'标量本身不可靠、必须读谱结构'收尾——这构成'谱诊断优于任何标量代理'主线的完整论证链。"
  }
 }
