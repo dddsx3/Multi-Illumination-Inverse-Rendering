@@ -1,0 +1,345 @@
+{
+ "scene": "sphere",
+ "res": 32,
+ "rows": [
+  {
+   "config": 0,
+   "trial": 0,
+   "mae": 88.12557729422122,
+   "residual_est": 640066708.4566846,
+   "residual_true": 2.2285806334490204,
+   "residual_ratio": 287208234.1782256
+  },
+  {
+   "config": 0,
+   "trial": 1,
+   "mae": 88.51668944053978,
+   "residual_est": 155856853286648.25,
+   "residual_true": 2.2357157571217816,
+   "residual_ratio": 69712284663277.336
+  },
+  {
+   "config": 0,
+   "trial": 2,
+   "mae": 93.4427913359532,
+   "residual_est": 184404630.20159042,
+   "residual_true": 2.2275037257453776,
+   "residual_ratio": 82785329.63615318
+  },
+  {
+   "config": 0,
+   "trial": 3,
+   "mae": 88.05985408036474,
+   "residual_est": 251522889420428.56,
+   "residual_true": 2.2520077509432985,
+   "residual_ratio": 111688287624708.73
+  },
+  {
+   "config": 0,
+   "trial": 4,
+   "mae": 87.49118537217907,
+   "residual_est": 1009498827.717846,
+   "residual_true": 2.2548927863508497,
+   "residual_ratio": 447692605.97597796
+  },
+  {
+   "config": 1,
+   "trial": 0,
+   "mae": 87.3049933647744,
+   "residual_est": 1031656589.8278751,
+   "residual_true": 2.205215078872368,
+   "residual_ratio": 467825836.9044939
+  },
+  {
+   "config": 1,
+   "trial": 1,
+   "mae": 91.77480217100569,
+   "residual_est": 1054650154676.7926,
+   "residual_true": 2.231356761744748,
+   "residual_ratio": 472649722697.0276
+  },
+  {
+   "config": 1,
+   "trial": 2,
+   "mae": 89.52876344046516,
+   "residual_est": 7055010819069.998,
+   "residual_true": 2.271001392093937,
+   "residual_ratio": 3106563846077.192
+  },
+  {
+   "config": 1,
+   "trial": 3,
+   "mae": 88.8226490451415,
+   "residual_est": 2691694534324.549,
+   "residual_true": 2.2103687690950817,
+   "residual_ratio": 1217758127946.4604
+  },
+  {
+   "config": 1,
+   "trial": 4,
+   "mae": 90.72963717041083,
+   "residual_est": 154554647618.9786,
+   "residual_true": 2.243916062451397,
+   "residual_ratio": 68877196524.9597
+  },
+  {
+   "config": 2,
+   "trial": 0,
+   "mae": 82.22896990138405,
+   "residual_est": 179366265.44353068,
+   "residual_true": 2.2329591777249487,
+   "residual_ratio": 80326710.50721046
+  },
+  {
+   "config": 2,
+   "trial": 1,
+   "mae": 86.04095368140543,
+   "residual_est": 2248517041.4497137,
+   "residual_true": 2.1917418654139675,
+   "residual_ratio": 1025904134.4839314
+  },
+  {
+   "config": 2,
+   "trial": 2,
+   "mae": 88.2823307230587,
+   "residual_est": 8594381905.085865,
+   "residual_true": 2.2487996539517123,
+   "residual_ratio": 3821764153.148704
+  },
+  {
+   "config": 2,
+   "trial": 3,
+   "mae": 92.53648485543373,
+   "residual_est": 6556686818.55033,
+   "residual_true": 2.252042171198112,
+   "residual_ratio": 2911440514.926991
+  },
+  {
+   "config": 2,
+   "trial": 4,
+   "mae": 86.96602597751044,
+   "residual_est": 33765624530.317635,
+   "residual_true": 2.27093963158545,
+   "residual_ratio": 14868569846.898247
+  },
+  {
+   "config": 3,
+   "trial": 0,
+   "mae": 89.86954648356979,
+   "residual_est": 24488685741.041992,
+   "residual_true": 2.247227884383774,
+   "residual_ratio": 10897286346.08732
+  },
+  {
+   "config": 3,
+   "trial": 1,
+   "mae": 94.20408801659335,
+   "residual_est": 332259013.4703508,
+   "residual_true": 2.2237668259747925,
+   "residual_ratio": 149412703.52151442
+  },
+  {
+   "config": 3,
+   "trial": 2,
+   "mae": 89.50844203062645,
+   "residual_est": 276503102070.4925,
+   "residual_true": 2.2120832791775094,
+   "residual_ratio": 124996696405.25519
+  },
+  {
+   "config": 3,
+   "trial": 3,
+   "mae": 90.9863794928588,
+   "residual_est": 2336373332.5782266,
+   "residual_true": 2.24896991382587,
+   "residual_ratio": 1038863756.3424177
+  },
+  {
+   "config": 3,
+   "trial": 4,
+   "mae": 87.13778178064737,
+   "residual_est": 8667240881557.327,
+   "residual_true": 2.236739806343765,
+   "residual_ratio": 3874943727015.3613
+  },
+  {
+   "config": 4,
+   "trial": 0,
+   "mae": 91.27124397376832,
+   "residual_est": 1638044360.215258,
+   "residual_true": 2.2249242824711066,
+   "residual_ratio": 736224766.4428239
+  },
+  {
+   "config": 4,
+   "trial": 1,
+   "mae": 87.78171812091728,
+   "residual_est": 66361940539.0561,
+   "residual_true": 2.269082803894797,
+   "residual_ratio": 29246151980.504314
+  },
+  {
+   "config": 4,
+   "trial": 2,
+   "mae": 88.67686463856359,
+   "residual_est": 14142429624.939754,
+   "residual_true": 2.2516163184656475,
+   "residual_ratio": 6281012226.175835
+  },
+  {
+   "config": 4,
+   "trial": 3,
+   "mae": 85.8798050818369,
+   "residual_est": 532424221.87284464,
+   "residual_true": 2.237863033221757,
+   "residual_ratio": 237916357.68983412
+  },
+  {
+   "config": 4,
+   "trial": 4,
+   "mae": 83.58678105997575,
+   "residual_est": 52485583415.9973,
+   "residual_true": 2.212755229727332,
+   "residual_ratio": 23719561346.360424
+  },
+  {
+   "config": 5,
+   "trial": 0,
+   "mae": 81.92828197872439,
+   "residual_est": 14804246185.210173,
+   "residual_true": 2.2465666049299884,
+   "residual_ratio": 6589720577.490525
+  },
+  {
+   "config": 5,
+   "trial": 1,
+   "mae": 93.42709013844373,
+   "residual_est": 1605312045599.6184,
+   "residual_true": 2.2406999368771983,
+   "residual_ratio": 716433297997.4541
+  },
+  {
+   "config": 5,
+   "trial": 2,
+   "mae": 94.43030863149868,
+   "residual_est": 28346787993769.094,
+   "residual_true": 2.2530003783571027,
+   "residual_ratio": 12581794599803.703
+  },
+  {
+   "config": 5,
+   "trial": 3,
+   "mae": 89.42934303729069,
+   "residual_est": 167569765741216.3,
+   "residual_true": 2.2388223485043,
+   "residual_ratio": 74847281140089.3
+  },
+  {
+   "config": 5,
+   "trial": 4,
+   "mae": 92.18314291178419,
+   "residual_est": 1057821179492.6368,
+   "residual_true": 2.2311815416081253,
+   "residual_ratio": 474108072232.53186
+  },
+  {
+   "config": 6,
+   "trial": 0,
+   "mae": 87.92800261111071,
+   "residual_est": 8.089019657435142e+16,
+   "residual_true": 2.223615068163316,
+   "residual_ratio": 3.6377787564268456e+16
+  },
+  {
+   "config": 6,
+   "trial": 1,
+   "mae": 90.53988151771446,
+   "residual_est": 5.928416313061966e+16,
+   "residual_true": 2.262337075790543,
+   "residual_ratio": 2.620483205841623e+16
+  },
+  {
+   "config": 6,
+   "trial": 2,
+   "mae": 91.10926536722164,
+   "residual_est": 6.77555897138147e+16,
+   "residual_true": 2.2033239860712874,
+   "residual_ratio": 3.075153274876685e+16
+  },
+  {
+   "config": 6,
+   "trial": 3,
+   "mae": 91.78370836944639,
+   "residual_est": 1.5994877085131936e+16,
+   "residual_true": 2.240683296161078,
+   "residual_ratio": 7138392611100225.0
+  },
+  {
+   "config": 6,
+   "trial": 4,
+   "mae": 89.42292996663471,
+   "residual_est": 60730927066485.49,
+   "residual_true": 2.2605527521419857,
+   "residual_ratio": 26865520837299.61
+  },
+  {
+   "config": 7,
+   "trial": 0,
+   "mae": 85.30173040728867,
+   "residual_est": 35716496167.14238,
+   "residual_true": 2.211298483659459,
+   "residual_ratio": 16151820494.190117
+  },
+  {
+   "config": 7,
+   "trial": 1,
+   "mae": 89.52964184062674,
+   "residual_est": 3379208965352.6406,
+   "residual_true": 2.2272572903586565,
+   "residual_ratio": 1517206377539.1143
+  },
+  {
+   "config": 7,
+   "trial": 2,
+   "mae": 87.11362276408363,
+   "residual_est": 1.6392460501633776e+17,
+   "residual_true": 2.231285415870076,
+   "residual_ratio": 7.346644398355302e+16
+  },
+  {
+   "config": 7,
+   "trial": 3,
+   "mae": 91.93758986980963,
+   "residual_est": 889090628104251.6,
+   "residual_true": 2.2617834169672575,
+   "residual_ratio": 393092734447757.44
+  },
+  {
+   "config": 7,
+   "trial": 4,
+   "mae": 88.96039332906771,
+   "residual_est": 241702481650.4565,
+   "residual_true": 2.222254658214491,
+   "residual_ratio": 108764529194.2628
+  }
+ ],
+ "summary": {
+  "n": 40,
+  "residual_ratio_median": 88820862859.61125,
+  "residual_ratio_max": 7.346644398355302e+16,
+  "residual_ratio_min": 80326710.50721046,
+  "n_ratio_gt_10": 40,
+  "mae_range": [
+   81.92828197872439,
+   94.43030863149868
+  ]
+ },
+ "one_step_gn": {
+  "median_dz_over_scale": 244.1151441583075,
+  "boundary_median_dz": 496.6501896590839
+ },
+ "verdict": {
+  "finding": "残差比中位 88820862860×, 最大 73466443983553024×, 40/40 个解残差比>10",
+  "conclusion": "发散从'合理推断'升格为'直接观测事实'——无阻尼 GN 3 步迭代产生与观测完全不相关的解(残差≫噪声底), MAE 90° 恒定确认为数值发散"
+ }
+}
