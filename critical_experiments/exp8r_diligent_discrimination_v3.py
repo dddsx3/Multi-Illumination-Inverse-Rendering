@@ -72,16 +72,10 @@ def als_init(I_sub, rho0, dirs_sub, n_gt):
     """SH-2 ALS 式粗解提方向初值(几何已知: 只迭代 ρ 和方向)。"""
     rho = rho0.copy()
     for _ in range(50):
-        # 方向: 每光解 l = argmin (ρ·n·l - I) → 线性闭式
-        M = rho[:, None] * n_gt                   # (P,N)
+        # 方向: 每光解 l = argmin ||ρ(n·l) − I_k||² → A=ρ·n (P,3), b=I_k, l 归一
         new_dirs = []
+        A = rho[:, None] * n_gt
         for k in range(dirs_sub.shape[0]):
-            r = I_sub[k] - M[:, k] * 0
-            # min_l ||ρ(n·l) − I_k||² → l = (M_kᵀI_k)/||M_k||² · n? 不:
-            # I ≈ ρ(n·l) = (ρn)·l → l* = Σ(ρn·I)/Σ(ρn)² — 简单投影
-            m = rho * n_gt[:, 0] * 0
-            # 用伪逆: I_k ≈ ρ_p (n_p · l) → A = ρ[:,None]*n_gt (P,3), b = I_k
-            A = rho[:, None] * n_gt
             b = I_sub[k]
             l = np.linalg.lstsq(A, b, rcond=None)[0]
             nrm = np.linalg.norm(l)
