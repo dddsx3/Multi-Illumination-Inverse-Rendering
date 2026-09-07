@@ -202,7 +202,7 @@ OUTZIP="exp8r_v3_results_${STAMP}.zip"
 import zipfile, glob, os, sys
 outzip = sys.argv[1]
 files = (glob.glob("exp8r_diligent_discrimination_v3.json")
-         + sorted(glob.glob("exp8r_per_object_*.json"))
+         + sorted(f for f in glob.glob("exp8r_per_object_*.json") if ".partial" not in f)
          + sorted(glob.glob("logs/*.log")))
 with zipfile.ZipFile(outzip, "w", zipfile.ZIP_DEFLATED) as z:
     for f in files:

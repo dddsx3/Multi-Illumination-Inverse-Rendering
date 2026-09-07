@@ -17,7 +17,7 @@ OUT = HERE / "exp8r_diligent_discrimination_v3.json"
 
 
 def main():
-    per = sorted(HERE.glob("exp8r_per_object_*.json"))
+    per = sorted(f for f in HERE.glob("exp8r_per_object_*.json") if ".partial" not in f.name)
     if not per:
         print("未找到 exp8r_per_object_*.json")
         sys.exit(1)

@@ -30,6 +30,7 @@ ROOT = Path("D:/data/DiLiGenT/pmsData")
 N3_SAMPLES = 50
 OTHER_SAMPLES = 15
 N_STARTS = 3
+CKPT_EVERY = 5   # 断点续跑: 每 5 个子集落盘 .partial.json(仅行累积, 不改变数值路径)
 SEED = 20260906
 
 
@@ -217,17 +218,32 @@ def main():
             outlier = resid_full > 3 * np.std(resid_full)
             out_frac = float(outlier.mean())
             print(f"\n{name}: P={len(n_gt)}, 朗伯残差 {lambert_resid:.3f}, 离群 {out_frac:.3f}")
-            t0obj = time.time()
+            pf = HERE / f"exp8r_per_object_{name}.partial.json"
+            ci0 = oth0 = 0
             ndone = 0
+            nsess = 0
+            if pf.exists():
+                pd = json.loads(pf.read_text(encoding="utf-8"))
+                rows = pd["rows"]
+                ci0 = int(pd["ci_done"])
+                oth0 = int(pd["oth_done"])
+                ndone = ci0 + oth0
+                print(f"    [resume] {name}: 已完成 N=3 {ci0}/{N3_SAMPLES} + other {oth0}/{OTHER_SAMPLES * 4}, 续跑剩余")
+            else:
+                rows = []
+            t0obj = time.time()
             ntotsub = N3_SAMPLES + OTHER_SAMPLES * 4
-
-            rows = []
             r2 = np.random.default_rng(SEED + zlib.crc32(name.encode()) % 1000)
-            # N=3 分层
+            # N=3 分层(全部预生成, 下标即断点续跑游标)
             sels = []
             for _ in range(N3_SAMPLES):
                 sels.append(r2.choice(96, 3, replace=False))
-            for ci, sel in enumerate(sels):
+            # other-N 选择全部预生成(抽样顺序与旧版完全一致: N=5,10,20,50 × 15)
+            other_sels = []
+            for N in (5, 10, 20, 50):
+                for _ in range(OTHER_SAMPLES):
+                    other_sels.append((N, r2.choice(96, N, replace=False)))
+            for ci, sel in enumerate(sels[ci0:], start=ci0):
                 dirs_sub = dirs[sel]; I_sub = I_norm[sel]
                 # 像素守卫
                 n_masked = (n_gt @ dirs_sub.T > 0).astype(float)
@@ -269,42 +285,46 @@ def main():
                 rows.append(dict(N=3, sigma_min=float(np.linalg.svd(dirs_sub, compute_uv=False)[-1]),
                                  trace=tr, lae=lae_v))
                 ndone += 1
+                nsess += 1
                 el = time.time() - t0obj
-                print(f"      [P] N3 done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/ndone*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
+                print(f"      [P] N3 done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/nsess*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
+                if ndone % CKPT_EVERY == 0:
+                    pf.write_text(json.dumps(dict(ci_done=ci + 1, oth_done=oth0, rows=rows), ensure_ascii=False), encoding="utf-8")
             # 其他 N
-            for N in (5, 10, 20, 50):
-                for _ in range(OTHER_SAMPLES):
-                    sel = r2.choice(96, N, replace=False)
-                    dirs_sub = dirs[sel]; I_sub = I_norm[sel]
-                    n_masked = (n_gt @ dirs_sub.T > 0).astype(float)
-                    keep = pixel_guard(I_sub, n_masked)
-                    if keep.sum() < 100:
-                        continue
-                    idx_k = np.where(keep)[0]
-                    rng3 = np.random.default_rng(SEED)
-                    sub_idx = np.sort(rng3.choice(idx_k, min(len(idx_k), max(len(idx_k)//8, 2000)), replace=False))
-                    n_k = n_gt[sub_idx]; I_k = I_sub[:, sub_idx]
-                    rho_als, dirs_als = als_init(I_k, rho_full[sub_idx]*0.8, dirs_sub, n_k)
-                    best = None
-                    for s in range(N_STARTS):
-                        d0 = dirs_als + rng.normal(0, 0.05, dirs_als.shape) if s > 0 else dirs_als
-                        d0 /= np.linalg.norm(d0, axis=1, keepdims=True)
-                        res = joint_trf(I_k, rho_als, d0, n_k, a_, b_)
-                        if best is None or res.cost < best.cost:
-                            best = res
-                    P_k = len(sub_idx)   # 修: 与 N=3 分支一致(下采样像素数)
-                    parms = best.x[P_k:].reshape(N, 3)
-                    xy = parms[:, 1:]
-                    zz = np.sqrt(np.maximum(1 - xy[:,0]**2 - xy[:,1]**2, 1e-12))
-                    dirs_e = np.column_stack([xy, zz])
-                    lae_v = lae(dirs_e, dirs_sub)
-                    rho_e = best.x[:P_k]; alpha_e = parms[:, 0]
-                    tr = diagnose_trace(n_k, I_k, rho_e, dirs_sub, alpha_e, a_, b_)
-                    rows.append(dict(N=N, sigma_min=float(np.linalg.svd(dirs_sub, compute_uv=False)[-1]),
-                                     trace=tr, lae=lae_v))
-                    ndone += 1
-                    el = time.time() - t0obj
-                    print(f"      [P] other done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/ndone*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
+            for ni, (N, sel) in enumerate(other_sels[oth0:], start=oth0):
+                dirs_sub = dirs[sel]; I_sub = I_norm[sel]
+                n_masked = (n_gt @ dirs_sub.T > 0).astype(float)
+                keep = pixel_guard(I_sub, n_masked)
+                if keep.sum() < 100:
+                    continue
+                idx_k = np.where(keep)[0]
+                rng3 = np.random.default_rng(SEED)
+                sub_idx = np.sort(rng3.choice(idx_k, min(len(idx_k), max(len(idx_k)//8, 2000)), replace=False))
+                n_k = n_gt[sub_idx]; I_k = I_sub[:, sub_idx]
+                rho_als, dirs_als = als_init(I_k, rho_full[sub_idx]*0.8, dirs_sub, n_k)
+                best = None
+                for s in range(N_STARTS):
+                    d0 = dirs_als + rng.normal(0, 0.05, dirs_als.shape) if s > 0 else dirs_als
+                    d0 /= np.linalg.norm(d0, axis=1, keepdims=True)
+                    res = joint_trf(I_k, rho_als, d0, n_k, a_, b_)
+                    if best is None or res.cost < best.cost:
+                        best = res
+                P_k = len(sub_idx)   # 修: 与 N=3 分支一致(下采样像素数)
+                parms = best.x[P_k:].reshape(N, 3)
+                xy = parms[:, 1:]
+                zz = np.sqrt(np.maximum(1 - xy[:,0]**2 - xy[:,1]**2, 1e-12))
+                dirs_e = np.column_stack([xy, zz])
+                lae_v = lae(dirs_e, dirs_sub)
+                rho_e = best.x[:P_k]; alpha_e = parms[:, 0]
+                tr = diagnose_trace(n_k, I_k, rho_e, dirs_sub, alpha_e, a_, b_)
+                rows.append(dict(N=N, sigma_min=float(np.linalg.svd(dirs_sub, compute_uv=False)[-1]),
+                                 trace=tr, lae=lae_v))
+                ndone += 1
+                nsess += 1
+                el = time.time() - t0obj
+                print(f"      [P] other done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/nsess*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
+                if ndone % CKPT_EVERY == 0:
+                    pf.write_text(json.dumps(dict(ci_done=N3_SAMPLES, oth_done=ni + 1, rows=rows), ensure_ascii=False), encoding="utf-8")
             # N=3 Spearman
             n3 = [r for r in rows if r["N"] == 3]
             trs = np.array([r["trace"] for r in n3]); laes = np.array([r["lae"] for r in n3])
@@ -320,6 +340,7 @@ def main():
             (HERE / f"exp8r_per_object_{name}.json").write_text(
                 json.dumps(per_obj, ensure_ascii=False, indent=1), encoding="utf-8")
             print(f"  [per-object saved] exp8r_per_object_{name}.json")
+            pf.unlink(missing_ok=True)
             # verdict 纪律: assert
             assert len(n3) > 0, f"{name} N=3 空"
         except Exception as exc:
