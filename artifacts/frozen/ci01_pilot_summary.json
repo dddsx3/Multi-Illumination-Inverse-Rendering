@@ -1,0 +1,82 @@
+{
+ "run_name": "pilot",
+ "seed": 20260907,
+ "gate": 1e-10,
+ "n_checks": 6,
+ "all_pass": true,
+ "checks": [
+  {
+   "case": "60x6x4",
+   "seed_i": 0,
+   "cond_Sigma_y": 1.0,
+   "rel_err": 4.9022024884067354e-12,
+   "rel_idempotent": null,
+   "rel_parameterization": 4.528543744411942e-12,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.032885229385456016,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  },
+  {
+   "case": "60x6x4",
+   "seed_i": 1,
+   "cond_Sigma_y": 1.0,
+   "rel_err": 2.2929062678211948e-12,
+   "rel_idempotent": null,
+   "rel_parameterization": 1.9439913393736304e-12,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.036550409301713827,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  },
+  {
+   "case": "50x6x5_r3_het",
+   "seed_i": 0,
+   "cond_Sigma_y": 2.8987156176449997,
+   "rel_err": 3.1497224898005637e-13,
+   "rel_idempotent": 2.15365282359886e-16,
+   "rel_parameterization": 2.8754517557655894e-13,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.06551619351044857,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  },
+  {
+   "case": "50x6x5_r3_het",
+   "seed_i": 1,
+   "cond_Sigma_y": 2.8879328208976704,
+   "rel_err": 2.557410357551617e-12,
+   "rel_idempotent": 2.619354520427095e-16,
+   "rel_parameterization": 1.3473744072328475e-12,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.028763470217262,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  },
+  {
+   "case": "200x9x200",
+   "seed_i": 0,
+   "cond_Sigma_y": 1.0,
+   "rel_err": 2.3972311001741867e-15,
+   "rel_idempotent": null,
+   "rel_parameterization": 2.3270120782349813e-15,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.8116941174150519,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  },
+  {
+   "case": "200x9x200",
+   "seed_i": 1,
+   "cond_Sigma_y": 1.0,
+   "rel_err": 2.1921066010912043e-15,
+   "rel_idempotent": null,
+   "rel_parameterization": 2.166863163241339e-15,
+   "scale_invariance": 0.0,
+   "scale_shift": 0.8181767059330303,
+   "retention_bounds_ok": true,
+   "gate_pass": true
+  }
+ ],
+ "note": "CI01 预注册：任何 identity 失败 → 停止后续实验先修 core（宪法 Gate A）"
+}

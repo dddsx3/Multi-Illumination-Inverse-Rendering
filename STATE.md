@@ -8,11 +8,11 @@
 | 卡 | 状态 | 结论一行 | 证据/artifact | commit | 更新日期 |
 |----|------|----------|----------------|--------|----------|
 | C01 仓库地基 | done | 目录树与宪法§6逐目录一致；CLAIMS_REGISTRY 含 C1–C6+红队增补 N/V+红线；pip install -e . 绿 + pytest 1 passed | CLAIMS_REGISTRY.yaml; pyproject.toml; src/calibinfo/ | c23cedb | 2026-09-07 |
-| C02 V1–V6 测试迁移 | done | 23/23 绿（~4s）；V1–V6+rank-deficient 阈值分层锁定；legacy 对照逐位一致（V1 median 1.0045/V4 rel err 6.44e-15/V2 2.23e-8 均与红队报告吻合）；legacy 无被任何实验 import；exp9d 结果已在本 clone 查证 | tests/unit/×8; legacy_redteam/ | 本commit(C02) | 2026-09-07 |
-| C03 迁移矩阵执行 | pending | — | — | — | — |
-| C04 run manifest 骨架 | pending | — | — | — | — |
-| C05 Gate A 冒烟 | pending | — | — | — | — |
-| C06 双路线 ΔF | pending | — | — | — | — |
+| C02 V1–V6 测试迁移 | done | 23/23 绿（~4s）；V1–V6+rank-deficient 阈值分层锁定；legacy 对照逐位一致（V1 median 1.0045/V4 rel err 6.44e-15/V2 2.23e-8 均与红队报告吻合）；legacy 无被任何实验 import；exp9d 结果已在本 clone 查证 | tests/unit/×8; legacy_redteam/ | 6e28ad8 | 2026-09-07 |
+| C03 迁移矩阵执行 | done | B1–B3 逐行迁移（information/estimators/datasets 单源化）+B4 归档标注+AGENT_HANDOFF 重写；估计器与 legacy 对账 x max\|Δ\|=0.0；诊断稠密对照 5/5 绿；迁移表无空锚点行；48 tests 绿 | src/calibinfo/; docs/REPO_MIGRATION.md 锚点 | 528de66 | 2026-09-07 |
+| C04 run manifest 骨架 | done | manifest 字段齐全（14 项）；config hash 对内容敏感/键序不敏感；run_ci.py+make_figures(--figure 1-9)+make_tables+reproduce_paper.sh 占位 | src/calibinfo/io/manifest.py; scripts/ | 本commit(C04/C05) | 2026-09-07 |
+| C05 Gate A 冒烟 | done | CI01 pilot 端到端绿：config→run_ci→results/raw(manifest)→artifacts/frozen→fig1_draft.png；6/6 checks 过（dual ~1e-12、param ~1e-12、scale_inv 0.0、photometric shift 0.81=V5 同构复现） | configs/ci01/pilot.yaml; artifacts/frozen/ci01_pilot_summary.json | 本commit(C04/C05) | 2026-09-07 |
+| C06 双路线 ΔF | done | 交付物随 C03 落地（schur.py 双路线+whitening）；验收测试含 m/q 欠定/临界/过定五区+Λ=0 秩亏，双路线 rel 8.4e-16 | tests/unit/test_information_modules.py | 528de66(交付)/本commit(验收扩区) | 2026-09-07 |
 | C07 CI01 正式 | pending | — | — | — | — |
 | C08 理论手稿定稿 | pending | — | — | — | — |
 | C09 scene 工厂 | pending | — | — | — | — |

@@ -1,0 +1,16 @@
+# CI01 pilot · 卡 C05 Gate A 冒烟（小规模随机块 + 光度结构块，端到端跑通用）
+# 正式规格见宪法 §4.1；正式 run 的放大版 config 由卡 C07 落盘（ci01_formal.yaml）。
+# shift_gate 预注册（跑前写死）：
+#   - random 块：A/B 独立 → 耦合弱，"σ 改变 → continuum 移动"为非空洞性检查（>1e-6）；
+#   - photometric 块：红队 V5 同构（A=D(s), B=D(aH)Y，含 scale gauge）→ V5 校准量级（>0.1）。
+run_name: pilot
+seed: 20260907
+n_seeds: 2
+k_scale: 10.0
+cases:
+  # A：临界/过定混合（m>q, n<q 覆盖欠定主参数区）——随机块
+  - {m: 60, q: 6, n: 4, shift_gate: 1.0e-6}
+  # B：秩亏 B（rank 3 < q=6，Λ=0 红线路径）+ 对角异方差——随机块
+  - {m: 50, q: 6, n: 5, rank_B: 3, heteroscedastic: true, shift_gate: 1.0e-6}
+  # C：光度立体结构（红队 V5 同构，强耦合 + scale gauge）——shift_gate 用 V5 校准 0.1
+  - {structure: photometric, m: 200, q: 9, n: 200, sigma: 0.02, shift_gate: 0.1}

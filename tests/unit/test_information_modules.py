@@ -23,27 +23,23 @@ SEED = 20260907
 
 
 def _system(rng, m, q, n, rank_B=None):
-    """随机系统 + 低秩物理映射 B = B0 Jᵀ（可选）。返回 A, B, Sigma_c, sigma。"""
+    """随机系统 + 低秩物理映射 J: φ(r) → c(q)（Σ_c = JΣ_φJᵀ，秩 r）。"""
     A = rng.normal(size=(m, n))
     r = rank_B if rank_B is not None else q
     B0 = rng.normal(size=(m, r))
     if r == q:
         B = B0
+        Sig_c = np.diag(rng.uniform(0.1, 1.0, size=q))
     else:
-        J = rng.normal(size=(r, q))
-        B = B0 @ J                                     # 秩 r < q
-    Q, _ = np.linalg.qr(rng.normal(size=(q, q)))
-    Sig_phi = np.diag(rng.uniform(0.1, 1.0, size=r)) if r < q \
-        else np.diag(rng.uniform(0.1, 1.0, size=q))
-    if r < q:
-        Sig_c = J @ Sig_phi @ J.T
-    else:
-        Sig_c = Sig_phi
+        J = rng.normal(size=(q, r))
+        B = B0 @ J.T                                     # B 的有效秩 r < q
+        Sig_c = J @ np.diag(rng.uniform(0.1, 1.0, size=r)) @ J.T
     sigma = 0.1
     return A, B, Sig_c, sigma
 
 
-@pytest.mark.parametrize("m,q,n", [(40, 3, 8), (30, 5, 5), (25, 9, 4)])  # 过定/临界/欠定(n<q)
+# m/q 三区（宪法 CI01/卡 C06 验收）：欠定 m<q、临界 m=q、过定 m>q（n 覆盖 n<q 与 n≥q）
+@pytest.mark.parametrize("m,q,n", [(4, 9, 3), (9, 9, 3), (40, 3, 8), (30, 5, 5), (25, 9, 4)])
 def test_dual_route_full_rank(m, q, n):
     """双路线：Schur(ΔF) vs marginal 直接逆——m/q 三区逐元素 rel<1e-10（C06 验收）。"""
     rng = np.random.default_rng(SEED)

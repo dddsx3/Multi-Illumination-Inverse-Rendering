@@ -23,30 +23,30 @@
 
 | 现有资产 | 目标 | 动作 | 必绑测试 | 完成锚点 |
 |---|---|---|---|---|
-| `redteam3_exp.py` 的 `DeltaF()`（lstsq 路径，已验证） | `src/calibinfo/information/schur.py::delta_f` | 重写（加 rank_policy 参数与 Λ=0 SVD 分支；返回 ΔF/M/rank diagnostics） | `test_rank_deficient_lambda0.py` | ☐ |
-| `redteam3_exp.py` V1 的 marginal 路线（σ²I+BΣ_cBᵀ 直接逆） | `schur.py::delta_f_marginal` | 移植；**只用于交叉验证**，禁止实验主路径调用 | `test_v1_covariance.py` 双路线互检 | ☐ |
-| （新建）W=Σ_y^{-1/2} 白化 | `information/whitening.py::whiten_system` | 新写；下游只接受白化系统 | CI01 异方差用例 | ☐ |
-| `redteam3_exp.py` V2 闭式 | `information/gauge.py::gauge_response` | 移植；返回 exact/small-λ slope/saturation | `test_v2_gauge_closed_form.py` | ☐ |
-| `redteam3_exp.py` V3 白化（**注意：正确形式是 F∞^{-1/2}=diag(1/s)，不是 1/√s**） | `information/retention.py::retention_spectrum` | 重写；限制到 range(F∞)；返回 ρ/basis/cond 诊断 | `test_v3_retention_bounds.py` | ☐ |
-| （新建）模式追踪 | `information/mode_tracking.py::track_modes` | 新写（\|V_prevᵀV_curr\| assignment + 简并子空间处理） | `test_v6_mode_tracking.py`（N=1 必须 0°） | ☐ |
+| `redteam3_exp.py` 的 `DeltaF()`（lstsq 路径，已验证） | `src/calibinfo/information/schur.py::delta_f` | 重写（加 rank_policy 参数与 Λ=0 SVD 分支；返回 ΔF/M/rank diagnostics） | `test_rank_deficient_lambda0.py` | 528de66 |
+| `redteam3_exp.py` V1 的 marginal 路线（σ²I+BΣ_cBᵀ 直接逆） | `schur.py::delta_f_marginal` | 移植；**只用于交叉验证**，禁止实验主路径调用 | `test_v1_covariance.py` 双路线互检 | 528de66 |
+| （新建）W=Σ_y^{-1/2} 白化 | `information/whitening.py::whiten_system` | 新写；下游只接受白化系统 | CI01 异方差用例 | 528de66 |
+| `redteam3_exp.py` V2 闭式 | `information/gauge.py::gauge_response` | 移植；返回 exact/small-λ slope/saturation | `test_v2_gauge_closed_form.py` | 528de66 |
+| `redteam3_exp.py` V3 白化（**注意：正确形式是 F∞^{-1/2}=diag(1/s)，不是 1/√s**） | `information/retention.py::retention_spectrum` | 重写；限制到 range(F∞)；返回 ρ/basis/cond 诊断 | `test_v3_retention_bounds.py` | 528de66 |
+| （新建）模式追踪 | `information/mode_tracking.py::track_modes` | 新写（\|V_prevᵀV_curr\| assignment + 简并子空间处理） | `test_v6_mode_tracking.py`（N=1 必须 0°） | 528de66 |
 
 ### B2 估计器（src/calibinfo/estimators/）
 
 | 现有资产 | 目标 | 动作 | 必绑测试 | 完成锚点 |
 |---|---|---|---|---|
-| `critical_experiments/exp8r_diligent_discrimination_v3.py` 估计器侧（LM+解析稀疏 Jacobian+ALS 初值+多起点+像素守卫） | `estimators/joint_map.py` + `estimators/gauss_newton.py` | 移植合格部分；**禁止**移植其 `diagnose_trace()`（两处代数错误） | FD-vs-解析 Jacobian rel<1e-6 回归 | ☐ |
-| `critical_experiments/exp8s_oracle_schur_audit.py` 变体 A（精确逐像素 ρ-Schur + S_aa 联合 α 边缘化） | `estimators/diagnostics.py`（或 information 层） | **移植为诊断参考实现**（v3.3 已核验为正确代数） | 随机小规模稠密对照 rel<1e-10（红线 #8） | ☐ |
-| exp12v3 的教训固化 | 估计器入口 assert | 数据驱动初始化；`assert not np.allclose(init, gt)`；GT 只进评分（红线 #11） | init 断言测试 | ☐ |
-| exp14 的 Λ 匹配诊断机制（估计器实际先验 Λ_z 进 CRB 迹） | `estimators/diagnostics.py` | 按需移植（CI03 用） | 与 exp14 json 数字对账用例 | ☐ |
+| `critical_experiments/exp8r_diligent_discrimination_v3.py` 估计器侧（LM+解析稀疏 Jacobian+ALS 初值+多起点+像素守卫） | `estimators/joint_map.py` + `estimators/gauss_newton.py` | 移植合格部分；**禁止**移植其 `diagnose_trace()`（两处代数错误） | FD-vs-解析 Jacobian rel<1e-6 回归 | 528de66 |
+| `critical_experiments/exp8s_oracle_schur_audit.py` 变体 A（精确逐像素 ρ-Schur + S_aa 联合 α 边缘化） | `estimators/diagnostics.py`（或 information 层） | **移植为诊断参考实现**（v3.3 已核验为正确代数） | 随机小规模稠密对照 rel<1e-10（红线 #8） | 528de66 |
+| exp12v3 的教训固化 | 估计器入口 assert | 数据驱动初始化；`assert not np.allclose(init, gt)`；GT 只进评分（红线 #11） | init 断言测试 | 528de66 |
+| exp14 的 Λ 匹配诊断机制（估计器实际先验 Λ_z 进 CRB 迹） | `estimators/diagnostics.py` | 按需移植（CI03 用） | 与 exp14 json 数字对账用例 | 推迟→C12（矩阵原文：按需移植） |
 
 ### B3 数据层（src/calibinfo/datasets/）
 
 | 现有资产 | 目标 | 动作 | 必绑测试 | 完成锚点 |
 |---|---|---|---|---|
-| `eval_diligent/` + `evaluate_diligent.py` | `datasets/diligent.py` | 收敛为单一 loader + manifest 接入 | 小样本 checksum/形状断言 | ☐ |
-| （新建）OpenIllumination loader | `datasets/openillumination.py` | 新写：HF `OpenIllumination/OpenIllumination`（CC BY 4.0）OLAT 子集；GT 光照/掩码解析；对象清单 manifest | 已知对象光照 GT 数值 sanity | ☐ |
-| `p1/source/generation/render_multilight.py`（BlenderProc，Windows 3.10 环境） | **留在原位**，Windows 侧调用 | 只读引用；CI03 非线性增强臂时包一层适配器 | oracle_gate 28.25dB 基线不回退 | ☐ |
-| `make_split_manifest.py` / `split_manifest.py` / `splits/` | `io/manifest.py` 统一 | 并入 run_manifest 体系 | manifest round-trip 测试 | ☐ |
+| `eval_diligent/` + `evaluate_diligent.py` | `datasets/diligent.py` | 收敛为单一 loader + manifest 接入 | 小样本 checksum/形状断言 | 528de66 |
+| （新建）OpenIllumination loader | `datasets/openillumination.py` | 新写：HF `OpenIllumination/OpenIllumination`（CC BY 4.0）OLAT 子集；GT 光照/掩码解析；对象清单 manifest | 已知对象光照 GT 数值 sanity | 推迟→C14（新建） |
+| `p1/source/generation/render_multilight.py`（BlenderProc，Windows 3.10 环境） | **留在原位**，Windows 侧调用 | 只读引用；CI03 非线性增强臂时包一层适配器 | oracle_gate 28.25dB 基线不回退 | 原位（C13 时包适配器） |
+| `make_split_manifest.py` / `split_manifest.py` / `splits/` | `io/manifest.py` 统一 | 并入 run_manifest 体系 | manifest round-trip 测试 | 本commit(C04) |
 
 ### B4 归档（只读，禁止再修改）
 
