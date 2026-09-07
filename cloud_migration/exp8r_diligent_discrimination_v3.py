@@ -174,12 +174,12 @@ def lae(dirs_est, dirs_true):
 
 
 def main():
+    global ROOT
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="", help="只跑指定物体(如 ballPNG); 空=全量")
     ap.add_argument("--data_root", default=str(ROOT), help="DiLiGenT pmsData 根")
     args = ap.parse_args()
-    global ROOT
     ROOT = Path(args.data_root)
     rng = np.random.default_rng(SEED)
     objects = sorted([d for d in ROOT.iterdir() if d.is_dir()])
