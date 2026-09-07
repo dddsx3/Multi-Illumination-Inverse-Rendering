@@ -93,8 +93,18 @@ def fisher_theta_marginal(n_true, rho_v, C_cfg):
     Sk = np.maximum(Z, 0)
     Hk = (Z > 0).astype(float)
     dY = sh2_d(n_true)
-    N, P = C_cfg.shape[0], len(n_true)
-    rho = rho_v
+    N = C_cfg.shape[0]
+    # 全暗像素过滤(口径移植 exp11v3 trace_theta_inv_safe keep0): F_rr=0 的像素
+    # 不携带 ρ 信息 → Schur 0/0=NaN → eig 不收敛(hemisphere cfg04 实证);
+    # 过滤阈值 = 1e-3 × 中位(与 exp11v3 一致), 非选择性通用预处理
+    F_rr_all = (Sk ** 2).sum(1)
+    keep0 = F_rr_all > 1e-3 * max(np.median(F_rr_all), 1e-300)
+    n_dark = int((~keep0).sum())
+    if keep0.sum() < 10:
+        raise RuntimeError(f"全暗过滤后仅 {keep0.sum()} 像素 — 停手报 INC")
+    n_true, rho_v = n_true[keep0], rho_v[keep0]
+    Y, Z, Sk, Hk, dY = Y[keep0], Z[keep0], Sk[keep0], Hk[keep0], dY[keep0]
+    P = len(n_true)
     # 切向基
     t1 = np.cross(n_true, np.broadcast_to(np.array([0., 0., 1.]), n_true.shape))
     bad = np.linalg.norm(t1, axis=1) < 1e-8
@@ -104,7 +114,7 @@ def fisher_theta_marginal(n_true, rho_v, C_cfg):
     t2 = np.cross(n_true, t1)
     T = np.stack([t1, t2], axis=2)                        # (P,3,2)
     CdY = np.einsum('kj,pji->pki', C_cfg, dY)              # (P,N,3)
-    Gt = np.einsum('pki,pid->pkd', CdY, T) * (rho[:, None] * Hk)[:, :, None]  # (P,N,2)
+    Gt = np.einsum('pki,pid->pkd', CdY, T) * (rho_v[:, None] * Hk)[:, :, None]  # (P,N,2)
     F_tt = np.einsum('pkd,pke->pde', Gt, Gt)              # (P,2,2)
     # ρ 边缘化: F_ρρ 逐像素对角 = Σ_k (ρ? no) — 口径: J_θ=G_t(已含ρh), J_ρ_p=Sk[:,k]
     F_rr = (Sk ** 2).sum(1)                                # (P,)
@@ -113,13 +123,13 @@ def fisher_theta_marginal(n_true, rho_v, C_cfg):
     S_tt = F_tt - (F_tr[:, :, None] * F_tr[:, None, :]) / F_rr[:, None, None]
     # C 边缘化(联合): M = ∂r/∂C 行(θ度量), F_CC 块对角(按光)
     M_tC = np.zeros((2 * P, 9 * N))                        # 行 2p+d, 列 9k+j
-    Gr = np.einsum('pki,pid->pkd', CdY, T) * (rho[:, None] * Hk)[:, :, None]
+    Gr = np.einsum('pki,pid->pkd', CdY, T) * (rho_v[:, None] * Hk)[:, :, None]
     for p in range(P):
         for k in range(N):
             M_tC[2 * p:2 * p + 2, 9 * k:9 * k + 9] = np.outer(Gr[p, k], Y[p])
     F_CC = np.zeros((9 * N, 9 * N))
     for k in range(N):
-        Yk = Y * (rho * Hk[:, k])[:, None]
+        Yk = Y * (rho_v * Hk[:, k])[:, None]
         F_CC[9 * k:9 * (k + 1), 9 * k:9 * (k + 1)] = Yk.T @ Yk
     F_CC_inv = np.linalg.pinv(F_CC)                        # ρ·α 型规范方向 → pinv
     S = np.zeros((2 * P, 2 * P))
