@@ -7,8 +7,8 @@
 
 | 卡 | 状态 | 结论一行 | 证据/artifact | commit | 更新日期 |
 |----|------|----------|----------------|--------|----------|
-| C01 仓库地基 | done | 目录树与宪法§6逐目录一致；CLAIMS_REGISTRY 含 C1–C6+红队增补 N/V+红线；pip install -e . 绿 + pytest 1 passed | CLAIMS_REGISTRY.yaml; pyproject.toml; src/calibinfo/ | 本commit(C01) | 2026-09-07 |
-| C02 V1–V6 测试迁移 | pending | — | — | — | — |
+| C01 仓库地基 | done | 目录树与宪法§6逐目录一致；CLAIMS_REGISTRY 含 C1–C6+红队增补 N/V+红线；pip install -e . 绿 + pytest 1 passed | CLAIMS_REGISTRY.yaml; pyproject.toml; src/calibinfo/ | c23cedb | 2026-09-07 |
+| C02 V1–V6 测试迁移 | done | 23/23 绿（~4s）；V1–V6+rank-deficient 阈值分层锁定；legacy 对照逐位一致（V1 median 1.0045/V4 rel err 6.44e-15/V2 2.23e-8 均与红队报告吻合）；legacy 无被任何实验 import；exp9d 结果已在本 clone 查证 | tests/unit/×8; legacy_redteam/ | 本commit(C02) | 2026-09-07 |
 | C03 迁移矩阵执行 | pending | — | — | — | — |
 | C04 run manifest 骨架 | pending | — | — | — | — |
 | C05 Gate A 冒烟 | pending | — | — | — | — |
@@ -42,4 +42,4 @@
 
 | 事项 | 阻塞物 | 解除条件 | 登记日期 |
 |------|--------|----------|----------|
-| exp9d 结果状态未证实 | 文件此前不在云 clone（本机 Windows 仓库在查证中，见 C02） | C02 时查证；找不到则 INC | 2026-09-07 |
+| ~~exp9d 结果状态未证实~~ **已解除（2026-09-07，卡 C02 查证）** | 云 clone 缺文件；本机 Windows clone **存在完整结果**：`critical_experiments/exp9d_terminator_localization.json`，数字与处置裁决表一致（λ terminator 带 1.49× / μ 0.919× vs 预注册 ≥5×，contour 对照 3.43×） | 已解除；分支维持归档，数字允许按红队报告口径引用 | 2026-09-07 |
