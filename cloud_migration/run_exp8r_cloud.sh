@@ -94,8 +94,34 @@ if [[ -z "$DATA_ROOT" ]]; then
         if [[ -d "$cand/ballPNG" ]]; then DATA_ROOT="$cand"; break; fi
     done
 fi
-[[ -n "$DATA_ROOT" && -d "$DATA_ROOT/ballPNG" ]] || fail "未找到 DiLiGenT pmsData 目录(含 ballPNG)。
-  请将 DiLiGenT 数据放到任意位置后设置: DATA_ROOT=<路径> bash run_exp8r_cloud.sh"
+# DiLiGenT 数据(约 936MB)不在本仓库中(gitignore data/), 也无可靠的免注册直链
+# ——官方页面 http://sites.google.com/site/diligentdt/ 提供下载, 但直链随托管方更新,
+# 禁止硬编码未验证 URL(项目数字卫生纪律)。脚本提供三个可靠路径:
+if [[ -n "${DATA_AUTO_DL:-}" ]]; then
+    # 路径 3(进阶): 用户自行验证过的直链 → DATA_AUTO_DL=<url> 自动下载解压
+    log "DATA_AUTO_DL 已设置 → 下载数据…"
+    DL_DIR="${WORKDIR}/DiLiGenT_download"
+    mkdir -p "$DL_DIR"
+    if command -v wget >/dev/null 2>&1; then
+        wget -q --show-progress -O "$DL_DIR/pmsData_dl" "$DATA_AUTO_DL"
+    else
+        curl -L --progress-bar -o "$DL_DIR/pmsData_dl" "$DATA_AUTO_DL"
+    fi
+    (cd "$DL_DIR" && { unzip -q pmsData_dl || tar xzf pmsData_dl; } ) || true
+    for cand in "$DL_DIR"/*/pmsData "$DL_DIR"/pmsData "$DL_DIR"; do
+        if [[ -d "$cand/ballPNG" ]]; then DATA_ROOT="$cand"; break; fi
+    done
+fi
+[[ -n "$DATA_ROOT" && -d "$DATA_ROOT/ballPNG" ]] || fail "未找到 DiLiGenT pmsData(含 ballPNG)。
+  数据获取(任选其一后重跑本脚本):
+  1. 本地上传(最可靠, 数据已在 Windows 机的 D:/data/DiLiGenT/ 共 936MB):
+       scp -r D:/data/DiLiGenT/pmsData <云用户>@<云IP>:~/DiLiGenT/pmsData
+       然后: DATA_ROOT=~/DiLiGenT/pmsData bash run_exp8r_cloud.sh
+       (或直接放到 ~/DiLiGenT/pmsData / /data/DiLiGenT/pmsData, 脚本自动探测)
+  2. 官方下载(约 936MB): http://sites.google.com/site/diligentdt/
+     下载解压后同上设置 DATA_ROOT
+  3. 已验证直链: DATA_AUTO_DL=<真实URL> bash run_exp8r_cloud.sh(自动下载解压)"
+ok "数据根: $DATA_ROOT"
 ok "数据根: $DATA_ROOT"
 
 # ------------------------------------------------------------------------------
