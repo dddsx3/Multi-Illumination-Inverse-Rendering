@@ -1,0 +1,163 @@
+{
+ "meta": {
+  "res": 48,
+  "n_lights": 5,
+  "term_eps": 0.02,
+  "enrich_threshold": 5.0,
+  "distance_metric": "BFS on valid-pixel grid",
+  "diag_mode": "C 最优补偿口径(与 Rayleigh 主口径一致)"
+ },
+ "generators": {
+  "lambda": {
+   "global_median": 0.030947062655300648,
+   "buckets": {
+    "terminator_band(0)": {
+     "n": 547,
+     "mean": 0.046201791468235394,
+     "ratio_to_median": 1.4929297808598936
+    },
+    "d=1": {
+     "n": 215,
+     "mean": 0.061148840207245,
+     "ratio_to_median": 1.975917420284518
+    },
+    "d=2-3": {
+     "n": 229,
+     "mean": 0.045875060312106496,
+     "ratio_to_median": 1.4823720371487006
+    },
+    "d=4-7": {
+     "n": 244,
+     "mean": 0.0349050718684111,
+     "ratio_to_median": 1.1278961191631065
+    },
+    "d=8-15": {
+     "n": 37,
+     "mean": 0.02023045912840619,
+     "ratio_to_median": 0.6537117707661052
+    },
+    "far(>15)": {
+     "n": 0,
+     "mean": null
+    },
+    "contour_band(对照)": {
+     "n": 91,
+     "mean": 0.10607097204537627,
+     "ratio_to_median": 3.427497246728465
+    },
+    "interior_far(对照)": {
+     "n": 37,
+     "mean": 0.02023045912840619,
+     "ratio_to_median": 0.6537117707661052
+    }
+   }
+  },
+  "mu": {
+   "global_median": 0.9883572250187843,
+   "buckets": {
+    "terminator_band(0)": {
+     "n": 547,
+     "mean": 0.9083452412609937,
+     "ratio_to_median": 0.9190454809937065
+    },
+    "d=1": {
+     "n": 215,
+     "mean": 0.9764303932182207,
+     "ratio_to_median": 0.9879326710033035
+    },
+    "d=2-3": {
+     "n": 229,
+     "mean": 0.9985619115703587,
+     "ratio_to_median": 1.0103248970040972
+    },
+    "d=4-7": {
+     "n": 244,
+     "mean": 1.060627002440878,
+     "ratio_to_median": 1.0731211100528153
+    },
+    "d=8-15": {
+     "n": 37,
+     "mean": 1.059550889134013,
+     "ratio_to_median": 1.0720323202108182
+    },
+    "far(>15)": {
+     "n": 0,
+     "mean": null
+    },
+    "contour_band(对照)": {
+     "n": 91,
+     "mean": 0.9348946264447294,
+     "ratio_to_median": 0.945907615970492
+    },
+    "interior_far(对照)": {
+     "n": 37,
+     "mean": 1.059550889134013,
+     "ratio_to_median": 1.0720323202108182
+    }
+   }
+  },
+  "nu": {
+   "global_median": 0.9751359608242273,
+   "buckets": {
+    "terminator_band(0)": {
+     "n": 547,
+     "mean": 0.9391379095676835,
+     "ratio_to_median": 0.9630840696038769
+    },
+    "d=1": {
+     "n": 215,
+     "mean": 0.9375096283945715,
+     "ratio_to_median": 0.9614142704799316
+    },
+    "d=2-3": {
+     "n": 229,
+     "mean": 0.9681925884208615,
+     "ratio_to_median": 0.9928795853272636
+    },
+    "d=4-7": {
+     "n": 244,
+     "mean": 0.9507969494447752,
+     "ratio_to_median": 0.9750403919481344
+    },
+    "d=8-15": {
+     "n": 37,
+     "mean": 0.878039680602821,
+     "ratio_to_median": 0.9004279565904468
+    },
+    "far(>15)": {
+     "n": 0,
+     "mean": null
+    },
+    "contour_band(对照)": {
+     "n": 91,
+     "mean": 0.870600770993954,
+     "ratio_to_median": 0.8927993694931367
+    },
+    "interior_far(对照)": {
+     "n": 37,
+     "mean": 0.878039680602821,
+     "ratio_to_median": 0.9004279565904468
+    }
+   }
+  }
+ },
+ "verdicts": {
+  "lambda": {
+   "terminator_enrichment": 1.4929297808598936,
+   "passes": false
+  },
+  "mu": {
+   "terminator_enrichment": 0.9190454809937065,
+   "passes": false
+  },
+  "nu": {
+   "terminator_enrichment": 0.9630840696038769,
+   "passes": false
+  }
+ },
+ "overall": {
+  "n_pass": 0,
+  "n_total": 3,
+  "conclusion": "不集中 → 不强行归因; 第三通道候选表(离散 Sobel 微分、极点参数化)如实列出"
+ }
+}
