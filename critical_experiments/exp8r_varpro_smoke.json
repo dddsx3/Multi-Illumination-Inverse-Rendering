@@ -1,0 +1,61 @@
+{
+ "meta": {
+  "purpose": "OPT-1 阶段 1 烟测: VarPro vs trf 单起点对照(ballPNG cfg00)",
+  "object": "ballPNG",
+  "N": 3,
+  "subset": "cfg00(SEED=20260906 复刻现行抽样)",
+  "P_subsampled": 2000,
+  "seed": 20260906,
+  "rep_median": "计时取 3 次中位",
+  "weighted": "False(与 joint_trf 目标严格一致)",
+  "python": "3.14.2",
+  "numpy": "2.4.1",
+  "scipy": "1.17.0",
+  "timing_note": "机器非空闲: 后台 PID 8260 exp8r_v3.1(约1核)在跑; 计时为上界(与阶段 0 同口径)",
+  "shadow_frac": 0.028333333333333332,
+  "a_": 7.614152233010712,
+  "b_": -146.7105162665478,
+  "lambert_resid": 0.24445689837780094
+ },
+ "trf": {
+  "cost": 29696.381368742863,
+  "lae_deg": 2.444015435594936,
+  "time_s_med": 0.11837389999982406,
+  "nfev": 6,
+  "njev": 6,
+  "times": [
+   0.120539,
+   0.117264,
+   0.118374
+  ]
+ },
+ "varpro": {
+  "cost": 29696.384810183918,
+  "lae_deg": 2.4476014087832687,
+  "time_s_med": 0.08585380000022269,
+  "n_outer": 17,
+  "n_fev": 258,
+  "als_steps_last": 1,
+  "converged": true,
+  "message": "cost plateau (rel drop <= 1e-14)",
+  "times": [
+   0.086939,
+   0.085854,
+   0.085168
+  ]
+ },
+ "cross": {
+  "cost_varpro_x_trf_semantics": 29696.384810183918,
+  "cost_trf_x_same_semantics": 29696.38136874286,
+  "rel_cost_gap": 1.1588755586124333e-07,
+  "rho_ratio_med": 1.0074635599391493,
+  "alpha_ratio_med": 0.9926379714009338,
+  "product_ratio_med": 1.0000057692095372,
+  "per_light_angle_trf_vs_vp_deg": [
+   0.011189704453975179,
+   0.0076406504778258645,
+   0.0064539467989752596
+  ]
+ },
+ "wall_seconds": 1.336584
+}

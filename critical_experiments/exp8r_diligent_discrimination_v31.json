@@ -1,0 +1,42 @@
+{
+ "objects": {
+  "ballPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "bearPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "buddhaPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "catPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "cowPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "gobletPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "harvestPNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "pot1PNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "pot2PNG": {
+   "error": "all input arrays must have the same shape"
+  },
+  "readingPNG": {
+   "error": "all input arrays must have the same shape"
+  }
+ },
+ "meta": {
+  "n3": 50,
+  "other": 15,
+  "seed": 20260906,
+  "diag": "v3.1 变体A代数@拟合值(逐像素ρ-Schur+联合α-pinv边缘化)",
+  "estimator": "v3 估计器链零改动(trf+解析稀疏J)",
+  "redline8": "PASS"
+ }
+}

@@ -1,0 +1,75 @@
+{
+ "meta": {
+  "purpose": "OPT-1 阶段 0 微基准: 现行 joint_trf 单子集计时分解",
+  "object": "ballPNG",
+  "N": 3,
+  "subset": "cfg00(SEED=20260906 复刻现行抽样)",
+  "P_subsampled": 2000,
+  "pixels_total": 15791,
+  "seed": 20260906,
+  "rep_median": "trf_x1 取 3 次中位数",
+  "python": "3.14.2",
+  "numpy": "2.4.1",
+  "scipy": "1.17.0",
+  "cores": 32,
+  "load_note": "机器有 python 后台进程 exp12v4 全量在跑(单核 ~95%), 计时受并行负载干扰, 所有数字为上界(真实无负载值应更低)"
+ },
+ "trf_detail": {
+  "nfev": 6,
+  "njev": 6,
+  "cost_x1_median": 29696.381368742863,
+  "cost_3start_best": 29696.381368742863,
+  "lae_deg": 2.444015435594936,
+  "trace": 7.665911752415742e-12,
+  "jac_time_share_est_pct": 1.35
+ },
+ "segments": [
+  {
+   "segment": "data_load(ballPNG 96 PNG + 归一化)",
+   "seconds": 0.617498,
+   "pct": 50.99
+  },
+  {
+   "segment": "calibrate(全 96 光拟合+噪声)",
+   "seconds": 0.103248,
+   "pct": 8.53
+  },
+  {
+   "segment": "subset_prep(守卫+下采样 cfg00)",
+   "seconds": 0.002532,
+   "pct": 0.21
+  },
+  {
+   "segment": "als_init(50 次 ALS 粗解)",
+   "seconds": 0.008453,
+   "pct": 0.7
+  },
+  {
+   "segment": "perturb(2 个扰动起点)",
+   "seconds": 9.2e-05,
+   "pct": 0.01
+  },
+  {
+   "segment": "trf_x1(单起点, 3 次中位数)",
+   "seconds": 0.111763,
+   "pct": 9.23
+  },
+  {
+   "segment": "trf_x3(现行协议 3 起点实际)",
+   "seconds": 0.366702,
+   "pct": 30.28
+  },
+  {
+   "segment": "sparse_jac_assembly(单次, 5 次中位数)",
+   "seconds": 0.000252,
+   "pct": 0.02
+  },
+  {
+   "segment": "diagnose_trace(单次)",
+   "seconds": 0.000377,
+   "pct": 0.03
+  }
+ ],
+ "total_seconds": 1.210917,
+ "wall_seconds": 1.445965
+}

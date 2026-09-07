@@ -70,6 +70,16 @@ def diagnose_trace_v31(n_gt, I_sub, rho, dirs_sub, alphas, a_, b_):
         t1s[k] = t1; t2s[k] = np.cross(dirs_sub[k], t1)
     # ρ 信息(逐像素对角, D1): Fpp[p] = Σ_k w_kp (α_k h nl)²
     Fpp = (((alphas[None, :] * h * nl) ** 2) * w.T).sum(1)     # (P,)
+    # 全暗像素过滤(修复: 拟合 rho_e 可为精确 0 → ALS 闭式 0/0 → NaN → SVD 不收敛,
+    # ball cfg21 实证; Fpp=0 像素不携带方向信息, 通用预处理非选择性)
+    keep = Fpp > 1e-12 * max(np.median(Fpp), 1e-300)
+    if keep.sum() < 10:
+        return float('nan')
+    n_gt, I_sub, rho, alphas = n_gt[keep], I_sub[:, keep], rho[keep], alphas
+    nl, h = nl[keep], h[keep]
+    w = w[:, keep]
+    Fpp = Fpp[keep]
+    P = int(keep.sum())
     Fpp = np.maximum(Fpp, 1e-300)
     n_l = 3 * N
     F_ll = np.zeros((n_l, n_l))
@@ -86,9 +96,10 @@ def diagnose_trace_v31(n_gt, I_sub, rho, dirs_sub, alphas, a_, b_):
         F_ll[i0 + 0, i0 + 1] = F_ll[i0 + 1, i0 + 0] = (wt * g_a * g_1).sum()
         F_ll[i0 + 0, i0 + 2] = F_ll[i0 + 2, i0 + 0] = (wt * g_a * g_2).sum()
         F_ll[i0 + 1, i0 + 2] = F_ll[i0 + 2, i0 + 1] = (wt * g_1 * g_2).sum()
-        F_lr[i0 + 0] = wt * alphas[k] * nl[:, k] * g_a / rho * rho   # = wt·α·h·nl·g_a
-        F_lr[i0 + 1] = wt * alphas[k] * nl[:, k] * g_1 / rho * rho
-        F_lr[i0 + 2] = wt * alphas[k] * nl[:, k] * g_2 / rho * rho
+        # d r/dρ_p (对第 k 光行): −α_k h_pk nl_pk (与 Jacobian 推导一致, 不经 rho)
+        F_lr[i0 + 0] = wt * alphas[k] * nl[:, k] * g_a
+        F_lr[i0 + 1] = wt * alphas[k] * nl[:, k] * g_1
+        F_lr[i0 + 2] = wt * alphas[k] * nl[:, k] * g_2
     # D1: ρ 逐像素对角精确 Schur
     S = F_ll - F_lr @ (F_lr.T / Fpp[:, None])
     # D2: α 联合边缘化(pinv 处理 ρ·α 乘积规范方向的奇异 S_aa)

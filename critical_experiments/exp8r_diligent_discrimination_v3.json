@@ -1,0 +1,49 @@
+{
+ "objects": {
+  "ballPNG": {
+   "error": "Unable to allocate 5.49 GiB for an array with shape (47013, 15680) and data type float64"
+  },
+  "bearPNG": {
+   "error": "Unable to allocate 36.9 GiB for an array with shape (40657, 121944) and data type float64"
+  },
+  "buddhaPNG": {
+   "error": "Unable to allocate 43.6 GiB for an array with shape (44191, 132546) and data type float64"
+  },
+  "catPNG": {
+   "error": "Unable to allocate 45.0 GiB for an array with shape (44897, 134664) and data type float64"
+  },
+  "cowPNG": {
+   "error": "Unable to allocate 597. KiB for an array with shape (76356,) and data type float64"
+  },
+  "gobletPNG": {
+   "error": "Unable to allocate 552. KiB for an array with shape (70680,) and data type float64"
+  },
+  "harvestPNG": {
+   "error": "Unable to allocate 69.0 GiB for an array with shape (55553, 166632) and data type float64"
+  },
+  "pot1PNG": {
+   "error": "Unable to allocate 70.9 GiB for an array with shape (56335, 168978) and data type float64"
+  },
+  "pot2PNG": {
+   "error": "Unable to allocate 25.4 GiB for an array with shape (33729, 101160) and data type float64"
+  },
+  "readingPNG": {
+   "error": "Unable to allocate 631. KiB for an array with shape (80817,) and data type float64"
+  }
+ },
+ "meta": {
+  "n3": 50,
+  "other": 15,
+  "seed": 20260906,
+  "protocol": "v3 geometry-known joint trf"
+ },
+ "verdict": {
+  "n_objects": 0,
+  "n_significant_positive": 0,
+  "n_significant_total": 0,
+  "meta_p": NaN,
+  "per_object": {},
+  "acceptance": "≥6/10 物体 LAE 显著正(p<0.05) → 支柱③真实侧成立",
+  "result": "混合/负结果: 0 显著正 / 0 显著负(交下一轮裁决)"
+ }
+}
