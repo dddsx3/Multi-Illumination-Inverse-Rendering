@@ -14,6 +14,8 @@
 from __future__ import annotations
 import json
 import sys
+import time
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -215,9 +217,12 @@ def main():
             outlier = resid_full > 3 * np.std(resid_full)
             out_frac = float(outlier.mean())
             print(f"\n{name}: P={len(n_gt)}, 朗伯残差 {lambert_resid:.3f}, 离群 {out_frac:.3f}")
+            t0obj = time.time()
+            ndone = 0
+            ntotsub = N3_SAMPLES + OTHER_SAMPLES * 4
 
             rows = []
-            r2 = np.random.default_rng(SEED + hash(name) % 1000)
+            r2 = np.random.default_rng(SEED + zlib.crc32(name.encode()) % 1000)
             # N=3 分层
             sels = []
             for _ in range(N3_SAMPLES):
@@ -263,6 +268,9 @@ def main():
                 tr = diagnose_trace(n_k, I_k, rho_e, dirs_sub, alpha_e, a_, b_)
                 rows.append(dict(N=3, sigma_min=float(np.linalg.svd(dirs_sub, compute_uv=False)[-1]),
                                  trace=tr, lae=lae_v))
+                ndone += 1
+                el = time.time() - t0obj
+                print(f"      [P] N3 done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/ndone*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
             # 其他 N
             for N in (5, 10, 20, 50):
                 for _ in range(OTHER_SAMPLES):
@@ -284,7 +292,7 @@ def main():
                         res = joint_trf(I_k, rho_als, d0, n_k, a_, b_)
                         if best is None or res.cost < best.cost:
                             best = res
-                    P_k = keep.sum()
+                    P_k = len(sub_idx)   # 修: 与 N=3 分支一致(下采样像素数)
                     parms = best.x[P_k:].reshape(N, 3)
                     xy = parms[:, 1:]
                     zz = np.sqrt(np.maximum(1 - xy[:,0]**2 - xy[:,1]**2, 1e-12))
@@ -294,6 +302,9 @@ def main():
                     tr = diagnose_trace(n_k, I_k, rho_e, dirs_sub, alpha_e, a_, b_)
                     rows.append(dict(N=N, sigma_min=float(np.linalg.svd(dirs_sub, compute_uv=False)[-1]),
                                      trace=tr, lae=lae_v))
+                    ndone += 1
+                    el = time.time() - t0obj
+                    print(f"      [P] other done={ndone}/{ntotsub} el={el:.0f}s eta_obj={el/ndone*(ntotsub-ndone):.0f}s lae={lae_v:.2f}", flush=True)
             # N=3 Spearman
             n3 = [r for r in rows if r["N"] == 3]
             trs = np.array([r["trace"] for r in n3]); laes = np.array([r["lae"] for r in n3])

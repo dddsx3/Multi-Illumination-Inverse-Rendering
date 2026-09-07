@@ -155,11 +155,15 @@ NCPU="$(nproc)"
 N_TODO="${#TODO[@]}"
 PARALLEL="${PARALLEL:-$(( N_TODO < NCPU ? N_TODO : NCPU ))}"
 [[ "$N_TODO" == "0" ]] && { ok "全部 10 物体已存在, 跳过计算"; } || {
-    log "开始并行计算: ${N_TODO} 物体 × 并行度 ${PARALLEL}(CPU ${NCPU} 核)…"
+    TPB=$(( NCPU / PARALLEL ))
+    [[ "$TPB" -lt 2 ]] && TPB=2
+    log "开始并行计算: ${N_TODO} 物体 × 并行度 ${PARALLEL}(CPU ${NCPU} 核, 每物体 BLAS/OpenMP 钉扎 ${TPB} 线程)…"
+    log "进度查看(另开终端): watch -n 15 bash $SCRIPT_DIR/show_progress.sh"
     mkdir -p logs
     PIDS=()
     for o in "${TODO[@]}"; do
-        ( "$PY_BIN" -u "$MAIN_SCRIPT" --only "$o" --data_root "$DATA_ROOT" \
+        ( export OMP_NUM_THREADS=$TPB OPENBLAS_NUM_THREADS=$TPB MKL_NUM_THREADS=$TPB NUMEXPR_NUM_THREADS=$TPB VECLIB_MAXIMUM_THREADS=$TPB
+          "$PY_BIN" -u "$MAIN_SCRIPT" --only "$o" --data_root "$DATA_ROOT" \
             > "logs/${o}.log" 2>&1 ) &
         PIDS+=($!)
         # 简易并行池: 达到并行度时等待任一完成
