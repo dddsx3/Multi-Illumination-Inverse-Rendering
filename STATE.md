@@ -15,9 +15,9 @@
 | C06 双路线 ΔF | done | 交付物随 C03 落地（schur.py 双路线+whitening）；验收测试含 m/q 欠定/临界/过定五区+Λ=0 秩亏，双路线 rel 8.4e-16 | tests/unit/test_information_modules.py | 528de66(交付)/本commit(验收扩区) | 2026-09-07 |
 | C07 CI01 正式 | done | **Gate A 通过**：100/100 checks 绿（dual 2.21e-12/param 2.23e-12/scale_inv 1.72e-15/idem 8.6e-16/photometric shift 0.799）；首轮暴露 2 个 harness 缺陷（未归一 J 病态、λ 锚定退化带）如实记录并修复后整卡重跑 | artifacts/frozen/ci01_formal_summary.json; docs/memo_CI01_GateA_20260907.md | 本commit(C07) | 2026-09-07 |
 | C08 理论手稿定稿 | done | Lemma1/Prop1/Prop2/Lemma2/λ⋆ 逐条按宪法§3 成文；四元组齐（假设→结论→新颖性权重→实验）；R1 引用谱系落实（HCRB/Harville/GUM）；无 novel theorem 措辞；λ⋆ 仅绝对信息语境 | paper/theory_note_v1.md | 本commit(C08) | 2026-09-07 |
-| C09 scene 工厂 | pending | — | — | — | — |
-| C10 CI02 gauge/λ⋆ | pending | — | — | — | — |
-| C11 retention+tracking | pending | — | — | — | — |
+| C09 scene 工厂 | done | 分层网格 54 场景（3几何×3albedo×3仰角×{1,3}灯）；gauge 恒等式 A·a=−B·c̄ 逐位成立（<1e-12）；μ_floor 接口落地 | src/calibinfo/datasets/synthetic.py; tests/unit/test_scene_factory.py | 本commit(C09-C11) | 2026-09-08 |
+| C10 CI02 gauge/λ⋆ | done | 双 gate 绿：闭式 vs direct 良条件区 p50 3.1e-9/layered 0.132（消减地板分层 gate，cancel_margin=100 预注册）；λ⋆ 一阶预测 vs 闭式二分求根 median\|log10\|=0.00000（54/54 线性域，cond≤0.99）；实现层处置：灾难消减地板分层+读出升级二分求根（memo §2） | artifacts/frozen/ci02_formal_summary.json; docs/memo_CI02_20260907.md | 本commit(C09-C11) | 2026-09-08 |
+| C11 retention+tracking | done | 双路线（白化平方根 vs generalized-eig）54 场景 max rel 1.55e-15（<1e-10）；Fig.4 三 panel 数据入 frozen：trace 反例（Δ≈4% 而 tracked ρ 0.001→0.87）、tracked heatmap（track_modes 链，N=3 简 1 步）、V6 角度 N=1 0.00°/N=3 25.9°；首轮 helper 缺陷（追错 F∞ 基）修正为 R(λ) 特征基 | experiments/ci02_gauge.py::fig4; tests 51 绿 | 本commit(C09-C11) | 2026-09-08 |
 | C12 CI03 线性 MC | pending | — | — | — | — |
 | C13 CI03 非线性包络 | pending | — | — | — | — |
 | C14 OpenIllumination 适配 | pending | — | — | — | — |

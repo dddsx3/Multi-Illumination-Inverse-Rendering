@@ -44,3 +44,12 @@ def track_modes(prev_vecs, curr_vecs, k=None, degenerate_tol=1e-3):
     min_gap = float(gaps.min()) if gaps.size else float("inf")
     return dict(assignment=assignment, overlap=O,
                 degenerate=bool(min_gap < degenerate_tol), min_gap=min_gap)
+
+
+def principal_angle_ref(V1, V2, k=None):
+    """两个 k 维列空间的最大主角度（度）。C11/Fig.4 的 V6 角度读出用。"""
+    V1 = np.asarray(V1, float)
+    V2 = np.asarray(V2, float)
+    k = k or min(V1.shape[1], V2.shape[1])
+    _, sv, _ = np.linalg.svd(V1[:, :k].T @ V2[:, :k])
+    return float(np.degrees(np.arccos(np.clip(sv[-1], -1, 1))))

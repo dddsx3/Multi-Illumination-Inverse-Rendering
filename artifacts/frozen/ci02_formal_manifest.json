@@ -1,0 +1,44 @@
+{
+ "experiment": "ci02",
+ "git_sha": "7e5bdc9dbf15f900125b8054ec2322a75f25651a",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "formal",
+  "seed": 20260907,
+  "P": 300,
+  "geometries": [
+   "sphere",
+   "bumpy",
+   "terminator_heavy"
+  ],
+  "albedos": [
+   "narrow",
+   "medium",
+   "wide"
+  ],
+  "light_elevs": [
+   25.0,
+   45.0,
+   65.0
+  ],
+  "n_lights_choices": [
+   1,
+   3
+  ],
+  "gate_closed_vs_direct": 1e-08,
+  "gate_lambda_star_log_err_median": 1.0,
+  "linear_band_rel_smed2": 0.01,
+  "cancellation_margin": 100.0,
+  "with_tracking": true
+ },
+ "config_hash": "9c9985a87145034a7202be3de87710d5a1c0c2106bb6c54ee3a25879a9f07894",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-07T16:17:51.276162+00:00"
+}

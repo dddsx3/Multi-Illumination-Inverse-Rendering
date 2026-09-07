@@ -13,6 +13,44 @@ from __future__ import annotations
 import numpy as np
 
 
+def retention_spectrum_gen_eig(DeltaF, Finf):
+    """独立路线 B：generalized eigenvalue（矩阵束 (ΔF, F∞)，scipy.linalg.eigh
+    走 LAPACK Cholesky 归约——与白化路线的 eigh 平方根代数独立）。
+
+    仅当 F∞ 数值正定时可用（Cholesky 前提）；F∞ 秩亏时本路线不可用，
+    白化路线限制到 range(F∞) 仍是唯一读出（Lemma 2 的秩亏处置）。
+    返回 (rho, ok)；ok=False 表示 F∞ 非正定、路线不可用。
+    """
+    from scipy.linalg import eigh as _gen_eigh
+    DeltaF = np.asarray(DeltaF, float)
+    Finf = np.asarray(Finf, float)
+    n = Finf.shape[0]
+    assert DeltaF.shape == (n, n)
+    Finf = 0.5 * (Finf + Finf.T)
+    try:
+        rho = _gen_eigh(DeltaF, Finf, eigvals_only=True)
+    except np.linalg.LinAlgError:
+        return None, False
+    return np.sort(rho), True
+
+
+def retention_spectrum_dual(DeltaF, Finf, tol_rel=1e-12):
+    """双路线交叉验证（宪法 Lemma 2 审计）：白化（正定平方根）vs generalized eig。
+
+    F∞ 正定时两路线应逐元素一致 rel<1e-10（CI02/卡 C11 验收）；
+    返回 dict(rho, dual_rel, gen_eig_available)。
+    """
+    out = retention_spectrum(DeltaF, Finf, tol_rel=tol_rel)
+    rho_g, ok = retention_spectrum_gen_eig(DeltaF, Finf)
+    dual_rel = None
+    if ok and rho_g.size == out["rho"].size:
+        dual_rel = float(np.abs(out["rho"] - rho_g).max()
+                        / max(np.abs(rho_g).max(), 1e-300))
+    out["gen_eig_available"] = bool(ok)
+    out["dual_rel"] = dual_rel
+    return out
+
+
 def retention_spectrum(DeltaF, Finf, tol_rel=1e-12):
     """限制到可识别子空间的 retention 谱。
 

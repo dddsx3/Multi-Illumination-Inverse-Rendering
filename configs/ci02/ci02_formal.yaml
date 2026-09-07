@@ -1,0 +1,21 @@
+# CI02 正式实验 · 卡 C10（宪法 §4.2 全条：54 分层场景）
+# 预注册（跑前写死）：
+#   gate_closed_vs_direct: 1e-8 —— 闭式 vs 直接 Rayleigh 全网格最大相对误差
+#   gate_lambda_star_log_err_median: 1.0 —— H3（跨场景长期偏差 >1 decade 才失败）
+#   linear_band_rel_smed2: 1e-2 —— "预测点仍在线性域"分层判据（λ⋆ ≤ 1e-2·s_med²）
+# 失效处置：保留闭式、降级 crossover claim（不删数据、不停手）。
+run_name: formal
+seed: 20260907
+P: 300
+geometries: [sphere, bumpy, terminator_heavy]
+albedos: [narrow, medium, wide]
+light_elevs: [25.0, 45.0, 65.0]
+n_lights_choices: [1, 3]
+gate_closed_vs_direct: 1.0e-8
+gate_lambda_star_log_err_median: 1.0
+linear_band_rel_smed2: 1.0e-2
+# 阈值分层（宪法 §6.2）：直接路线在深未校准端（gauge Rayleigh→0）受灾难性消减地板
+# C·eps·saturation/|direct| 约束（红队 V2 同现象：25 decade max 3.9e-8）。
+# gate 语义：良条件区 rel<1e-8；全程 rel < max(1e-8, 消减地板)（cvd_layered<1）。
+cancellation_margin: 100.0
+with_tracking: true
