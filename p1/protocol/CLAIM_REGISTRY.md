@@ -1,3 +1,7 @@
+> **[SUPERSEDED 20260907]** 本 GA-ISI 三句话契约已被新宪法取代——
+> 唯一有效版本 = 仓库根 `CLAIMS_REGISTRY.yaml`（calibration-confidence continuum，C1–C6 + 红队增补）。
+> 历史保留，只读；详见 `docs/主控计划书_20260907_TCI_从当前状态到投稿_v1.0.md` §1 处置裁决表。
+
 # CLAIM_REGISTRY · R5-B′ 论文四句话契约
 
 > **本文件是论文的宪法**：R5-B′ 阶段任何实验、图表、章节都必须服务于以下四句 claim（C1–C4）。

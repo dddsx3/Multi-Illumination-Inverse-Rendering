@@ -1,3 +1,8 @@
+# **[VOID 20260907]** 本实验判定作废（任务书 v3.3 §1.1 四缺陷：真值初始化幻象等）。
+# 永久保留资产 = divergence_precheck（exp12v3_divergence_precheck.*，残差比 1e11-1e16 检出全对）。
+# 修正重跑版 = exp12v4_discrimination_matched（情景丙收口）；禁引本文件数字。
+# 只读归档（宪法 §15 / REPO_MIGRATION B4）。
+
 #!/usr/bin/env python3
 """卡 R 步骤 2-7 · exp12v3 判别力重跑(trf + ALS 初值 + 双响应)
 
