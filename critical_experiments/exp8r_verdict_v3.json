@@ -1,0 +1,53 @@
+{
+  "experiment": "卡S exp8R v3",
+  "claim": "支柱③真实侧: Fisher 迹推前诊断量判别 DiLiGenT 多光照方向估计误差(LAE)",
+  "preregistration": "critical_experiments/exp8r_preregistration_v3.md",
+  "code_commit_sha": "3411c38(判定时刻 HEAD; 执行链 1141271→3411c38)",
+  "criterion_frozen": true,
+  "protocol": {
+    "n_objects": 10,
+    "n3_samples": 50,
+    "criterion": "≥6/10 物体 N=3 Spearman(trace,LAE) 显著正 p<0.05",
+    "estimator": "scipy least_squares(trf) 联合 {ρ}∪{α,l̂}, 解析+稀疏 Jacobian(LSMR 紧容差), ALS 初值, 3 起点",
+    "implementation_note": "性能代际: FD→解析+稀疏 J; 与 FD 稠密路径同最优解(cost 差 4e-11); 判据零改动"
+  },
+  "results_per_object": {
+    "ballPNG": {"rho": -0.379, "p": 0.0066, "verdict": "显著负", "lambert_resid": 0.244},
+    "bearPNG": {"rho": -0.114, "p": 0.4303, "verdict": "ns", "lambert_resid": 0.168},
+    "buddhaPNG": {"rho": -0.643, "p": 4.79e-7, "verdict": "显著负", "lambert_resid": 0.223},
+    "catPNG": {"rho": -0.028, "p": 0.8485, "verdict": "ns", "lambert_resid": 0.135},
+    "cowPNG": {"rho": -0.700, "p": 1.5e-8, "verdict": "显著负", "lambert_resid": 0.445},
+    "gobletPNG": {"rho": -0.232, "p": 0.1043, "verdict": "ns", "lambert_resid": 0.354},
+    "harvestPNG": {"rho": -0.550, "p": 3.5e-5, "verdict": "显著负", "lambert_resid": 0.671,
+                  "archive_note": "rows 100/110(缺 10 个 N=50 子集, 云实例暂停; 主判据完整)"},
+    "pot1PNG": {"rho": -0.735, "p": 1.3e-9, "verdict": "显著负", "lambert_resid": 0.137},
+    "pot2PNG": {"rho": 0.210, "p": 0.1431, "verdict": "ns", "lambert_resid": 0.293},
+    "readingPNG": {"rho": -0.551, "p": 3.4e-5, "verdict": "显著负", "lambert_resid": 0.467}
+  },
+  "verdict": {
+    "n_significant_positive": 0,
+    "n_significant_negative": 6,
+    "meta_p": "<1e-4",
+    "pre_registered_decision": "不成立(情景乙 → 下一轮裁决)",
+    "honest_negative": true
+  },
+  "audit_exp8s": {
+    "file": "critical_experiments/exp8s_oracle_schur_audit.json",
+    "sigma_align_max_err": 1.11e-16,
+    "variants": {
+      "A_strict_schur_oracle": {"pos": 4, "neg": 3},
+      "B_simplified_oracle": {"pos": 2, "neg": 3},
+      "C_info_direction_oracle": {"pos": 3, "neg": 4}
+    },
+    "conclusion": "符号约定/简化近似/拟合点污染三假说全部排除; oracle 版亦无一致判别方向 → 定义层问题, 支柱③重定义裁决权归主智能体"
+  },
+  "artifacts": {
+    "verdict_md": "critical_experiments/exp8r_verdict_v3.md",
+    "jacobian_validation": "critical_experiments/exp8r_jac_validation.py",
+    "oracle_audit": "critical_experiments/exp8s_oracle_schur_audit.py",
+    "merge_script": "cloud_migration/exp8r_merge.py",
+    "repro_eval": "EXP8R_JAC=fd 可 A/B 回退数值差分路径"
+  },
+  "produced": "2026-09-07",
+  "status": "收口(预注册判定不成立; harvest 部分存档缺口已注记)"
+}
