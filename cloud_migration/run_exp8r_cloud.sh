@@ -90,7 +90,7 @@ fi
 # 3. 数据探测: pmsData 根目录
 # ------------------------------------------------------------------------------
 if [[ -z "$DATA_ROOT" ]]; then
-    for cand in "/data/DiLiGenT/pmsData" "$WORKDIR/pmsData" "$HOME/DiLiGenT/pmsData" "$HOME/pmsData"; do
+    for cand in "/data/DiLiGenT/pmsData" "$WORKDIR/pmsData" "$HOME/DiLiGenT/pmsData"                 "$HOME/pmsData" "/workspace/DiLiGenT/pmsData" "/workspace/pmsData"                 "$PWD/DiLiGenT/pmsData" "$PWD/../DiLiGenT/pmsData"; do
         if [[ -d "$cand/ballPNG" ]]; then DATA_ROOT="$cand"; break; fi
     done
 fi
