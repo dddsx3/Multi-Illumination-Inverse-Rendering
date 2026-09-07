@@ -1,7 +1,7 @@
 # ICCV 2027 论文骨架 v1 · 卡I(2026-09-07)
 
 > 依据:任务书 v3.2 卡 I(四支柱章节映射 + 证据指针表)。
-> 状态:骨架 v1(S 腿已闭环; 支柱③重定义裁决权归主智能体; 卡H GPU 臂待排)。
+> 状态:骨架 v1 + v3.3 重标(支柱③两腿 ⏸ 修复中: 卡R2/S2; 详见 `任务书_增补v3.3`)。
 
 ## 0. 一句话定位(本节唯一主张)
 
@@ -21,9 +21,9 @@
 | §1 Intro | 现象 | N 曲线平坦是"网络侧现象", 需诊断工具而非更大模型 | EX-01; exp6/7 同图 | ✅ |
 | §2 Related Work | 边界 | 8 篇最近工作 + novelty 风险(可变基数证据累积) | `p1/literature/RELATED_WORK_MATRIX_v3.md` | ✅ |
 | §3 Method | 支柱① 工具链 | SH-9 联合 Fisher + 稀疏 Schur; GBR 三类方向解析分离; CRB 有效性(12/12) | exp2/3/4 计算图+json; 措辞包 §2 | ✅ |
-| §4 Method(诊断定义) | 支柱③(现:负结果) | 迹推前诊断定义 + 预注册评估协议; 判定不成立及 oracle 审计 | exp8r_preregistration_v3; exp8r_verdict_v3; exp8S | ✅(裁决待) |
+| §4 Method(诊断定义) | 支柱③(现:⏸待 R2/S2) | 迹推前诊断定义 + 预注册评估协议; **v3 实现缺陷修复中(v3.3 任务书 §1.2: 主诊断两处代数错误), 判读冻结至 exp12v4/exp8R v3.1 落地** | exp8r_preregistration_v3; exp8r_verdict_v3(头部 SUPERSEDED 待加); exp8S | ⏸ 待 R2/S2 |
 | §5 Diagnostics(对象) | 支柱② 网络侧 | 复制/打乱/敏感度三前向: 网络对光照多样性近零响应 | exp6; EX-01/EX-04/EX-05 验收 | ✅ |
-| §6 Experiments(真实数据) | 支柱③真实侧 | DiLiGenT 10 物体: 0/10 显著正/6/10 显著负; 异质性先于合并 | exp8r_verdict_v3; 73 备用 json | ✅ 负结果 |
+| §6 Experiments(真实数据) | 支柱③真实侧 | DiLiGenT 10 物体: **⏸ 待 S2(v3.1 修正诊断重跑; 旧"0/10 正 6/10 负"headline 被两处代数缺陷污染, 禁引)**; 异质性先于合并 | exp8r_verdict_v3(待 v3.1); exp8S 变体A=当前最可信读数(4正/3负/3ns) | ⏸ 待 S2 |
 | §7 Prescription | 支柱④ 处方 | 控制子空间/谱先验(Gauge/GBR-informed): 124/124 领先; 谱分层与先验连续谱 | exp13b; exp14; exp9c; exp10; exp13 | ✅ |
 | §8 Limitations | 全集 | SH-2 截断 GBR 非精确; 深度通道全病态; 支柱③未成立; 卡H 单模型证据 | 措辞包 §3; FLAG 文件 | ✅ |
 | §9 Conclusion | 收束 | 诊断必要(②)+ 工具可靠(①)+ 判别需重定义(③)+ 处方可行(④) | 同上 | 待支柱③裁决 |
@@ -39,13 +39,13 @@
 | exp5/5b | 散布度负结果族 + 低秩机制 | `exp5_*` | 负结果(机制级) |
 | exp6 | 网络三前向测试 | `exp6_*` | ✅ |
 | exp7 | CRB-vs-N 同图 | `exp7_*` | ✅ |
-| exp8R v3(卡S) | DiLiGenT 判别力(预注册) | `exp8r_verdict_v3.*` | **不成立(0/10 正 6/10 负)** |
+| exp8R v3(卡S) | DiLiGenT 判别力(预注册) | `exp8r_verdict_v3.*` | ⏸ 被污染(§1.2 两处代数错误), headline 禁引; v3.1 重跑中 |
 | exp8S(卡S') | oracle 审计(三变体) | `exp8s_oracle_schur_audit.*` | 假说全排除 |
 | exp9c(卡N) | 谱分层闭环 | json+图 | ✅ |
 | exp10(卡O链条) | slope 收口 | `exp10_slope_closure.*` | ✅ |
 | exp11c(卡O) | 反向切法 κ_w | `exp11c_reverse_cut.*` | ✅ |
 | exp12v2(卡L) | 联合 GN 判别 | `exp12v2_*` | 真负结果(病态) |
-| exp12v3(卡M预备) | 匹配判别 | `exp12v3_*` | ✅ |
+| exp12v3(卡M预备) | 匹配判别 | `exp12v3_*` | ⏸ VOID → exp12v4 重跑中(v3.3 §1.1 四缺陷) |
 | exp13b(卡M) | 控制子空间双对照 | `exp13b_control_subspaces.*` | ✅ 124/124 |
 | exp13 | gauge 误差占比 | `exp13_gauge_error_fraction.*` | ✅ |
 | exp14 | 先验连续谱 | `exp14_prior_continuum.*` | ✅ |
@@ -57,10 +57,11 @@
 ## 3. gate-SKELETON-FULL 检查单
 
 - [x] 卡L(exp12v2 真负结果) / 卡M(exp13b 124/124) / 卡N(exp9c 谱闭环) / 卡O(exp11c)
-- [x] 卡S(exp8R v3 判定 0/10→不成立)+ exp8S 审计
+- [⏸] 卡S/exp8R v3 判定被实现缺陷污染(§1.2) → **卡S2(v3.1)重跑中**; exp8S 审计代数保留有效
 - [x] 卡W(措辞包 v0.4 + 方法论清单小节, 本包 §1–§3 落地)
 - [x] 卡I(骨架 v1:四支柱映射 + 证据指针表)
 - [ ] **卡H seed2024**(唯一 GPU 臂, ~8h 本机夜跑; 云实例已暂停, 待本机或新实例排期)
-- [ ] **支柱③重定义裁决**(主智能体; 裁决卡见 `exp8r_verdict_v3.md` §4; 措辞条目 5 跟随更新)
+- [ ] **支柱③重定义裁决 —— 冻结至 R2/S2 落地后一次裁决**(v3.3 §4.1; 裁决卡见 `exp8r_verdict_v3.md` §4)
+- [ ] **卡 R2(exp12v4)** 与 **卡 S2(exp8R v3.1)**(v3.3 新增, gate 前置)
 
 > 未裁决/未跑两格是 gate 开闸的前置; 其余 S 腿证据已全部在案且可复现。
