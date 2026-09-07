@@ -1,0 +1,154 @@
+{
+ "experiment": "ci01",
+ "git_sha": "be3a6a34c02ebf67fbe16006f7e2aceb136c9538",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "formal",
+  "seed": 20260907,
+  "n_seeds": 5,
+  "k_scale": 10.0,
+  "cases": [
+   {
+    "m": 1,
+    "q": 1,
+    "n": 1,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 4,
+    "q": 1,
+    "n": 2,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 4,
+    "q": 1,
+    "n": 2,
+    "heteroscedastic": true,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 2,
+    "q": 3,
+    "n": 2,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 3,
+    "q": 3,
+    "n": 3,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 12,
+    "q": 3,
+    "n": 6,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 12,
+    "q": 3,
+    "n": 6,
+    "rank_B": 1,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 12,
+    "q": 3,
+    "n": 6,
+    "heteroscedastic": true,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 4,
+    "q": 9,
+    "n": 4,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 9,
+    "q": 9,
+    "n": 9,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 36,
+    "q": 9,
+    "n": 18,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 36,
+    "q": 9,
+    "n": 18,
+    "rank_B": 4,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 36,
+    "q": 9,
+    "n": 18,
+    "heteroscedastic": true,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 36,
+    "q": 9,
+    "n": 18,
+    "rank_B": 4,
+    "heteroscedastic": true,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 18,
+    "q": 36,
+    "n": 12,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 36,
+    "q": 36,
+    "n": 36,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 144,
+    "q": 36,
+    "n": 72,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 144,
+    "q": 36,
+    "n": 72,
+    "rank_B": 18,
+    "shift_gate": 1e-06
+   },
+   {
+    "m": 144,
+    "q": 36,
+    "n": 72,
+    "heteroscedastic": true,
+    "shift_gate": 1e-06
+   },
+   {
+    "structure": "photometric",
+    "m": 200,
+    "q": 9,
+    "n": 200,
+    "sigma": 0.02,
+    "shift_gate": 0.1
+   }
+  ]
+ },
+ "config_hash": "0b64e6d1afcd7ef0fdf38c63cd9f8c64fe0177abab89725bca6f697d57c75c9a",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-07T15:16:48.917817+00:00"
+}

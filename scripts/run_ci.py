@@ -53,7 +53,11 @@ def main():
 
     frozen = ROOT / "artifacts" / "frozen"
     frozen.mkdir(parents=True, exist_ok=True)
-    summary_path = frozen / f"{args.experiment}_{config.get('run_name', 'run')}_summary.json"
+    stem = f"{args.experiment}_{config.get('run_name', 'run')}"
+    # 宪法 §11：artifacts/frozen 只进摘要 + manifest（provenance 与摘要同放）
+    (frozen / f"{stem}_manifest.json").write_text(
+        (run_dir / "manifest.json").read_text(encoding="utf-8"), encoding="utf-8")
+    summary_path = frozen / f"{stem}_summary.json"
     summary_path.write_text(
         json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[run_ci] {args.experiment} done -> {run_dir}")

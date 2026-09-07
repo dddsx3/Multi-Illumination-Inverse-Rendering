@@ -74,10 +74,14 @@ def _build_case(rng, case):
     A = rng.normal(size=(m, n))
     r = case.get("rank_B") or q
     B0 = rng.normal(size=(m, r))
-    J = rng.normal(size=(q, r))            # φ(r 维) → c(q 维) 物理映射（r=q 时非平凡）
-    B = B0 @ J.T                           # c 空间设计矩阵（秩 r）
+    # φ→c 映射取正交列（QR）：随机未归一 J 会把 cond(JᵀJ)≈cond(J)² 人工注入系统，
+    # 使 identity 判定退化到 κ·eps 量级——物理参数映射按泛型良尺度构造（首轮正式
+    # run 实测教训，见 CI01 memo）。
+    J, _ = np.linalg.qr(rng.normal(size=(q, r)))
+    J = J[:, :r]                                       # (q, r) 正交列
+    B = B0 @ J.T                                       # c 空间设计矩阵（秩 r）
     Sig_phi = np.diag(rng.uniform(0.1, 1.0, size=r))
-    Sig_c = J @ Sig_phi @ J.T              # c 空间诱导先验（可秩亏）
+    Sig_c = J @ Sig_phi @ J.T                          # c 空间诱导先验（可秩亏）
     hetero = case.get("heteroscedastic", False)
     Sigma_y = rng.uniform(0.5 * sigma ** 2, 1.5 * sigma ** 2, size=m) if hetero \
         else np.full(m, sigma ** 2)
@@ -121,12 +125,14 @@ def run(config, run_dir):
             DF_c, _ = delta_f_marginal(A, B, Sig_c, sigma)
             rel_param = float(np.linalg.norm(DF_phi - DF_c) / np.linalg.norm(DF_c))
 
-            # 4/5 尺度自检 + 6 谱界（各向同性有效先验，λ 锚定场景敏感带 s_med²/100——
-            # CI02 纪律前置：锚定保证"σ 单独改变 → continuum 移动"非空洞可检；
-            # 读出在 C07 正式 config 冻结前预注册于此）
+            # 4/5 尺度自检 + 6 谱界（各向同性有效先验，λ 锚定工作带 s_med²/100——
+            # 工作带纪律（红队 §2.2 谱截断）：BᵀB 的近零奇异值不入带；
+            # 锚定保证"σ 单独改变 → continuum 移动"非空洞可检；读出已预注册）
             Finf = A.T @ A
-            s_med2 = float(np.median(np.linalg.eigvalsh(B_phi.T @ B_phi)))
-            sigma_base = float(np.sqrt(s_med2 / 100.0))   # λ_base = σ²/σ_φ² = s_med²/100
+            s2 = np.linalg.eigvalsh(B_phi.T @ B_phi)
+            s_pos = s2[s2 > 1e-3 * max(s2.max(), 1e-300)]
+            s_med2 = float(np.median(s_pos)) if s_pos.size else float(s2.max())
+            sigma_base = float(np.sqrt(max(s_med2, 1e-12) / 100.0))   # λ_base = s_med²/100
             Sig_iso = np.eye(r)
             Lam_a = sigma_base ** 2 * np.linalg.inv(Sig_iso)
             Lam_b = (k_scale * sigma_base) ** 2 * np.linalg.inv(k_scale ** 2 * Sig_iso)
