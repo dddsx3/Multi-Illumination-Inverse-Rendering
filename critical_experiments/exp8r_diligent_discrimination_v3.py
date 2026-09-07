@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 import json
+import os
 import sys
 import time
 import zlib
@@ -94,8 +95,71 @@ def als_init(I_sub, rho0, dirs_sub, n_gt):
     return rho, np.array(new_dirs)
 
 
+def jac_r_joint(x, P, n_gt):
+    """残差 r[(k,p)] 的解析 Jacobian(模块级, 供 joint_trf 与验证脚本共用)。
+
+    x = [ρ(P) | (α_k, x_k, y_k)×N]; 行序 = 光主序(k*P+p)。
+    """
+    N = (x.size - P) // 3
+    rho = x[:P]
+    parms = x[P:].reshape(N, 3)
+    alphas = parms[:, 0]
+    xy = parms[:, 1:]
+    z = np.sqrt(np.maximum(1 - xy[:, 0]**2 - xy[:, 1]**2, 1e-12))
+    nl = np.clip(n_gt @ np.column_stack([xy, z]).T, 0, None)      # (P,N)
+    m0 = (nl > 0).astype(float)   # clip 边界处次梯度取 0
+    J = np.zeros((N * P, P + 3 * N))
+    for k in range(N):
+        r0 = k * P
+        # ρ 块: 列=像素的逐光对角(用 np.diag 显式构造, 避免 slice+array 花式索引外积陷阱)
+        J[r0:r0 + P, :P] = np.diag(-alphas[k] * nl[:, k])
+        J[r0:r0 + P, P + 3 * k] = -rho * nl[:, k]
+        J[r0:r0 + P, P + 3 * k + 1] = -rho * alphas[k] * (n_gt[:, 0] - (xy[k, 0] / z[k]) * n_gt[:, 2]) * m0[:, k]
+        J[r0:r0 + P, P + 3 * k + 2] = -rho * alphas[k] * (n_gt[:, 1] - (xy[k, 1] / z[k]) * n_gt[:, 2]) * m0[:, k]
+    return J
+
+
+def jac_r_joint_sparse(x, P, n_gt):
+    """同 jac_r_joint 的稀疏版本(csr)。trf 对稀疏 J 走 LSMR,
+    正规方程 JᵀJ 不再稠密化 → 单迭代成本从 O(m·n²) 降到 O(nnz)。
+    """
+    N = (x.size - P) // 3
+    rho = x[:P]
+    parms = x[P:].reshape(N, 3)
+    alphas = parms[:, 0]
+    xy = parms[:, 1:]
+    z = np.sqrt(np.maximum(1 - xy[:, 0]**2 - xy[:, 1]**2, 1e-12))
+    nl = np.clip(n_gt @ np.column_stack([xy, z]).T, 0, None)
+    m0 = (nl > 0).astype(float)
+    rows, cols, vals = [], [], []
+    for k in range(N):
+        r = np.arange(k * P, (k + 1) * P)
+        rows += [r, r, r, r]
+        cols += [np.arange(P),
+                 np.full(P, P + 3 * k),
+                 np.full(P, P + 3 * k + 1),
+                 np.full(P, P + 3 * k + 2)]
+        vals += [-alphas[k] * nl[:, k],
+                 -rho * nl[:, k],
+                 -rho * alphas[k] * (n_gt[:, 0] - (xy[k, 0] / z[k]) * n_gt[:, 2]) * m0[:, k],
+                 -rho * alphas[k] * (n_gt[:, 1] - (xy[k, 1] / z[k]) * n_gt[:, 2]) * m0[:, k]]
+    from scipy import sparse
+    return sparse.csr_matrix((np.concatenate(vals),
+                              (np.concatenate(rows), np.concatenate(cols))),
+                             shape=(N * P, P + 3 * N))
+
+
 def joint_trf(I_sub, rho0, dirs0, n_gt, a_, b_, n_iters=60):
-    """trf 联合估计 {ρ} ∪ {α_i, l̂_i}。参数化: l = [x,y] → z=√(1-x²-y²)。"""
+    """trf 联合估计 {ρ} ∪ {α_i, l̂_i}。参数化: l = [x,y] → z=√(1-x²-y²)。
+
+    解析 Jacobian(默认; EXP8R_JAC=fd 可回退数值差分):
+      残差 r[(k,p)] = I_obs[k,p] − ρ_p·α_k·nl[p,k],  nl = clip(n·l̂, 0, None)
+      dr/dρ_p = −α_k·nl[p,k]
+      dr/dα_k = −ρ_p·nl[p,k]
+      dr/dx_k = −ρ_p·α_k·(n_x − (x_k/z_k)·n_z)·[nl>0]
+      dr/dy_k = −ρ_p·α_k·(n_y − (y_k/z_k)·n_z)·[nl>0]
+      行序 = 光主序(k*P+p), 与 residual().ravel() 一致。
+    """
     N = I_sub.shape[0]
     P = len(n_gt)
     # 参数: [ρ(P) | (α_k, x_k, y_k)×N]
@@ -120,7 +184,13 @@ def joint_trf(I_sub, rho0, dirs0, n_gt, a_, b_, n_iters=60):
         np.array([np.mean(I_sub[k][I_sub[k] > 0]) / max(np.mean(rho0), 1e-6)
                   for k in range(N)]),
         dirs0[:, :2]]).ravel()])
-    res = least_squares(residual, x0, method='trf', max_nfev=n_iters, verbose=0)
+    use_fd = os.environ.get("EXP8R_JAC", "analytic") == "fd"
+    jac = '2-point' if use_fd else (lambda x: jac_r_joint_sparse(x, P, n_gt))
+    kw = dict(method='trf', max_nfev=n_iters, verbose=0)
+    if not use_fd:
+        # LSMR 紧公差(实测 P=2000/N=3: 与 FD 稠密路径 cost 差 4e-11, 即同一最优解)
+        kw["tr_options"] = {"maxiter": 500, "atol": 1e-12, "btol": 1e-12}
+    res = least_squares(residual, x0, jac=jac, **kw)
     return res
 
 
