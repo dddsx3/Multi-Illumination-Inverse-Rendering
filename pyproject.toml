@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calibinfo"
+version = "0.1.0"
+description = "Calibration-confidence continuum: mode-resolved effective information tools for photometric inverse problems (TCI project)"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# 只收集新宪法下的测试结构；仓库遗留测试（tests/test_*.py）属 legacy 管线，不在默认跑批内。
+testpaths = ["tests/unit", "tests/regression"]
+addopts = "-q"

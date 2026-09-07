@@ -91,3 +91,8 @@ models_list.txt
 obj_models_list.txt
 docs/incidents/*_host_monitor.log
 docs/incidents/*_host_monitor*.log
+
+# === calibinfo（新宪法结构, 2026-09-07 C01）===
+# results/raw/ 不进 git（宪法 §11）；artifacts/frozen/ 只进可重画图表的 CSV/JSON + manifest
+results/
+*.egg-info/
