@@ -90,9 +90,18 @@ fi
 # 3. 数据探测: pmsData 根目录
 # ------------------------------------------------------------------------------
 if [[ -z "$DATA_ROOT" ]]; then
-    for cand in "/data/DiLiGenT/pmsData" "$WORKDIR/pmsData" "$HOME/DiLiGenT/pmsData"                 "$HOME/pmsData" "/workspace/DiLiGenT/pmsData" "/workspace/pmsData"                 "$PWD/DiLiGenT/pmsData" "$PWD/../DiLiGenT/pmsData"; do
+    # 静态候选(含用户云主机实测路径 /workspace/D/data/DiLiGenT/pmsData)
+    for cand in "/workspace/D/data/DiLiGenT/pmsData" "/data/DiLiGenT/pmsData"                 "$WORKDIR/pmsData" "$HOME/DiLiGenT/pmsData" "$HOME/pmsData"                 "/workspace/DiLiGenT/pmsData" "/workspace/pmsData"                 "$PWD/DiLiGenT/pmsData" "$PWD/../DiLiGenT/pmsData"; do
         if [[ -d "$cand/ballPNG" ]]; then DATA_ROOT="$cand"; break; fi
     done
+    # 兜底: 在常见根下递归找任意含 ballPNG 的 pmsData(深度限 6, 避免慢)
+    if [[ -z "$DATA_ROOT" ]] && command -v find >/dev/null 2>&1; then
+        for root in /workspace "$HOME" /data /mnt; do
+            [[ -d "$root" ]] || continue
+            hit="$(find "$root" -maxdepth 6 -type d -name pmsData -exec test -d '{}/ballPNG' ';' -print -quit 2>/dev/null)"
+            if [[ -n "$hit" ]]; then DATA_ROOT="$hit"; break; fi
+        done
+    fi
 fi
 # DiLiGenT 数据(约 936MB)不在本仓库中(gitignore data/), 也无可靠的免注册直链
 # ——官方页面 http://sites.google.com/site/diligentdt/ 提供下载, 但直链随托管方更新,
