@@ -1,0 +1,93 @@
+{
+ "experiment": "ci03",
+ "git_sha": "b86f25723183ef5a3ce0ee206b3d26836da065e0",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "formal",
+  "seed": 20260907,
+  "n_scenes_per_case": 3,
+  "trials": 4000,
+  "gate_variance_ratio_median": [
+   0.95,
+   1.05
+  ],
+  "gate_variance_ratio_iqr": [
+   0.9,
+   1.1
+  ],
+  "gate_coverage_abs_tol": 0.05,
+  "gate_bias_ratio": [
+   0.9,
+   1.2
+  ],
+  "gate_condvar_ratio_median": [
+   0.9,
+   1.1
+  ],
+  "gate_bias_snr_min": 10,
+  "cases": [
+   {
+    "tag": "photo_n1_lo",
+    "structure": "photometric",
+    "P": 400,
+    "n_lights": 1,
+    "sigma": 0.02,
+    "sig_c": 0.05
+   },
+   {
+    "tag": "photo_n1_hi",
+    "structure": "photometric",
+    "P": 400,
+    "n_lights": 1,
+    "sigma": 0.05,
+    "sig_c": 0.05
+   },
+   {
+    "tag": "photo_n3_lo",
+    "structure": "photometric",
+    "P": 400,
+    "n_lights": 3,
+    "sigma": 0.02,
+    "sig_c": 0.05
+   },
+   {
+    "tag": "photo_n3_hi",
+    "structure": "photometric",
+    "P": 400,
+    "n_lights": 3,
+    "sigma": 0.05,
+    "sig_c": 0.05
+   },
+   {
+    "tag": "photo_term_hi",
+    "structure": "photometric",
+    "P": 400,
+    "n_lights": 3,
+    "sigma": 0.05,
+    "sig_c": 0.05,
+    "geometry": "terminator_heavy",
+    "albedo": "wide",
+    "trials": 10000
+   },
+   {
+    "tag": "random_block",
+    "structure": "random",
+    "P": 300,
+    "n": 8,
+    "q": 4,
+    "sigma": 0.1,
+    "sig_c": 0.3
+   }
+  ]
+ },
+ "config_hash": "7cf267d8890fa1a9457985ae12d711149607ee5bd48dd69e66e1d10b77897726",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-08T00:01:36.744634+00:00"
+}

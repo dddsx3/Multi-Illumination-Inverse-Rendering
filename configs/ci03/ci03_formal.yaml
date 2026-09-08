@@ -1,0 +1,29 @@
+# CI03 正式实验 · 卡 C12（宪法 §4.3：linear oracle MC）
+# 预注册（跑前写死；阈值 = 红队 V1 校准量级 + MC 误差预算）：
+#   joint ensemble 方差比（最弱 5 tracked modes）：median ∈ (0.95, 1.05)，IQR ⊂ (0.90, 1.10)
+#     [红队 V1 全像素观测 median 1.0045/IQR [0.984,1.025] @ cond 1.8e8；弱模式端更宽]
+#   coverage 名义 68%/95%：|emp − nom| < 0.05（median across weak modes）
+#   fixed-δc：bias 比率 ∈ (0.9, 1.2)（红队 1.04）；marginal 均值残差 < 0.2（红队 0.052）
+#   条件方差比 median ∈ (0.9, 1.1)（红队 1.0015）
+# trials：高条件数格 10000，其余 4000（弱模式 CI 宽度 <10% 预算，宪法 §4.3）
+run_name: formal
+seed: 20260907
+n_scenes_per_case: 3
+trials: 4000
+gate_variance_ratio_median: [0.95, 1.05]
+gate_variance_ratio_iqr: [0.90, 1.10]
+gate_coverage_abs_tol: 0.05
+gate_bias_ratio: [0.9, 1.2]
+gate_condvar_ratio_median: [0.9, 1.1]
+gate_bias_snr_min: 10
+cases:
+  # photometric 结构（红队 V1 同构）：N=1 与 N=3，两档噪声
+  - {tag: photo_n1_lo, structure: photometric, P: 400, n_lights: 1, sigma: 0.02, sig_c: 0.05}
+  - {tag: photo_n1_hi, structure: photometric, P: 400, n_lights: 1, sigma: 0.05, sig_c: 0.05}
+  - {tag: photo_n3_lo, structure: photometric, P: 400, n_lights: 3, sigma: 0.02, sig_c: 0.05}
+  - {tag: photo_n3_hi, structure: photometric, P: 400, n_lights: 3, sigma: 0.05, sig_c: 0.05}
+  # 高条件数格（非朗伯重终止子 → cond(ΔF)↑；扩样 10000 由 config override）
+  - {tag: photo_term_hi, structure: photometric, P: 400, n_lights: 3, sigma: 0.05, sig_c: 0.05,
+     geometry: terminator_heavy, albedo: wide, trials: 10000}
+  # 随机块（通用系统，m/q 过定）
+  - {tag: random_block, structure: random, P: 300, n: 8, q: 4, sigma: 0.1, sig_c: 0.3}
