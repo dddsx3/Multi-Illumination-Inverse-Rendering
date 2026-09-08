@@ -1,0 +1,47 @@
+{
+ "experiment": "ci04",
+ "git_sha": "40c8c9b078a4405dd21c99e3d7c59d38803ebcef",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "formal",
+  "seed": 20260907,
+  "data_root": "D:/data/OpenIllumination",
+  "data_meta": "D:/data/OpenIllumination_meta",
+  "corruption_type": "joint",
+  "levels": [
+   0.1,
+   0.2,
+   0.35,
+   0.5,
+   0.75,
+   1.0
+  ],
+  "seeds_per_level": 20,
+  "bootstrap": 1000,
+  "gate_spearman_min": 0.5,
+  "max_objects": 11,
+  "objects": [
+   "obj_03_pumpkin",
+   "obj_04_dolphin",
+   "obj_07_pumpkin2",
+   "obj_09_ball",
+   "obj_10_pumpkin3",
+   "obj_11_pine",
+   "obj_13_mushroom",
+   "obj_16_friends_cup",
+   "obj_17_pumpkin5",
+   "obj_18_fabric_hat",
+   "obj_19_cylinder"
+  ]
+ },
+ "config_hash": "b8753b17dd172c0ef72d66d2a7542016483eb869698dd8befc2f66701589b48f",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-08T03:36:05.025269+00:00"
+}

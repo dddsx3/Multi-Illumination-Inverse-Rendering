@@ -1,0 +1,16 @@
+# C16 · CI04 正式 run（Gate D）预注册（跑前写死，C15 pilot freeze 版）
+# 判据：spearman(pred_deg, emp_deg) > 0.5 且 bootstrap95 下界 > 0（H5）
+# 失败处置：真实章降级 limitation（Gate D 失败动作），如实执行
+# seeds：每 level × 对象 20 seeds；test 对象 = test_selection.json 冻结清单
+# （obj_20_greenhead exclusion：HF 数据侧无 com_masked_thumbnail 层，见 test_selection.json）
+run_name: formal
+seed: 20260907
+data_root: D:/data/OpenIllumination
+data_meta: D:/data/OpenIllumination_meta
+corruption_type: joint
+levels: [0.1, 0.2, 0.35, 0.5, 0.75, 1.0]
+seeds_per_level: 20
+bootstrap: 1000
+gate_spearman_min: 0.5
+max_objects: 11
+objects: [obj_03_pumpkin, obj_04_dolphin, obj_07_pumpkin2, obj_09_ball, obj_10_pumpkin3, obj_11_pine, obj_13_mushroom, obj_16_friends_cup, obj_17_pumpkin5, obj_18_fabric_hat, obj_19_cylinder]
