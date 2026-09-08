@@ -1,6 +1,6 @@
 {
  "experiment": "ci03nl",
- "git_sha": "259646e672448ea6ccf3ebe9fb73f8f0175c16be",
+ "git_sha": "bd67897193c9ee7318ee6a1b2ebe36105705bdc0",
  "git_dirty": true,
  "python": "3.14.2",
  "numpy": "2.4.1",
@@ -34,5 +34,5 @@
  "seed": 20260907,
  "dataset_checksums": {},
  "started_utc": null,
- "written_utc": "2026-09-08T00:09:19.140667+00:00"
+ "written_utc": "2026-09-08T04:13:04.979492+00:00"
 }
