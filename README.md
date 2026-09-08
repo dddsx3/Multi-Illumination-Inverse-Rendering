@@ -1,3 +1,5 @@
+> **Historical development archive.** The cleaned reproducibility package associated with the manuscript is maintained separately (see paper/CITATION when published). This repository is frozen as a research log and is no longer maintained.
+
 # calibinfo · Calibration-Confidence Continuum for Photometric Inverse Problems
 
 > **From Calibrated to Uncalibrated Lighting: A Mode-Resolved Information Continuum
