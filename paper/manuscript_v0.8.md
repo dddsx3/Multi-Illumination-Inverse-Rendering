@@ -38,7 +38,7 @@ uncertainty into gauge freedoms. Neither extreme describes practice.
 calibrated to uncalibrated total (trace) information is **1.01**, while the weakest-mode
 condition number spans 10⁻⁷: nearly all damage from unknown lighting concentrates in a few
 weakly-informed directions that any trace-level summary averages away (Fig.4, trace panel).
-Predicting reconstruction quality therefore requires mode-resolved readouts, not scalars.
+Predicting reconstruction quality therefore requires mode-resolved readouts, not scalars; throughout, trace-type summaries appear only as counterexamples.
 
 3) **This paper.** We treat the calibration level as a continuous random variable δc ~ N(0, Σ_c)
 — with Σ_c in physical units — and characterize, per mode, how the resulting hybrid estimation
