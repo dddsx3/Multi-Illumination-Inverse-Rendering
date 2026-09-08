@@ -1,7 +1,7 @@
 # STATE · 进度账本（每次会话开始必读、结束必更）
 
 > **主线一句话**：校准置信度连续谱 → 逐模式信息预测 → 受控真实数据验证（CI01–CI05 → TCI 投稿）。
-> **当前状态（2026-09-08）：C01–C23 全部完成；Gate A/B/C/D/E 全通过；submission candidate v1.0 已归档（待导师审阅轮 + TCI LaTeX 套版 + 异机 smoke）。**
+> **当前状态（2026-09-09）：C01–C23 done；Gate A–E 通过；进入投稿闭口阶段（F1–F6，见《任务布置_投稿闭口阶段_20260908》）。停止规则生效：仅 prior-art collision / 异机复现失败 / 导师更强主张三者之一可重开实验。**
 > **宪法**：[docs/Calibration_Confidence_Continuum_TCI_实验设计书_v1.0.md](docs/Calibration_Confidence_Continuum_TCI_实验设计书_v1.0.md)
 > **执行条例**：[docs/主控计划书_20260907_TCI_从当前状态到投稿_v1.0.md](docs/主控计划书_20260907_TCI_从当前状态到投稿_v1.0.md) · 卡状态只有 pending / in_progress / done / blocked / void
 > **交接指令**：读 STATE.md + REPO_MIGRATION.md 锚点列 + 主控计划书 §4 当前卡，继续执行。
@@ -31,6 +31,15 @@
 | C21 初稿组装 | done | 手稿 v0.8 全 11 节（宪法 §9 逐节）：Abstract 四句/三贡献；数字全部取 frozen（λ⋆ 0.00000/coverage ±0.013/Gate D 0.728 [0.668,0.783]/包络 flip≤3%）；§13 checklist 9 项全 PASS（禁词=否定声明豁免）；CLAIMS_REGISTRY C1–C6 证据指针补全（artifact+sha256+commit） | paper/manuscript_v0.8.md | bd67897 | 2026-09-08 |
 | C22 复现审计 | done | clean checkout（GitHub 克隆）抓到 .gitignore 静默排除 datasets 三文件（补交 8bcc139）→ 补后 clone: install 绿+pytest 54/54+CI01 重跑 100/100+Fig.3 重建；reproduce_paper.sh 一键链本仓库全通过；第三方异机 smoke 待投稿前异机执行（单机限制如实记） | scripts/reproduce_paper.sh; docs/memo_C22_20260908.md | d742fdb | 2026-09-08 |
 | C23 内审投稿 | done | 宪法 §13 checklist 12/12（trace 反例声明入正文；claims evidence 结构核验）；submission candidate v1.0 + reproducibility bundle 576KB 双份归档（zip 在 MIR_Archive 根，GitHub release 待发）；待办=导师审阅+TCI LaTeX 套版+异机 smoke | paper/submission_candidate_v1.0.md; reproducibility_bundle_*.zip | c33f058 | 2026-09-08 |
+
+## 投稿闭口阶段（卡 F1–F6，2026-09-08 任务布置）
+
+| F1 文献/新颖性闭口 | in_progress | 六条谱系 comparison matrix + 补充检索 + Intro/RW 改写（48h 硬门） | docs/novelty_comparison_matrix.md | — | 2026-09-09 |
+| F2 claims 逐句冻结 | pending | 四处锁死句 + 禁词 grep + v0.9 | CLAIMS_REGISTRY.yaml | — | 2026-09-09 |
+| F3 异机 clean-room 复现 | pending | 新 clone→tests→CI01/CI03→Fig.3/4/7 对账 | docs/memo_F3_crossmachine.md | — | 2026-09-09 |
+| F4 TCI 13 页套版 | pending | LaTeX 套版 + 删减（正式论文撰写——由写作会话执行） | paper/tci_submission/ | — | — |
+| F5 导师终审 | pending | 送审简报 + sign-off | docs/advisor_briefing.md | — | 2026-09-09 |
+| F6 投稿工程 | pending | cover letter + release + 提交 | paper/submission/ | — | — |
 
 ## 条件卡（触发才执行）
 
