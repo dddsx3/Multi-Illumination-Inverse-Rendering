@@ -72,7 +72,7 @@
   **对账 x 逐位一致 max|Δ|=0.0**）；诊断参考实现（exp8S 变体 A 代数）= estimators/diagnostics.py；
 - 数据 loader（已迁移）：`src/calibinfo/datasets/diligent.py`（与 legacy load_object 逐位一致）；
 - 信息层（已迁移）：`src/calibinfo/information/`（whitening/schur/gauge/retention/mode_tracking）；
-- 旧四支柱历史结论：`critical_experiments/`（原位只读，禁引清单见 `docs/论文数字口径说明_v0.5.md`
+- 旧四支柱历史结论：`critical_experiments/`（原位只读，禁引清单见 `docs/archive/legacy_iccv/论文数字口径说明_v0.5.md`
   与 CLOSURE_20260906.md 增补指针）；
 - 长期记忆：`~/.clawsgo/memory/inverse-rendering-sci-plan.md`（每里程碑追加）。
 
