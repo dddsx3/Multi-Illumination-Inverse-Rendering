@@ -64,10 +64,35 @@ def _make_fig6(out_dir):
     return out
 
 
+import figure_gens as _g
+
+_GEN = {2: _g.fig2, 3: _g.fig3, 4: _g.fig4, 5: _g.fig5, 6: _make_fig6, 7: _g.fig7,
+        8: _g.fig8, 9: _g.fig9}
+
+
+def _provenance(n, out_path):
+    import hashlib
+    import subprocess
+    sha = subprocess.run(["git", "rev-parse", "HEAD"],
+                         cwd=str(FIGS.resolve().parents[2]),
+                         capture_output=True, text=True).stdout.strip()
+    src = {"Fig.3": "ci02_formal_summary.json", "Fig.4": "ci02_formal_summary.json",
+           "Fig.5": "ci03_formal_summary.json", "Fig.6": "ci03nl_nl_formal_summary.json",
+           "Fig.7": "ci04_formal_summary.json", "Fig.8": "ci05_formal_summary.json",
+           "Fig.9": "ci05abl_ablation_summary.json"}.get("Fig.%d" % n)
+    prov = dict(figure=n, png=str(out_path), git_sha=sha, artifact=src,
+                manifest_hash=None if src is None else
+                hashlib.sha256((FROZEN / src).read_bytes()).hexdigest()[:16])
+    pp = FIGS.parent / "provenance" / ("fig%d.json" % n)
+    pp.parent.mkdir(parents=True, exist_ok=True)
+    pp.write_text(json.dumps(prov, indent=1), encoding="utf-8")
+    print("[make_figures] provenance ->", pp)
+
+
 def make_figure(n, out_dir=FIGS):
     out_dir.mkdir(parents=True, exist_ok=True)
-    if n == 6:
-        return _make_fig6(out_dir)
+    if n in _GEN:
+        return _GEN[n](out_dir)
     src = FROZEN / f"ci01_pilot_summary.json"
     if not src.exists():
         raise SystemExit(f"[make_figures] 缺 {src}——先跑 run_ci.py（图表只读 frozen）")
@@ -101,7 +126,8 @@ def main():
     args = ap.parse_args()
     if args.figure not in range(1, 10):
         raise SystemExit(f"--figure 须在 1–9（{FIGURES}）")
-    make_figure(args.figure)
+    out = make_figure(args.figure)
+    _provenance(args.figure, out)
 
 
 if __name__ == "__main__":
