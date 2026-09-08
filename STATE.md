@@ -20,7 +20,7 @@
 | C11 retention+tracking | done | 双路线（白化平方根 vs generalized-eig）54 场景 max rel 1.55e-15（<1e-10）；Fig.4 三 panel 数据入 frozen：trace 反例（Δ≈4% 而 tracked ρ 0.001→0.87）、tracked heatmap（track_modes 链，N=3 简 1 步）、V6 角度 N=1 0.00°/N=3 25.9°；首轮 helper 缺陷（追错 F∞ 基）修正为 R(λ) 特征基 | experiments/ci02_gauge.py::fig4; tests 51 绿 | 本commit(C09-C11) | 2026-09-08 |
 | C12 CI03 线性 MC | done | **Gate B 素材过**：18/18 绿（varratio 0.977–1.009/cov68 .68±.013/cov95 .95±.008/bias 闭式 0.96–1.01/condvar 0.98–1.03）；3 处实现事故如实入 memo（np.empty 混入→0.40 假象/条件方差归一化错位/bias SNR 可测性门） | artifacts/frozen/ci03_formal_summary.json; docs/memo_CI03_linear_20260908.md | 本commit(C12) | 2026-09-08 |
 | C13 CI03 非线性包络 | done | **Gate C 过（有效域存在）**：B 臂解析 SH+ReLU 42 cells；<10% 域边界 flip≤3.0%/0.8%/2.2%（sphere/bumpy/term），误差随 flip 单调爬升；mask-flip 逐 cell 记录；A 臂 BlenderProc 按卡条款为增强项待 GPU 排期（非阻塞） | artifacts/frozen/ci03nl_nl_formal_summary.json; docs/memo_CI03_nl_20260908.md; fig6_draft.png | 本commit(C13) | 2026-09-08 |
-| C14 OpenIllumination 适配 | pending | — | — | — | — |
+| C14 OpenIllumination 适配 | done | 数据侦察→降采样裁决（全量 41GB/对象 >> 2GB 线 → thumbnail 层 200×273 + alpha 掩码，裁决入 manifest）；development 8 对象冻结（官方 material 8 族各 1）；loader GT 逐位复现 light_pos.npy + alpha 掩码与全分辨率覆盖率交叉校验 ±0.02；manifest 8×143 文件 sha256 入 frozen | src/calibinfo/datasets/openillumination.py; artifacts/frozen/openillumination_dev_manifest.json; tests/unit/test_openillumination.py | 本commit(C14) | 2026-09-08 |
 | C15 Σ_c 生成器+pilot | pending | — | — | — | — |
 | C16 CI04 正式 | pending | — | — | — | — |
 | C17 DiLiGenT 适配 | pending | — | — | — | — |

@@ -59,7 +59,8 @@ arms_return_package/
 # 数据（大文件不入库）
 processed_data/
 data/
-datasets/
+# datasets/  (2026-09-08 收窄: 原规则误伤 src/calibinfo/datasets/ 包代码)
+/datasets/
 
 # IDE / OS
 .idea/
