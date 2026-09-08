@@ -1,0 +1,12 @@
+# C13 · 非线性 validity envelope（B 臂解析 SH+ReLU）预注册
+# gate_valid_pred_err: 0.10 —— 理论误差 |emp/pred − 1| 的弱模式 median <10% 为有效域
+# 失效处置：三几何均无 <10% 域 → Gate C 失败动作（只留线性理论），如实执行
+run_name: nl_formal
+seed: 20260907
+P: 400
+geometries: [sphere, bumpy, terminator_heavy]
+albedo: medium
+n_scenes_per_geo: 2
+trials: 2000
+k_grid: [0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0]
+gate_valid_pred_err: 0.10

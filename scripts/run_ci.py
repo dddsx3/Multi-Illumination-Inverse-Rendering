@@ -27,6 +27,7 @@ RUNNERS = {
     "ci01": "experiments.ci01_algebra",
     "ci02": "experiments.ci02_gauge",
     "ci03": "experiments.ci03_mc_validity",
+    "ci03nl": "experiments.ci03_nl_envelope",
     "ci04": "experiments.ci04_real_corruption",
     "ci05": "experiments.ci05_sanity_robustness",
 }

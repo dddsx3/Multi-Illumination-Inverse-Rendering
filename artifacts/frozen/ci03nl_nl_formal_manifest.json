@@ -1,0 +1,38 @@
+{
+ "experiment": "ci03nl",
+ "git_sha": "259646e672448ea6ccf3ebe9fb73f8f0175c16be",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "nl_formal",
+  "seed": 20260907,
+  "P": 400,
+  "geometries": [
+   "sphere",
+   "bumpy",
+   "terminator_heavy"
+  ],
+  "albedo": "medium",
+  "n_scenes_per_geo": 2,
+  "trials": 2000,
+  "k_grid": [
+   0.1,
+   0.25,
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0
+  ],
+  "gate_valid_pred_err": 0.1
+ },
+ "config_hash": "21d66e2847d1b28eeed84012929ccb800f33eed7ce1ea9d4036b5a87981ecb64",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-08T00:09:19.140667+00:00"
+}
