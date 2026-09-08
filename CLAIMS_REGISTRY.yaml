@@ -184,3 +184,12 @@ claims_lock_20260909:
     r2a: artifacts/ci04r/summary.json (r2a)
     r2b: artifacts/ci04r/branch_decision.json
     table: artifacts/ci04r/table_R1.csv
+  degeneracy_disclosure: P_emin ≡ P_mode（构造必然：tracked modes = 同一 retention 谱的 bottom-5；66
+    cells 上 max|P_mode−P_emin| = 1.8e-15）。正文 §VIII 已按审计发现 2 方案 a 如实披露；mode vs trace/logdet
+    的 stratified 差（+0.12/+0.14）仅作 descriptive，不加 CI、不写 outperform。
+  track_qualifier: 经验最坏 mode = bottom tracked mode 占 60/66 cells；仅 4/11 对象身份随 level
+    翻转——手稿 §VIII 已加限定从句（ranking evidence rather than rich identity dynamics）。
+  posthoc_delta_ci: 方案 b（post-hoc mode-vs-trace/logdet CI）按审计自身倾向暂缓——待专家 Q3 裁决；若要求补做则标注
+    post-hoc 仅入 supplement。
+  banned_patterns_ci: scripts/audit_claims.py：12 条语义级模式族（structurally blind / universally
+    superior / always beats / all scalar…fail|blind 等同义替换覆盖 + 否定声明豁免），exit code 门。

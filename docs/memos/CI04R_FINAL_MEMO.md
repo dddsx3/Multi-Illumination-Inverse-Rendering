@@ -57,3 +57,15 @@ SUBMISSION BLOCKERS:  TCI LATEX/PAGE LIMIT + AUTHOR REVIEW（异机 smoke 已由
 **永久禁句**（grep 入 CI）：all scalar information criteria fail / scalar criteria are
 structurally blind / mode-resolved is universally superior / real-world λ⋆ prediction validated /
 agrees quantitatively after an affine scale。
+
+## 审计响应（2026-09-09 · 独立审计发现 1–4 全部处置）
+
+| 发现 | 处置 | 状态 |
+|---|---|---|
+| 1（必须修）手稿 "structurally blind" 禁句残留（summaries vs criteria 逃过精确 grep） | Discussion 段整段重写：trace 稀释允许句式 + E-min/logdet 未盲事实（pooled 0.87/0.86）+ Branch B 对齐；grep 升级为语义级模式族 `scripts/audit_claims.py`（12 条，含否定声明豁免），exit code 门 | ✅ 修复 |
+| 2（披露级）P_emin ≡ P_mode 结构性恒等 ⇒ Branch A 不可达 | 方案 a：§VIII 如实披露恒等式（1.8e-15）+ mode vs trace/logdet stratified 差（+0.12/+0.14）仅 descriptive；方案 b（post-hoc CI）登记暂缓待专家 Q3 | ✅ 披露（方案 a） |
+| 3（措辞级）"track" 支撑边界 | §VIII 加限定：60/66 cells 最坏=bottom tracked，4/11 对象身份翻转——ranking evidence carries the wording | ✅ 限定 |
+| 4（备忘）Table R1 CI 列 + 死代码 | 表注补 CI 列说明；`recompute_spectra` 死代码（R/frozen_row）清除；清理后复跑 Branch B 与全部数字不变 | ✅ 清理 |
+
+**语义级 grep 终验**：`python scripts/audit_claims.py` → 12 模式族 × 手稿 = 0 命中（exit 0）。
+**复算稳定性**：清理后 CI04-R 全链重跑，Branch B 与全部数字逐位不变。

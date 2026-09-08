@@ -176,12 +176,26 @@ subset, 1200-pixel subsample) defines the linearization; prediction = weak-5-mod
 λ_j(F∞)/λ_j(ΔF(Σ_c)) computed **before** any corruption; empirical = the same whitened
 per-pixel GLS re-run with corrupted calibration, scale-gauge aligned, normalized by a
 residual-bootstrap control arm. Test set: 11 objects frozen before the run (one excluded for a
-dataset-side missing layer, documented). **Result (Gate D)**: pooled Spearman 0.728,
-object-cluster bootstrap 95% CI [0.705, 0.754] — descriptive, partly driven by the shared
-corruption-level axis — every per-object coefficient positive in [0.72, 0.80] (Fig.7, Table V).
-Magnitude-level agreement is limited by Σ_c_real and model mismatch (~10², the empirical form of
-risks R-A/R-D): the claim is rank-and-scale, reported with its sensitivity band, and never
-reduced to average-MAE monotonicity.
+dataset-side missing layer, documented). **Result (Gate D)**: pooled Spearman 0.728, object-cluster bootstrap 95% CI [0.705, 0.754] —
+descriptive, partly driven by the shared corruption-level axis — with every per-object
+coefficient positive in [0.72, 0.80] (Fig.7, Table V). The pre-registered confirmatory
+re-analysis (CI04-R) separates the two load-bearing questions. *Within-cell mode ranking*
+(承重墙): R_A = 0.90, object-cluster 95% CI [0.90, 0.95], 66/66 cells and 11/11 objects
+positive — the mode-resolved retention scores consistently rank the relative degradation of
+tracked modes within the same object and corruption level. *Fixed-level severity* (co-primary,
+fair comparison against scalar baselines): the mode-resolved score matches but does not exceed
+the best scalar baseline (Δ = +0.00, cluster 95% CI [−0.33, 0.00] versus E-min). This
+degeneracy is structural: the tracked modes are, by construction, the bottom eigenvectors of
+the same retention operator, so the E-optimality worst-mode score coincides exactly with the
+mode-resolved score (max deviation 1.8e-15 over all 66 cells). Against the remaining scalar
+baselines the stratified medians are 0.536 (mode-resolved) versus 0.400 (trace) and 0.418
+(log-determinant) — a descriptive ordering without a pre-registered interval, reported without
+significance claims. One boundary on reading identity tracking: the empirically worst mode is
+the bottom tracked mode in 60 of 66 cells, and only 4 of 11 objects change their worst-mode
+identity across corruption levels — the ranking evidence, rather than rich identity dynamics,
+carries the identify-and-track wording. Magnitude-level agreement is limited by Σ_c_real and
+model mismatch (~10², the empirical form of risks R-A/R-D): absolute magnitudes remain
+descriptive, and the claim is never reduced to average-MAE monotonicity.
 
 ## IX. External Sanity, Robustness, and Limitations (CI05)
 
@@ -197,9 +211,16 @@ causal chain by design.
 
 When is more calibration worth acquiring? The continuum gives a per-mode answer: directions
 whose lifted information remains below μ_floor are unrecoverable regardless of effort below
-λ⋆; above λ⋆, calibration investment transfers linearly until saturation. Why trace misleads:
-the calibrated/uncalibrated trace ratio is 1.01 while weak modes span 10⁻⁷ in conditioning —
-scalar summaries are structurally blind to the damage that matters. The framework — whitened
+λ⋆; above λ⋆, calibration investment transfers linearly until saturation. Trace-like
+aggregate summaries can strongly dilute localized information loss: the
+calibrated/uncalibrated trace ratio is 1.01 while weak modes span 10⁻⁷ in conditioning.
+This is a statement about trace-type dilution, not about scalar summaries in general — in
+the controlled real-data experiment, E-optimality and log-det baselines reach pooled
+Spearman 0.87/0.86, and the E-optimality worst-mode score coincides exactly with the
+mode-resolved one (structurally: the tracked modes are the bottom eigenvectors of the same
+retention operator). What scalar summaries cannot provide is the identity, tracking, and
+interpretation of vulnerable directions — the contribution the mode-resolved spectrum
+retains under Branch B. The framework — whitened
 hybrid information + gauge spectral response + continuity tracking — transfers to any inverse
 problem with block-random calibration (camera color response, projector geometry, spectral
 basis calibration).

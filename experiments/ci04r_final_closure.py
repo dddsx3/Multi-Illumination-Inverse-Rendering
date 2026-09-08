@@ -100,14 +100,11 @@ def recompute_spectra(cfg, manifest):
             gen = CorruptionGenerator("joint", float(level))
             sig3 = np.diag(gen.sigma_phi_diag())           # (3,3) 物理单位
             DF = scen.delta_f_injected(sig3)
-            Finv_h = np.diag(1.0 / np.sqrt(scen.Finf_diag))
-            R = Finv_h @ DF @ Finv_h
             spec = retention_spectrum_full(
                 DF, np.diag(scen.Finf_diag),
                 rank_relative_tol=cfg["rank_relative_tol"],
                 clip_tol=cfg["retention_clip_tol"], log_eps=cfg["log_eps"])
-            # T5.3 对账门：弱 5 换算 pred_deg' vs frozen ≤1e-9（相对）
-            frozen_row = None
+            # T5.3 对账门在 gate_recompute() 统一执行
             spectra[(obj_name, float(level))] = spec
     return scenes, spectra
 
