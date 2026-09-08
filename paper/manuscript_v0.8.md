@@ -193,7 +193,12 @@ baselines the stratified medians are 0.536 (mode-resolved) versus 0.400 (trace) 
 significance claims. One boundary on reading identity tracking: the empirically worst mode is
 the bottom tracked mode in 60 of 66 cells, and only 4 of 11 objects change their worst-mode
 identity across corruption levels — the ranking evidence, rather than rich identity dynamics,
-carries the identify-and-track wording. Magnitude-level agreement is limited by Σ_c_real and
+carries the identify-and-track wording. The locked Branch-B wording: scalar worst-mode
+criteria such as E-optimality can summarize degradation severity nearly as well as the
+mode-resolved score; the additional value of the mode-resolved spectrum is not a universally
+better scalar predictor, but the ability to identify, track, and interpret which directions
+become vulnerable as calibration confidence changes. Magnitude-level agreement is limited by
+Σ_c_real and
 model mismatch (~10², the empirical form of risks R-A/R-D): absolute magnitudes remain
 descriptive, and the claim is never reduced to average-MAE monotonicity.
 
