@@ -1,0 +1,4 @@
+# C17/C18 · CI05 sanity（DiLiGenT 10 对象，全量）
+# 不设"必须赢"判据；要求：弱模式存在（floor<<med）+ 方向一致 + 边界透明（宪法 §4.5）
+run_name: formal
+seed: 20260907

@@ -23,8 +23,8 @@
 | C14 OpenIllumination 适配 | done | 数据侦察→降采样裁决（全量 41GB/对象 >> 2GB 线 → thumbnail 层 200×273 + alpha 掩码，裁决入 manifest）；development 8 对象冻结（官方 material 8 族各 1）；loader GT 逐位复现 light_pos.npy + alpha 掩码与全分辨率覆盖率交叉校验 ±0.02；manifest 8×143 文件 sha256 入 frozen | src/calibinfo/datasets/openillumination.py; artifacts/frozen/openillumination_dev_manifest.json; tests/unit/test_openillumination.py | 本commit(C14) | 2026-09-08 |
 | C15 Σ_c 生成器+pilot | done | corruption 生成器三类（强度/方向/联合，物理单位 φ 空间）；pilot 全链跑通：spearman 0.676 [0.590,0.757] > 0.5 预注册 pass；首轮教训×3（level=4 超线性化域→0.23，截档回收；δc=0 对照臂恒等解爆炸→残差 bootstrap；强度维被尺度 gauge 吸收→估计后对齐）；量级失配 10²（R-A/R-D 实证）→ 主 claim 冻结为秩相关+全局仿射尺度 | src/calibinfo/models/corruption.py; artifacts/frozen/ci04_pilot_summary.json; docs/memo_CI04_pilot_20260908.md | 本commit(C15) | 2026-09-08 |
 | C16 CI04 正式 | done | **Gate D 通过**：test 11 对象（冻结清单）×6 档×20 seeds，spearman 0.728 [0.668,0.783]>0.5 且 CI 下界≫0；逐对象 11/11 正、带 [0.72,0.80] 稳定；greenhead 缺 com_masked 层→exclusion 如实记录；首轮误用 dev 清单发现后重跑（config 显式 objects 字段固化） | artifacts/frozen/ci04_formal_summary.json; docs/memo_CI04_formal_20260908.md | 本commit(C16) | 2026-09-08 |
-| C17 DiLiGenT 适配 | pending | — | — | — | — |
-| C18 CI05 sanity | pending | — | — | — | — |
+| C17 DiLiGenT 适配 | done | loader 于 C03 迁移（真数据对账 0.0）；CI05 口径与 exp8R 系逐对象朗伯残差一致（ball 0.244/pot1 0.137/harvest 0.671）——迁移后口径未漂移 | src/calibinfo/datasets/diligent.py; artifacts/frozen/ci05_formal_summary.json | 本commit(C17/C18) | 2026-09-08 |
+| C18 CI05 sanity | done | 10/10 弱模式存在（floor/med 2.7e-3–7.1e-3 ≪1）；λ⋆ 预测全对象有限（1.8e-3–5.9e-3）；taxonomy 10/10 校准传播与模型失配可比（量级对比，不混写因果）；OOM(24.7GB)+死代码两次如实记录 | experiments/ci05_sanity_robustness.py; docs/memo_CI05_20260908.md | 本commit(C17/C18) | 2026-09-08 |
 | C19 ablation 附录 | pending | — | — | — | — |
 | C20 图表冻结 | pending | — | — | — | — |
 | C21 初稿组装 | pending | — | — | — | — |

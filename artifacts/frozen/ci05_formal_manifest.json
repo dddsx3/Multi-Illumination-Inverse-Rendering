@@ -1,0 +1,19 @@
+{
+ "experiment": "ci05",
+ "git_sha": "6cfcd0be3f2a8dacb352cc8a01fe1ff390b4af60",
+ "git_dirty": true,
+ "python": "3.14.2",
+ "numpy": "2.4.1",
+ "scipy": "1.17.0",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "hostname": "gmx",
+ "config": {
+  "run_name": "formal",
+  "seed": 20260907
+ },
+ "config_hash": "4cf706a1db5e0d998574bde77298e76529f41b1cf788109323cbb86f86e6eb90",
+ "seed": 20260907,
+ "dataset_checksums": {},
+ "started_utc": null,
+ "written_utc": "2026-09-08T03:46:54.346576+00:00"
+}
