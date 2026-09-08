@@ -36,7 +36,7 @@
 
 ## 投稿闭口阶段（卡 F1–F6，2026-09-08 任务布置）
 
-| CI04-R 最终收口 | done | **Branch B**（PASS-A R_A=0.90 CI[0.90,0.95] 66/66+11/11; S0 Δ=0 vs E-min 0.536 构造性恒等）; T5.3 重算门 4.4e-12; pooled cluster CI [0.705,0.754] 替换旧 330-point CI; RT-F 12/12 → EXPERIMENTAL PROGRAM = CLOSED | artifacts/ci04r/*; docs/memos/CI04R_FINAL_MEMO.md | 本commit(CI04R) | 2026-09-09 |
+| CI04-R 最终收口 | done | **Branch B**（PASS-A R_A=0.90 CI[0.90,0.95] 66/66+11/11; S0 Δ=0 vs E-min 0.536 构造性恒等）; T5.3 重算门 4.4e-12; pooled cluster CI [0.705,0.754] 替换旧 330-point CI; RT-F 12/12 → CLOSED; 独立审计发现 1-4 全处置（禁句修复+恒等式披露+4/11 限定+方案b 暂缓登记+语义级 CI）| artifacts/ci04r/*; docs/memos/CI04R_FINAL_MEMO.md; docs/f2_claim_lock_audit_20260909.md | ade974c+审计响应 b1c6a3a/c3d7530 | 2026-09-09 |
 | F1 文献/新颖性闭口 | done | 六条谱系 comparison matrix + 补充检索 + Intro/RW 改写（48h 硬门） | docs/novelty_comparison_matrix.md | 4156148 | 2026-09-09 |
 | F2 claims 逐句冻结 | done | 四处锁死句 + 禁词 grep + v0.9 | CLAIMS_REGISTRY.yaml | 2f05440 | 2026-09-09 |
 | F3 异机 clean-room 复现 | done | 新 clone→tests→CI01/CI03→Fig.3/4/7 对账（五项全绿，位级复现） | docs/memo_F3_crossmachine_20260909.md | 557e826 | 2026-09-09 |
