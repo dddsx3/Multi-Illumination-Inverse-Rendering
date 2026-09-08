@@ -1,0 +1,14 @@
+# C15 · CI04 pilot（development 8 对象；pilot 只修协议/bug，禁反调 test 阈值——宪法 W8）
+# 预注册 Gate D 主判据（跑前写死，pilot 不改）：
+#   spearman(pred_deg, emp_deg) > 0.5 且 bootstrap CI 下界 > 0
+#   （H5 失败判据：相关性接近零或只 MAE 单调 → 真实定量主张不成立）
+run_name: pilot
+seed: 20260907
+data_root: D:/data/OpenIllumination
+data_meta: D:/data/OpenIllumination_meta
+corruption_type: joint
+levels: [0.1, 0.2, 0.35, 0.5, 0.75, 1.0]   # joint 档（物理单位 log²I/度²；pilot 首轮 4.0 档增益跨度 e^8=3×10³ 倍，远超线性化有效域，判 by C13 包络纪律截档）
+seeds_per_level: 8
+bootstrap: 500
+gate_spearman_min: 0.5
+max_objects: 8
