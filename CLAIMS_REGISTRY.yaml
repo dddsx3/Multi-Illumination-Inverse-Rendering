@@ -7,6 +7,7 @@ meta:
     path: paper/manuscript_v0.8.md
     sha256_16: 280e874abafb732b
     commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
+  frozen_at: 2026-09-09 卡F2
 claims:
   C1:
     statement: ΔF 是 hybrid/marginal information 的 Schur form；随 calibration confidence
@@ -139,3 +140,26 @@ red_lines:
   source: 红队报告三 攻击五（F∞^{-1/4} 假上界 0.716 事故）
   rule: F∞^{-1/2} = 正定平方根（白化路线 diag(1/s) 仅对 F∞=diag(s²) 成立）；retention 双路线（generalized
     eig / 白化）交叉验证
+frozen_sentences_20260908:
+  _note: 专家第七轮逐句裁决（2026-09-08）+ F1 文献闭口后的四处锁死措辞。手稿应用与 v0.9 升版由写作会话执行（F2 余项）；本段为唯一权威来源。
+  gate_D: The predicted mode-resolved information loss consistently ranks the empirical
+    degradation under controlled real-data corruption, while absolute degradation
+    magnitudes remain affected by higher-order effects and unmodeled calibration/model
+    mismatch.
+  gate_D_rules:
+  - 替换现 'agrees quantitatively after an affine scale' 句
+  - log-log 斜率 1.82 只出现于 sensitivity/limitations，禁'二阶效应是新发现'式表述
+  lambda_star:
+    synthetic: 合成侧 quantitative validation：54/54 scenes, median |log10(pred/scan)|
+      = 0.00000
+    real: real-scene diagnostic remains finite/meaningful
+    forbidden: real-world λ⋆ prediction validated
+  lambda_misspec:
+    main_text: 正文只报渲染规模 -74.9%（CI05 ablation, 4 场景 IQR 窄带）
+    supplement_note: N5 ~3% 入 supplement/history note，并写明与 -74.9% 两者不是同一个 functional（variance
+      vs weak-mode aggregate）且不是同一个系统规模
+    forbidden: 任何 'framework is robust to Λ misspecification' 泛化句
+  novelty: 差异句：过去工作分析给定校准误差下误差如何传播到重建/法线（sensitivity 谱系，见 docs/novelty_comparison_matrix.md
+    八条）；本文给出从 calibrated 到 uncalibrated 的连续置信度模型（nuisance-marginalized information、逐模式
+    retention、gauge lifting）并验证其预测受控真实 corruption 下相对退化结构的能力。Introduction 第一页 freshness
+    三段式：问题形式化 + render-specific diagnostics + validation chain。
