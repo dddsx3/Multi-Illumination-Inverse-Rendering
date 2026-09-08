@@ -27,7 +27,7 @@
 | C18 CI05 sanity | done | 10/10 弱模式存在（floor/med 2.7e-3–7.1e-3 ≪1）；λ⋆ 预测全对象有限（1.8e-3–5.9e-3）；taxonomy 10/10 校准传播与模型失配可比（量级对比，不混写因果）；OOM(24.7GB)+死代码两次如实记录 | experiments/ci05_sanity_robustness.py; docs/memo_CI05_20260908.md | 本commit(C17/C18) | 2026-09-08 |
 | C19 ablation 附录 | done | 4 项 within-scene 效应量：白化vs raw λI 中位差 0.034（红队 V4 10% 同量级）；Λ 4× misspec 弱模式迹 −74.8%（4 场景 IQR 窄带）；灯数 1→3 最弱模式 log10 −6.2→−3.3（多灯混合抬升）；异方差口径 retention 差中位 0.008（V5 尺度纪律稳定） | experiments/ci05_ablation.py; artifacts/frozen/ci05abl_ablation_summary.json | 本commit(C19) | 2026-09-08 |
 | C20 图表冻结 | done | Fig.1–9 全部由 make_figures.py --figure N 从 artifacts/frozen 一键生成（Fig.3/4/7 主图 + Fig.2/5/6/8/9 全 draft）；provenance（git SHA + artifact sha256 前 16）入 paper/provenance/×9；无 notebook 手工导出 | paper/figures/×8; paper/provenance/×9; scripts/figure_gens.py | 本commit(C20) | 2026-09-08 |
-| C21 初稿组装 | pending | — | — | — | — |
+| C21 初稿组装 | done | 手稿 v0.8 全 11 节（宪法 §9 逐节）：Abstract 四句/三贡献；数字全部取 frozen（λ⋆ 0.00000/coverage ±0.013/Gate D 0.728 [0.668,0.783]/包络 flip≤3%）；§13 checklist 9 项全 PASS（禁词=否定声明豁免）；CLAIMS_REGISTRY C1–C6 证据指针补全（artifact+sha256+commit） | paper/manuscript_v0.8.md | 本commit(C21) | 2026-09-08 |
 | C22 复现审计 | pending | — | — | — | — |
 | C23 内审投稿 | pending | — | — | — | — |
 

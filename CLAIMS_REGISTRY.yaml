@@ -1,101 +1,141 @@
-# CLAIMS_REGISTRY · 主张登记册（唯一有效版本）
-# 宪法：《Calibration_Confidence_Continuum_TCI_实验设计书_v1.0》§10 + 三轮红队增补行（红队报告二 §9 / 红队报告三 §10）。
-# 规则（宪法 Gate E）：每条主 claim 必须有 artifact path + commit SHA 指针，否则不投稿。
-# 禁令列冻结，不得放宽；新措辞须先过本表再进论文。
-# 历史版本：p1/protocol/CLAIM_REGISTRY.md（GA-ISI 三句话）已标 SUPERSEDED 20260907，仅历史保留。
-
 meta:
-  constitution: "Calibration_Confidence_Continuum_TCI_实验设计书_v1.0 §10"
-  venue: "IEEE TCI"
-  evidence_rule: "evidence.artifacts 逐条 = {artifact_path, commit_sha, manifest_hash?}；C22 复现审计前允许为空，投稿前不允许为空"
-
+  constitution: Calibration_Confidence_Continuum_TCI_实验设计书_v1.0 §10
+  venue: IEEE TCI
+  evidence_rule: evidence.artifacts 逐条 = {artifact_path, commit_sha, manifest_hash?}；C22
+    复现审计前允许为空，投稿前不允许为空
+  manuscript:
+    path: paper/manuscript_v0.8.md
+    sha256_16: 280e874abafb732b
+    commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
 claims:
   C1:
-    statement: "ΔF 是 hybrid/marginal information 的 Schur form；随 calibration confidence 单调。"
-    allowed: "ΔF(Λ) 为混合信息矩阵的 Schur 补，在 Loewner 意义下随 Λ 单调（Lemma 1 实例化 + CI01 双路线验证）"
+    statement: ΔF 是 hybrid/marginal information 的 Schur form；随 calibration confidence
+      单调。
+    allowed: ΔF(Λ) 为混合信息矩阵的 Schur 补，在 Loewner 意义下随 Λ 单调（Lemma 1 实例化 + CI01 双路线验证）
     forbidden: '"new information geometry"'
-    weight: "成熟理论实例化"
-    source: {theory: "Lemma 1", experiment: "CI01", tables: "Table IV 前半"}
-    evidence: []
+    weight: 成熟理论实例化
+    source:
+      theory: Lemma 1
+      experiment: CI01
+      tables: Table IV 前半
+    evidence:
+    - artifact: artifacts/frozen/ci01_formal_summary.json
+      sha256_16: 6f2b1e0ef67a41cb
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
   C2:
-    statement: "joint ensemble 下 affine-Gaussian covariance = σ²ΔF⁻¹。"
-    allowed: "affine-Gaussian 联合 ensemble 中 joint MAP/GLS 的有限样本协方差与 σ²ΔF(Λ)⁻¹ 精确一致（Prop 1 + CI03 MC）"
+    statement: joint ensemble 下 affine-Gaussian covariance = σ²ΔF⁻¹。
+    allowed: affine-Gaussian 联合 ensemble 中 joint MAP/GLS 的有限样本协方差与 σ²ΔF(Λ)⁻¹ 精确一致（Prop
+      1 + CI03 MC）
     forbidden: '"new estimator"'
-    weight: "精确性/一致性资产"
-    source: {theory: "Prop 1", experiment: "CI03", tables: "Table IV"}
-    evidence: []
+    weight: 精确性/一致性资产
+    source:
+      theory: Prop 1
+      experiment: CI03
+      tables: Table IV
+    evidence:
+    - artifact: artifacts/frozen/ci03_formal_summary.json
+      sha256_16: 507a7c89bad3352c
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
   C3:
-    statement: "gauge absolute information obeys exact spectral response。"
-    allowed: "gauge 绝对信息满足精确谱闭式 aᵀΔF(λ)a = Σαᵢ²sᵢ²λ/(sᵢ²+λ)，小 λ 线性抬升、大 λ 饱和（Prop 2 + CI02）"
+    statement: gauge absolute information obeys exact spectral response。
+    allowed: gauge 绝对信息满足精确谱闭式 aᵀΔF(λ)a = Σαᵢ²sᵢ²λ/(sᵢ²+λ)，小 λ 线性抬升、大 λ 饱和（Prop 2
+      + CI02）
     forbidden: '"universal new gauge theorem"'
-    weight: "核心解析资产"
-    source: {theory: "Prop 2", experiment: "CI02", figures: "Fig.3"}
-    evidence: []
+    weight: 核心解析资产
+    source:
+      theory: Prop 2
+      experiment: CI02
+      figures: Fig.3
+    evidence:
+    - artifact: artifacts/frozen/ci02_formal_summary.json
+      sha256_16: 1ad2b7556876c463
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
   C4:
-    statement: "λ⋆ 可由 scene quantities 预测，在小 λ 域用 μ_floor/Σα² 近似。"
-    allowed: "λ⋆ 在绝对信息单位下由场景量闭式预测（多场景统计，CI02；log10 误差按预注册阈值报告）"
+    statement: λ⋆ 可由 scene quantities 预测，在小 λ 域用 μ_floor/Σα² 近似。
+    allowed: λ⋆ 在绝对信息单位下由场景量闭式预测（多场景统计，CI02；log10 误差按预注册阈值报告）
     forbidden: '"universal threshold"'
-    weight: "诊断资产"
-    source: {theory: "Definition/Diagnostic λ⋆", experiment: "CI02", figures: "Fig.3"}
-    evidence: []
+    weight: 诊断资产
+    source:
+      theory: Definition/Diagnostic λ⋆
+      experiment: CI02
+      figures: Fig.3
+    evidence:
+    - artifact: artifacts/frozen/ci02_formal_summary.json
+      sha256_16: 1ad2b7556876c463
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
   C5:
-    statement: "ρ∈[0,1]，可读作 within-scene information retention。"
-    allowed: "retention spectrum 谱界 0≤ρⱼ≤1，作 within-scene 信息保留读出；跨场景只比较统计分布"
-    forbidden: "跨场景逐 mode 直接比较"
-    weight: "解释工具"
-    source: {theory: "Lemma 2", experiment: "CI01/CI02", figures: "Fig.4"}
-    evidence: []
+    statement: ρ∈[0,1]，可读作 within-scene information retention。
+    allowed: retention spectrum 谱界 0≤ρⱼ≤1，作 within-scene 信息保留读出；跨场景只比较统计分布
+    forbidden: 跨场景逐 mode 直接比较
+    weight: 解释工具
+    source:
+      theory: Lemma 2
+      experiment: CI01/CI02
+      figures: Fig.4
+    evidence:
+    - artifact: artifacts/frozen/ci02_formal_summary.json
+      sha256_16: 1ad2b7556876c463
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
   C6:
-    statement: "mode-resolved prediction explains controlled real corruption better than scalar trace summaries。"
-    allowed: "受控真实 corruption 下逐模式退化与 ΔF 连续谱预测存在显著秩/尺度相关（Spearman + bootstrap CI + 一个全局仿射尺度，CI04）"
-    forbidden: "只凭 MAE 单调即宣称成功"
-    weight: "核心实证资产"
-    source: {theory: "H5", experiment: "CI04", figures: "Fig.7", tables: "Table V"}
-    evidence: []
-
-# 三轮红队增补行（允许/禁令，措辞原样继承自红队报告；证据 = redteam 脚本数值 + 迁移后的单元测试）
+    statement: mode-resolved prediction explains controlled real corruption better
+      than scalar trace summaries。
+    allowed: 受控真实 corruption 下逐模式退化与 ΔF 连续谱预测存在显著秩/尺度相关（Spearman + bootstrap CI +
+      一个全局仿射尺度，CI04）
+    forbidden: 只凭 MAE 单调即宣称成功
+    weight: 核心实证资产
+    source:
+      theory: H5
+      experiment: CI04
+      figures: Fig.7
+      tables: Table V
+    evidence:
+    - artifact: artifacts/frozen/ci04_formal_summary.json
+      sha256_16: 0d45991f081cbcef
+      commit: 439f1b19b32f43e4f092b2d4fdaf51e1ca333581
 redteam_addenda:
-  round2:   # 红队报告二 §9（redteam2_exp.py，N1–N5 + 补测，种子 20260907）
+  round2:
     N1:
-      allowed: "ΔF(Λ) 与混合信息矩阵 Schur 补在机器精度一致；linear-Gaussian 下其逆为可达界"
+      allowed: ΔF(Λ) 与混合信息矩阵 Schur 补在机器精度一致；linear-Gaussian 下其逆为可达界
       forbidden: '"我们提出了新的部分校准信息度量"'
     N2:
-      allowed: "单调性在全部随机测试中无违反（Schur 补单调性的实例化）"
+      allowed: 单调性在全部随机测试中无违反（Schur 补单调性的实例化）
       forbidden: '"我们证明了新的校准单调定理"'
     N4_fix:
-      allowed: "gauge 抬升线性于强度校准精度，跨 6 个数量级实测；可观测性交叉点存在于所测场景"
+      allowed: gauge 抬升线性于强度校准精度，跨 6 个数量级实测；可观测性交叉点存在于所测场景
       forbidden: '"gauge lifting 在所有场景中主导弱模式"'
     N5:
-      allowed: "4× Λ 错设改变弱模式方差预测约 3%（单场景）"
+      allowed: 4× Λ 错设改变弱模式方差预测约 3%（单场景）
       forbidden: '"框架对先验错设稳健"（泛化声明）'
-  round3:   # 红队报告三 §10（redteam3_exp.py，V1–V6，种子 20260907）
+  round3:
     V1:
-      allowed: "联合 ensemble 下 Cov(x̂) 与 σ²ΔF⁻¹ 逐像素一致（median 比 1.0045）；fixed-δc 产生闭式可预测偏差与更低条件方差"
+      allowed: 联合 ensemble 下 Cov(x̂) 与 σ²ΔF⁻¹ 逐像素一致（median 比 1.0045）；fixed-δc 产生闭式可预测偏差与更低条件方差
       forbidden: '"我们提出了新的部分校准估计器"'
     V2:
-      allowed: "gauge 谱响应闭式在 25 个数量级 λ 上成立（≤3.9e-8），线性抬升与饱和两端精确"
+      allowed: gauge 谱响应闭式在 25 个数量级 λ 上成立（≤3.9e-8），线性抬升与饱和两端精确
       forbidden: '"gauge lifting 是新定理"（定位为 Prop 2）'
     V3:
-      allowed: "λ⋆ 有闭式线性预测器（单场景实测比 0.74）；retention 度量下 gauge 与最弱模式不交叉"
-      forbidden: ['"λ⋆ 万能阈值"', '"R 谱可用于定位 λ⋆"（红队报告三新增禁令）']
+      allowed: λ⋆ 有闭式线性预测器（单场景实测比 0.74）；retention 度量下 gauge 与最弱模式不交叉
+      forbidden:
+      - '"λ⋆ 万能阈值"'
+      - '"R 谱可用于定位 λ⋆"（红队报告三新增禁令）'
     V6:
-      allowed: "N=1 模式基 λ 不变（0.00°）；N=3 实测 88.4° 旋转"
+      allowed: N=1 模式基 λ 不变（0.00°）；N=3 实测 88.4° 旋转
       forbidden: '"R(Λ) 的特征基天然无 mode swapping"'
     V4:
-      allowed: "参数化不变性机器精度成立（6.4e-15）；raw 坐标 λI 与白化形式差 10%"
-      forbidden: "—（修订 #8 的实证支撑，无禁令行）"
-
-# 实现层红线（非 claim，来自红队 erratum；与主控计划书 §1.3 继承红线共同生效）
+      allowed: 参数化不变性机器精度成立（6.4e-15）；raw 坐标 λI 与白化形式差 10%
+      forbidden: '—（修订 #8 的实证支撑，无禁令行）'
 red_lines:
-  - id: RL-solve
-    source: "红队报告二 N3-fix（攻击四）"
-    rule: "ΔF(Λ) 所有实现禁用 solve 于 Λ=0/秩亏路径，统一 lstsq/SVD/pinv + 已知答案单元测试（m_k<q 用例）；solve 静默垃圾实测相对误差 8.3e4"
-  - id: RL-thin-svd
-    source: "红队报告二 攻击四.2"
-    rule: "谱公式仅在 thin-SVD 形式下成立；零奇异值方向由 (I−UUᵀ) 项承载，禁按 full-SVD 逐项写（λ→0 出现 0/0 记号坑）"
-  - id: RL-mode-resolved
-    source: "红队报告二 攻击三（trace 信息比仅 1.01 而弱模式条件数 1e-7）"
-    rule: "全部 continuum 实验读出 mode-resolved，禁 trace/logdet 标量汇总作主证据（宪法 §0 禁令的数值依据）"
-  - id: RL-retention-whitening
-    source: "红队报告三 攻击五（F∞^{-1/4} 假上界 0.716 事故）"
-    rule: "F∞^{-1/2} = 正定平方根（白化路线 diag(1/s) 仅对 F∞=diag(s²) 成立）；retention 双路线（generalized eig / 白化）交叉验证"
+- id: RL-solve
+  source: 红队报告二 N3-fix（攻击四）
+  rule: ΔF(Λ) 所有实现禁用 solve 于 Λ=0/秩亏路径，统一 lstsq/SVD/pinv + 已知答案单元测试（m_k<q 用例）；solve
+    静默垃圾实测相对误差 8.3e4
+- id: RL-thin-svd
+  source: 红队报告二 攻击四.2
+  rule: 谱公式仅在 thin-SVD 形式下成立；零奇异值方向由 (I−UUᵀ) 项承载，禁按 full-SVD 逐项写（λ→0 出现 0/0 记号坑）
+- id: RL-mode-resolved
+  source: 红队报告二 攻击三（trace 信息比仅 1.01 而弱模式条件数 1e-7）
+  rule: 全部 continuum 实验读出 mode-resolved，禁 trace/logdet 标量汇总作主证据（宪法 §0 禁令的数值依据）
+- id: RL-retention-whitening
+  source: 红队报告三 攻击五（F∞^{-1/4} 假上界 0.716 事故）
+  rule: F∞^{-1/2} = 正定平方根（白化路线 diag(1/s) 仅对 F∞=diag(s²) 成立）；retention 双路线（generalized
+    eig / 白化）交叉验证
