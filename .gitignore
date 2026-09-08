@@ -51,7 +51,8 @@ _SMOKE_/
 _SMOKE_*
 smoke_artifacts/
 _smoke_models/
-archive/
+# archive/ (2026-09-09 收窄: 原规则吞掉 docs/archive/ 历史文档区)
+/archive/
 arms_return_package/
 
 # 本地实验归档（不入库）
