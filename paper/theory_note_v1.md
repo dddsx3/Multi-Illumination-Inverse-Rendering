@@ -68,13 +68,19 @@ Schur 补单调性为教科书结果。本文不宣称新信息几何（CLAIMS_R
 
 ## 2. Proposition 1 · affine-Gaussian 有限样本协方差恒等式
 
-**陈述**。在 (H1)(H3) 且 ΔF(Λ) 可逆下，profiled joint MAP 估计器
+**陈述**。在 (H1)(H3) 且 ΔF(Λ) 可逆，且以下四条件同时成立时——(1) affine-Gaussian 模型
+正确指定；(2) A, B, Σc, σ² 为真实且已知；(3) δc ~ N(0,Σc) 与 ε ~ N(0,σ²I) 独立重抽；
+(4) 使用匹配的 GLS/joint-MAP 估计器——profiled joint MAP 估计器
 
 > x̂ = ΔF(Λ)⁻¹ Aᵀ M(Λ) y
 
 在联合系综 δc~N(0,Σ_c)、ε~N(0,σ²I)（**joint sampling**）下满足
 
 > E[x̂] = x,  Cov(x̂) = σ² ΔF(Λ)⁻¹ ——有限样本精确恒等式（非渐近）。
+>
+> This identity is an exact sampling covariance under the stated joint ensemble; it is not a
+> universal bound under model mismatch, fixed corruption, nonlinear mask changes, or unmodeled
+> real calibration error. CI04 的受控确定性 corruption 退化不与 Prop 1 等同。
 
 **Corollary（fixed-δc 诊断，R4 修订）**。固定 δc = δ̄ 时：
 - bias(δ̄) = ΔF⁻¹AᵀMBδ̄（可闭式预测）；
@@ -116,7 +122,9 @@ nuisance 方向），白化各向同性先验 Λ = λI，B = USVᵀ（thin-SVD�
 2. 左乘 aᵀ 并用 Aa = Bc̄ 化为 c̄ᵀBᵀB(BᵀB+λI)⁻¹λc̄；
 3. SVD 对角化 → 逐奇异方向闭式；
 4. Taylor 展开两端（sᵢ>0 的方向贡献线性项；零奇异值方向不进和式——thin-SVD 形式）；
-5. 各向异性 Λ 仅补充矩阵式 AᵀB(BᵀB+Λ)⁻¹Λc̄，不强求一维闭式。
+5. 各向异性 Λ 的一般式 = **Anderson–Duffin 并联和** S:Λ = S(S+Λ)⁺Λ（1969；允许 S/Λ 半正定
+   秩亏；禁 [S⁺+Λ⁻¹]⁻¹ 一般式——S=diag(1,0), Λ=diag(2,3) 反例给错误分量 3 而真值 0），
+   仅 Λ≻0 特例可写减法式 S − S(S+Λ)⁻¹S。gauge 恒等式右端 = c̄ᵀ[(BᵀB):Λ]c̄。
 
 **引用定位**：称 Proposition（render-specific 解析资产），不称新定理；
 新颖性来自逆渲染实例化 + 光度结构解释 + 验证（红队 V2：25 个数量级 λ 网格
@@ -163,6 +171,9 @@ F∞^{-1/2} 为正定平方根（eigh 构造；F∞=diag(s²) 的光度特例才
 **报告口径**：log₁₀(λ⋆^pred / λ⋆^scan) 的 median/IQR/90%（按"预测点是否仍在线性域"
 分层），不用单一绝对差。红队 V3 单场景实测比 0.74（先验 sanity，禁泛化）。
 
+**降档声明（CI04-R T10.3）**：λ⋆ 为 **Discussion-level model-internal diagnostic**——闭式
+root 与线性预测器同源（模型内自洽），禁写 "prediction accuracy = 0.00000" 与
+"real-world validated predictor"；DiLiGenT 只写 finite/meaningful sanity。
 **R2 度量纪律**：retention（归一化）度量下 gauge 与最弱模式**不交叉**
 （亏缺系数 α 加权平均 s² < s_max²，实测 52.4 vs 65.5）——λ⋆ 只存在于绝对信息谱；
 任何"R 谱可用于定位 λ⋆"的表述禁止（CLAIMS_REGISTRY V3 新增禁令）。

@@ -1,7 +1,9 @@
 # STATE · 进度账本（每次会话开始必读、结束必更）
 
 > **主线一句话**：校准置信度连续谱 → 逐模式信息预测 → 受控真实数据验证（CI01–CI05 → TCI 投稿）。
-> **当前状态（2026-09-09）：C01–C23 done；Gate A–E 通过；进入投稿闭口阶段（F1–F6，见《任务布置_投稿闭口阶段_20260908》）。停止规则生效：仅 prior-art collision / 异机复现失败 / 导师更强主张三者之一可重开实验。**
+> **当前状态（2026-09-09）：CI04-R Branch B 收口，RT-F 12/12 → EXPERIMENTAL PROGRAM = CLOSED。
+> THEORY: FROZEN | EVIDENCE: FROZEN | CLAIMS: FROZEN TO BRANCH B | MANUSCRIPT: FINALIZATION。
+> SUBMISSION BLOCKERS: TCI LATEX/PAGE LIMIT + AUTHOR REVIEW。重开条件仅限任务书 v3.0 §17 三条。**
 > **宪法**：[docs/Calibration_Confidence_Continuum_TCI_实验设计书_v1.0.md](docs/Calibration_Confidence_Continuum_TCI_实验设计书_v1.0.md)
 > **执行条例**：[docs/主控计划书_20260907_TCI_从当前状态到投稿_v1.0.md](docs/主控计划书_20260907_TCI_从当前状态到投稿_v1.0.md) · 卡状态只有 pending / in_progress / done / blocked / void
 > **交接指令**：读 STATE.md + REPO_MIGRATION.md 锚点列 + 主控计划书 §4 当前卡，继续执行。
@@ -34,11 +36,12 @@
 
 ## 投稿闭口阶段（卡 F1–F6，2026-09-08 任务布置）
 
+| CI04-R 最终收口 | done | **Branch B**（PASS-A R_A=0.90 CI[0.90,0.95] 66/66+11/11; S0 Δ=0 vs E-min 0.536 构造性恒等）; T5.3 重算门 4.4e-12; pooled cluster CI [0.705,0.754] 替换旧 330-point CI; RT-F 12/12 → EXPERIMENTAL PROGRAM = CLOSED | artifacts/ci04r/*; docs/memos/CI04R_FINAL_MEMO.md | 本commit(CI04R) | 2026-09-09 |
 | F1 文献/新颖性闭口 | done | 六条谱系 comparison matrix + 补充检索 + Intro/RW 改写（48h 硬门） | docs/novelty_comparison_matrix.md | 4156148 | 2026-09-09 |
 | F2 claims 逐句冻结 | done | 四处锁死句 + 禁词 grep + v0.9 | CLAIMS_REGISTRY.yaml | 2f05440 | 2026-09-09 |
 | F3 异机 clean-room 复现 | done | 新 clone→tests→CI01/CI03→Fig.3/4/7 对账（五项全绿，位级复现） | docs/memo_F3_crossmachine_20260909.md | 557e826 | 2026-09-09 |
 | F4 TCI 13 页套版 | pending | LaTeX 套版 + 删减（正式论文撰写——由写作会话执行） | paper/tci_submission/ | — | — |
-| F5 导师终审 | in_progress | 送审简报 + sign-off | docs/advisor_briefing_20260909.md | — | 2026-09-09 |
+| F5 导师终审 | in_progress | 送审简报 + sign-off | docs/advisor_briefing_20260909.md | 65a3196 | 2026-09-09 |
 | F6 投稿工程 | in_progress | cover letter + release + 提交 | paper/submission/ | — | — |
 
 ## 条件卡（触发才执行）

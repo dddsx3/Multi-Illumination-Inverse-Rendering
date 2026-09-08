@@ -1,0 +1,12 @@
+{
+ "experiment": "ci04r_final_closure",
+ "git_sha": "87af2b0d90adbd833079f373380417c708bee51f",
+ "config": "configs/ci04r/ci04r_frozen.yaml",
+ "config_sha256": "0649d722a9a58894d0a9b82da305f89ec7aa0f1fc6e45cec3d3a4096f063e665",
+ "artifacts": {
+  "artifacts/frozen/ci04_formal_summary.json": "0d45991f081cbceff92e5d5289fd9b7c7cd46eee547b9e92e8abd1c2ce3c5d6f",
+  "artifacts/frozen/ci04_formal_manifest.json": "3b53d7fbebe732e62f6e6e724bebc7fadd2ae03a1aaf4be63bef3d3f7757cc0c"
+ },
+ "platform": "Windows-11-10.0.26200-SP0",
+ "written_utc": "2026-09-08T14:32:53.690082+00:00"
+}

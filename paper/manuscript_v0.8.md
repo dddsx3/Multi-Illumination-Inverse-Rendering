@@ -18,11 +18,13 @@ information ΔF(Λ) that is provably monotone in the relative calibration inform
 (ii) an **exact gauge-lifting spectral response** (Proposition 2) showing that otherwise
 unobservable gauge directions are lifted linearly in calibration confidence before saturating,
 together with a scene-conditioned observability diagnostic λ⋆ that is predictable from scene
-quantities alone (μ_floor/Σαᵢ², median log₁₀ error 0.00000 across 54 stratified scenes); and
+quantities alone (a scene-conditioned model-internal diagnostic; 54/54 stratified scenes
+in-band); and
 (iii) a **mode-resolved validation protocol** connecting these predictions to finite-sample
 estimator covariance (variance ratio 0.98–1.01, nominal coverage within ±0.01), to controlled
-real-data corruption on OpenIllumination (Spearman 0.728, 95% CI [0.668, 0.783], 11 held-out
-objects), and to explicit validity boundaries from mask changes (linearization valid for
+real-data corruption on OpenIllumination (pooled Spearman 0.728, object-cluster 95% CI
+[0.705, 0.754], 11 held-out objects; descriptive — the load-bearing evidence is within-cell
+mode ranking, R_A = 0.90), and to explicit validity boundaries from mask changes (linearization valid for
 mask-flip rates up to 0.8–3.0% per scene family). Mode-resolved predictions detect weak-mode
 damage that scalar trace summaries miss by three orders of magnitude; we report both the
 successes and the quantitative boundaries of the approach.
@@ -119,11 +121,17 @@ generalized-eigenvalue cross-check, max deviation 1.6e-15 over 54 scenes).
 B = USVᵀ, α = Vᵀc̄, then aᵀΔF(λ)a = Σᵢ αᵢ²sᵢ²λ/(sᵢ²+λ): linear lifting λΣαᵢ² as λ→0,
 saturation to ‖Aa‖² as λ→∞. Verified against direct Rayleigh quotients on 54 stratified
 scenes × 25-decade grids: well-conditioned region p50 3.1e-09 (gate 1e-8); the deep-uncalibrated
-end is governed by a documented cancellation floor C·ε·sat/|direct| (Fig.3). **Definition
+end is governed by a documented cancellation floor C·ε·sat/|direct| (Fig.3). In the theory
+chapter the general parallel-sum form is written as S:Λ = S(S+Λ)⁺Λ (Anderson & Duffin 1969),
+valid for positive-semidefinite, possibly rank-deficient operands; the subtractive form
+S − S(S+Λ)⁻¹S is used only where Λ ≻ 0 is explicitly stated. λ⋆ retains its role as a
+model-internal consistency diagnostic (closed-form root and linear predictor derive from the
+same analytic curve); it is not reported as an externally validated prediction accuracy.
+**Definition
 (diagnostic λ⋆).** The gauge curve crosses the scene's intrinsic weak-mode floor μ_floor at
 λ⋆, predictable in the linear band by λ⋆ ≈ μ_floor/Σαᵢ²; applicability requires
 λ⋆ ≪ min_{αᵢ≠0} sᵢ². Across 54 scenes the closed-form bisection root and the linear predictor
-agree to median |log₁₀| = 0.00000 (q90 0.00003; all scenes in-band, worst λ⋆/min sᵢ² = 0.99).
+agree to within grid resolution across all 54 in-band scenes (worst λ⋆/min sᵢ² = 0.99); as both the root and the predictor derive from the same analytic curve, this agreement is a model-internal consistency diagnostic rather than an external prediction-accuracy claim.
 λ⋆ is defined only in absolute information units; in the retention metric the gauge and
 weakest modes provably never cross (deficit-coefficient ordering 52.4 < 65.5).
 
@@ -131,6 +139,12 @@ weakest modes provably never cross (deficit-coefficient ordering 52.4 < 65.5).
 
 **Proposition 1 (finite-sample identity).** For the profiled joint MAP/GLS estimator
 x̂ = ΔF(Λ)⁻¹AᵀM(Λ)y, under joint sampling of δc and ε: E[x̂] = x, Cov(x̂) = σ²ΔF(Λ)⁻¹.
+This identity holds under four explicit conditions: (1) the affine-Gaussian model is
+correctly specified; (2) A, B, Σ_c and σ² are the true and known quantities; (3) δc ~
+N(0,Σ_c) and ε ~ N(0,σ²I) are independently re-drawn per trial; (4) the matched
+GLS/joint-MAP estimator is used. It is an exact sampling covariance under the stated
+joint ensemble; it is not a universal bound under model mismatch, fixed corruption,
+nonlinear mask changes, or unmodeled real calibration error.
 The fixed-δc control exhibits closed-form bias ΔF⁻¹AᵀMBδ̄ (reproduction 0.96–1.01) and a
 systematically *lower* conditional variance σ²ΔF⁻¹AᵀM²AΔF⁻¹ (0.98–1.03) — fixed-δc ensembles
 underestimate uncertainty and are never used for tightness claims. **CI03 (Gate B)**: mode-
@@ -146,7 +160,7 @@ region.
 ## VII. Synthetic Experiments (CI01–CI03)
 
 Table IV (synthetic validation): closed-form errors ≤ 2.2e-12; MC variance ratios 0.977–1.009;
-coverage 68% within ±0.013; λ⋆ log-error statistics median 0.00000 / q90 0.00003 (54 scenes);
+coverage 68% within ±0.013; λ⋆ consistency: 54/54 in-band scenes (model-internal diagnostic);
 retention dual-route 1.6e-15. Ablations (Fig.9, Table VI): whitened vs raw λI changes weak-mode
 readouts by median 0.034 (IQR 0.025–0.049) — a first-order effect, consistent with the
 parameterization-invariance analysis; Λ 4× misspecification moves the weak-mode trace by
@@ -162,8 +176,9 @@ subset, 1200-pixel subsample) defines the linearization; prediction = weak-5-mod
 λ_j(F∞)/λ_j(ΔF(Σ_c)) computed **before** any corruption; empirical = the same whitened
 per-pixel GLS re-run with corrupted calibration, scale-gauge aligned, normalized by a
 residual-bootstrap control arm. Test set: 11 objects frozen before the run (one excluded for a
-dataset-side missing layer, documented). **Result (Gate D)**: Spearman 0.728, bootstrap 95% CI
-[0.668, 0.783], every per-object coefficient positive in [0.72, 0.80] (Fig.7, Table V).
+dataset-side missing layer, documented). **Result (Gate D)**: pooled Spearman 0.728,
+object-cluster bootstrap 95% CI [0.705, 0.754] — descriptive, partly driven by the shared
+corruption-level axis — every per-object coefficient positive in [0.72, 0.80] (Fig.7, Table V).
 Magnitude-level agreement is limited by Σ_c_real and model mismatch (~10², the empirical form of
 risks R-A/R-D): the claim is rank-and-scale, reported with its sensitivity band, and never
 reduced to average-MAE monotonicity.
@@ -171,7 +186,7 @@ reduced to average-MAE monotonicity.
 ## IX. External Sanity, Robustness, and Limitations (CI05)
 
 DiLiGenT (10 objects, geometry-known calibration side only): weak-mode structure exists in
-all objects (floor/median ∈ [2.7e-3, 7.1e-3]); λ⋆ finite everywhere; the failure taxonomy places all objects in the "calibration-propagation comparable to model mismatch" band; we do not attribute natural non-Lambertian residuals to calibration uncertainty (constitution-level
+all objects (floor/median ∈ [2.7e-3, 7.1e-3]); λ⋆ finite everywhere; the failure taxonomy places all objects in the band where the calibration-associated term is substantially larger than the residual mismatch term under this diagnostic decomposition (56–1131× across objects; median 273×); this comparison is descriptive and must not be read as a causal decomposition of real reconstruction error. Trace-like aggregate summaries can dilute localized information loss; E-optimality summarizes worst-mode severity, whereas the mode-resolved spectrum is what identifies, tracks, and interprets vulnerable directions individually. We do not claim mode-resolved superiority for scalar severity prediction, and we do not attribute natural non-Lambertian residuals to calibration uncertainty (constitution-level
 separation; Fig.8). **Limitations** (explicit): (i) magnitude-level real-data agreement is
 bounded by Σ_c_real and BRDF/shadow mismatch; (ii) the Λ-misspecification sensitivity is a
 single-scene second-order observation; (iii) DiLiGenT serves as sanity only; (iv) mask/terminator

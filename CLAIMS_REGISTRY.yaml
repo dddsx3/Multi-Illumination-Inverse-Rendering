@@ -163,3 +163,24 @@ frozen_sentences_20260908:
     八条）；本文给出从 calibrated 到 uncalibrated 的连续置信度模型（nuisance-marginalized information、逐模式
     retention、gauge lifting）并验证其预测受控真实 corruption 下相对退化结构的能力。Introduction 第一页 freshness
     三段式：问题形式化 + render-specific diagnostics + validation chain。
+claims_lock_20260909:
+  _note: CI04-R Branch B 脚本自动裁决（branch_decision.json），措辞按任务书 v3.0 §16 Branch B 逐字锁死；禁止手改升级。
+  branch: B
+  r2a_status: PASS-A
+  severity_status: S0
+  C5_real_data_locked: Scalar worst-mode criteria such as E-optimality can summarize
+    degradation severity nearly as well as the mode-resolved score. The additional
+    value of the mode-resolved spectrum is therefore not a universally better scalar
+    predictor, but the ability to identify, track, and interpret which directions
+    become vulnerable as calibration confidence changes.
+  C5_forbidden:
+  - mode always beats scalar
+  - universal identification
+  - agrees quantitatively after an affine scale
+  - real-world λ⋆ prediction validated
+  pooled_relocated: 0.728 → descriptive pooled association (object-cluster CI [0.705,0.754])
+  C7_water_filling: PARKING_LOT / future paper（预算-方差律与 nuisance-basis 可分配性未验证；本稿不新增）
+  evidence:
+    r2a: artifacts/ci04r/summary.json (r2a)
+    r2b: artifacts/ci04r/branch_decision.json
+    table: artifacts/ci04r/table_R1.csv

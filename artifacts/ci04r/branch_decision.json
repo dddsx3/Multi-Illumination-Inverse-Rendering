@@ -1,0 +1,23 @@
+{
+ "r2a_status": "PASS-A",
+ "r2a_stat": 0.8999999999999998,
+ "r2a_ci95": [
+  0.8999999999999998,
+  0.9499999999999998
+ ],
+ "positive_objects": 11,
+ "severity_status": "S0",
+ "rho_mode_strat": 0.5363636363636364,
+ "best_scalar_name": "P_emin",
+ "rho_best_scalar_strat": 0.5363636363636364,
+ "delta_mode": 0.0,
+ "delta_mode_ci95": [
+  -0.33333333333333326,
+  0.0
+ ],
+ "branch": "B",
+ "bootstrap_seed": 20260908,
+ "config_sha256": "0649d722a9a58894d0a9b82da305f89ec7aa0f1fc6e45cec3d3a4096f063e665",
+ "artifact_sha256": "0d45991f081cbceff92e5d5289fd9b7c7cd46eee547b9e92e8abd1c2ce3c5d6f",
+ "git_sha": "87af2b0d90adbd833079f373380417c708bee51f"
+}

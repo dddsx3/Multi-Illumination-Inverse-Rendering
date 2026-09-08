@@ -1,0 +1,59 @@
+dataset: OpenIllumination
+split: frozen_test
+n_objects: 11
+n_levels: 6
+n_modes: 5
+n_seeds: 20
+ctype: joint
+expected_cells: 66
+expected_mode_points: 330
+objects:
+- obj_03_pumpkin
+- obj_04_dolphin
+- obj_07_pumpkin2
+- obj_09_ball
+- obj_10_pumpkin3
+- obj_11_pine
+- obj_13_mushroom
+- obj_16_friends_cup
+- obj_17_pumpkin5
+- obj_18_fabric_hat
+- obj_19_cylinder
+levels:
+- 0.1
+- 0.2
+- 0.35
+- 0.5
+- 0.75
+- 1.0
+exclusions:
+- object: obj_20_greenhead
+  reason: HF 数据侧缺 com_masked_thumbnail 层（原 CI04 exclusion，维持原状）
+primary_target: T_ol = max_j D_olj (emp_deg max over 5 tracked modes; frozen CI04
+  definition)
+predictor_direction: larger = worse
+predictors:
+  P_mode: 1 - min_j rho_olj, rho_olj = 1/pred_deg_olj (frozen artifact)
+  P_trace: 1 - (1/q) sum_i r_i        (recomputed full spectrum, Chapter 5)
+  P_logdet: -(1/q) sum_i log(max(r_i, 1e-12))
+  P_emin: 1 - min_i r_i
+  P_corr: frozen level value (pooled only; within-level = none)
+rank_relative_tol: 1.0e-10
+retention_clip_tol: 1.0e-10
+log_eps: 1.0e-12
+bootstrap_seed: 20260908
+bootstrap_reps: 10000
+practical_margin_delta: 0.05
+pass_a_min_median: 0.5
+pass_a_min_positive_objects: 9
+data_sources:
+  empirical: artifacts/frozen/ci04_formal_summary.json rows (ZERO rerun)
+  prediction_side: 'deterministic recompute via delta_f_injected, gate: weak-5 relative
+    err <= 1e-9 vs frozen'
+frozen_artifacts_sha256:
+  artifacts/frozen/ci04_formal_summary.json: 0d45991f081cbceff92e5d5289fd9b7c7cd46eee547b9e92e8abd1c2ce3c5d6f
+  artifacts/frozen/ci04_formal_manifest.json: 3b53d7fbebe732e62f6e6e724bebc7fadd2ae03a1aaf4be63bef3d3f7757cc0c
+  artifacts/frozen/ci04_pilot_summary.json: 513771cbeb3622d4deaef0bae8616743c263cefb12ffe46ac8f35d4ccf353929
+  artifacts/frozen/openillumination_dev_manifest.json: 1ac10f9ca75c611fdc80fdcc670e8db474897cea6ba019010d8516f854690257
+analysis_registration: internally preregistered analysis plan (post-audit confirmatory
+  re-analysis); no external registry

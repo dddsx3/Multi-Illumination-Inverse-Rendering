@@ -1,0 +1,79 @@
+{
+ "passed": 12,
+ "total": 12,
+ "verdict": "EXPERIMENTAL PROGRAM = CLOSED",
+ "checks": [
+  {
+   "id": 1,
+   "name": "RT-F1 \u6570\u636e\u51bb\u7ed3",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 2,
+   "name": "RT-F2 \u7edf\u8ba1\u72ec\u7acb\u6027",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 3,
+   "name": "RT-F3 pooled \u8bda\u5b9e\u6027\uff08P_corr \u884c=corruption magnitude + T7.3 \u53e5\uff09",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 4,
+   "name": "RT-F4 stratified \u8bda\u5b9e\u6027",
+   "passed": true,
+   "detail": "P_corr \u884c none\u00d77"
+  },
+  {
+   "id": 5,
+   "name": "RT-F5 scalar \u516c\u5e73\u6027",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 6,
+   "name": "RT-F6 mode identity",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 7,
+   "name": "RT-F7 E-min \u5b50\u7a7a\u95f4 overlap",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 8,
+   "name": "RT-F8 \u5e76\u8054\u548c\u4e00\u822c\u5f0f",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 9,
+   "name": "RT-F9 Prop 1 \u9650\u5b9a\u53e5",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 10,
+   "name": "RT-F10 \u03bb\u22c6",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 11,
+   "name": "RT-F11 Branch \u5ba1\u8ba1",
+   "passed": true,
+   "detail": ""
+  },
+  {
+   "id": 12,
+   "name": "RT-F12 \u7981\u6269 scope",
+   "passed": true,
+   "detail": ""
+  }
+ ]
+}

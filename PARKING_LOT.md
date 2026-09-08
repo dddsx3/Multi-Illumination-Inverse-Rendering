@@ -7,3 +7,5 @@
 | 日期 | 想法 | 来源 | 状态 |
 |------|------|------|------|
 | 2026-09-07 | （示例行）若 Gate D 失败，可探索 semi-calibrated 子集作为降级叙事 | 主控计划书 §1 | 待 Gate D |
+| 2026-09-09 | water-filling calibration budget allocation（C7 PARKED） | CI04-R 任务书 v3.0 §12 |
+| 2026-09-09 | BlenderProc 非线性增强臂 / cast-shadow 非凸合成族 / 新重建基线 / 新硬件标定实验 / 通用逆问题推广 | CI04-R v3.0 §17 闭口后清单 |
