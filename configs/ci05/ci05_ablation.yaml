@@ -1,0 +1,8 @@
+# C19 · ablation 附录（within-scene 效应量，不设胜负判据）
+run_name: ablation
+seed: 20260907
+P: 300
+geometry: bumpy
+n_scenes: 4
+sigma: 0.02
+light_counts: [1, 2, 3]

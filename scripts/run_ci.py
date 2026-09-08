@@ -30,6 +30,7 @@ RUNNERS = {
     "ci03nl": "experiments.ci03_nl_envelope",
     "ci04": "experiments.ci04_real_corruption",
     "ci05": "experiments.ci05_sanity_robustness",
+    "ci05abl": "experiments.ci05_ablation",
 }
 
 
