@@ -48,7 +48,10 @@ def _setup_repo(repo: Path):
 
 
 def precheck(repo: Path):
-    """The 7 pre-run seal checks (final task book, section 2)."""
+    """The 7 pre-run seal checks (final task book, section 2).
+
+    Offline variant: git checks compare the bundle-restored HEAD via a marker
+    file written by run_all.sh (the cloud clone has no remote access anyway)."""
     os.chdir(repo)
     checks = {}
     ok = True
@@ -63,6 +66,8 @@ def precheck(repo: Path):
 
     st = subprocess.run(["git", "status", "--porcelain"],
                         capture_output=True, text=True).stdout
+    # run_all.sh restores repo-new from the bundle by checkout; the driver and
+    # stage scripts live outside repo-new so the tree stays clean by design.
     checks["worktree_clean"] = (st.strip() == "")
     ok &= checks["worktree_clean"]
 

@@ -53,7 +53,10 @@ def main():
         uj = json.loads((cd / "U.json").read_text(encoding="utf-8"))
         obj_name, level = uj["cell"].rsplit("|", 1)
         got_cells.add((obj_name, float(level)))
-        U.update(uj["U"])
+        for key, budgets in uj["U"].items():
+            U.setdefault(key, {b: 0.0 for b in BUDGETS})
+            for b in BUDGETS:
+                U[key][b] += budgets[b]           # accumulate across levels
         orderings.update(uj["orderings"])
         per_run.extend(json.loads((cd / "per_run_errors.json").read_text(encoding="utf-8")))
 
@@ -111,10 +114,11 @@ def main():
                         repr(r["E_run"])])
     (out / "selection_orders.json").write_text(
         json.dumps(orderings, indent=1), encoding="utf-8")
+    n_lev = len(LEVELS)
     uos = {}
     for key, budgets in U.items():
         obj_name, regime, unit = key.rsplit("|", 2)
-        uos[(obj_name, int(regime), unit)] = budgets
+        uos[(obj_name, int(regime), unit)] = {b: budgets[b] / n_lev for b in BUDGETS}
     with open(out / "uos_table.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["object", "regime", "policy", "budget", "E_osb"])
