@@ -1,0 +1,43 @@
+# P-LOWRES-FULLRES v1 -- full-resolution / full-142-light certification run.
+# PREREGISTERED before execution. Removes the "only 1200 subsampled pixels"
+# attack surface of P-CERT v1 by recomputing the certified gap table on ALL
+# masked pixels with ALL 142 lights, using the exact low-rank (Woodbury)
+# route (src/calibinfo/information/lowrank.py, L5 identity).
+
+gate: P-LOWRANK-FULLRES
+analysis_status: preregistered_v1
+run_name: lowrank_fullres_v1
+
+parameterization: same as P-CERT v1 (t multiplies Lambda0; larger t = higher precision)
+objective: J_A = tr DeltaF^{-1} via the Woodbury low-rank route (route="woodbury")
+
+data_root: ./data/OpenIllumination  # patched by run_cloud.py
+data_meta: ./data/OpenIllumination_meta
+cohort: [obj_03_pumpkin, obj_04_dolphin, obj_07_pumpkin2, obj_09_ball, obj_10_pumpkin3, obj_11_pine, obj_13_mushroom, obj_16_friends_cup, obj_17_pumpkin5, obj_18_fabric_hat, obj_19_cylinder]
+n_objects: 11
+camera: A1
+noise_fit_convention: corrected
+scene_rng_spec: "default_rng([20260910, obj_idx]) for the pixel/light universe; calibrated PS is data-driven (rho from mean intensity, n from +z), 25 alternating iterations, batched normal equations"
+
+resolution:
+  pixels: ALL masked pixels (mask = com_masked_thumbnail alpha > 128; no subsampling)
+  lights: ALL 142 capture lights (no analysis-subset; every light is Fisher-active)
+
+level: 0.5
+kappa: 10.0
+budgets_k: [5, 14, 48]
+fw_iters: 40
+fw_line_search_evals: 10
+random_seed: 20260916
+n_random: 6
+policies:
+  certified_lower_bound: FW dual-gap lower bound per k (global, convex program)
+  greedy_steepest_prefix: sequential argmin of the exact woodbury gradient over unchosen active lights (48-step prefix; recorded as the greedy variant for this protocol)
+  random_subsets: 6 seeded uniform k-subsets of the 142 lights
+  all_refined: t = kappa everywhere
+  none: t = 1 everywhere
+
+outcome_independence: >
+  Descriptive/certifying protocol: no sign-based gate; every computed row is
+  reported. Numerical hard gates only (route equivalence <=1e-8 vs dense at
+  small scale, gradient FD <=1e-6, FW gap >= 0, feasibility invariants).
