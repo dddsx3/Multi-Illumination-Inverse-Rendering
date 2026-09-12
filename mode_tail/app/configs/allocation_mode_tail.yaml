@@ -1,0 +1,80 @@
+# P-ALLOC2 v1 -- mode-tail targeted calibration intervention (preregistered).
+# Committed BEFORE the run (allocation-prereg discipline). Outcome-independent:
+# every computed comparison is reported regardless of direction.
+#
+# Question (the only question a mode-resolved analysis naturally poses):
+#   if the theory says certain calibration components hurt the weakest tracked
+#   modes most, does a targeted intervention on those components reduce the
+#   TARGETED modes' empirical error, compared to spending the same budget on
+#   random Fisher-active lights?
+#
+# Lineage: identical scene construction / corruption machinery / budgets as the
+# frozen allocation experiment (P=1200, 48 Fisher-active of 142, corrected
+# interface); paired raw innovations in a disjoint seed space.
+
+gate: P-ALLOC2
+analysis_status: preregistered_v1
+run_name: allocation_mode_tail_v1
+
+data_root: D:/data/OpenIllumination
+data_meta: D:/data/OpenIllumination_meta
+cohort: [obj_03_pumpkin, obj_04_dolphin, obj_07_pumpkin2, obj_09_ball, obj_10_pumpkin3, obj_11_pine, obj_13_mushroom, obj_16_friends_cup, obj_17_pumpkin5, obj_18_fabric_hat, obj_19_cylinder]
+n_objects: 11
+noise_fit_convention: corrected
+scene_rng_spec: "default_rng([20260910, obj_idx])  # frozen allocation lineage"
+
+levels: [0.2, 0.5, 1.0]
+regimes: [10, 100]
+budgets_k: [5, 10, 14, 28, 48]     # within the 48 Fisher-active lights
+seeds_per_level: 10
+
+policies:
+  targeted: >
+    the frozen adaptive normalized weak-Fisher-mode sensitivity heuristic
+    (select_ordering_mode_aware; bottom-5 tracked modes recomputed at every
+    step) - this is the 'targeted' arm: the theory says which lights hurt the
+    weak modes most
+  scalar_targeted: >
+    J_A steepest-descent greedy prefix (exact gradient, same certificate
+    functional as P-CERT) - the scalar-OED targeted control: it optimizes the
+    A-optimal functional itself, with no access to the mode decomposition.
+    Preregistered distinctiveness judgment (J3): the mode-resolved claim
+    survives only if the targeted arm reduces the bottom-5 tracked-mode
+    energy STRICTLY MORE than this scalar arm; if scalar >= targeted, the
+    mode language adds no incremental intervention value (honest negative).
+  random_active48: >
+    uniform permutations over the same 48 Fisher-active lights (the attribution
+    control of the frozen benchmark), 6 permutations averaged per seed
+
+endpoint:
+  primary: >
+    per-run targeted-mode energy E = sum_j (e_dual . W_j)^2 over the bottom-5
+    tracked modes, where W = F_inf^{1/2} V_bottom5 (the normalized dual
+    coordinate of the strict 1/rho theorem, M0-2 corrected) and e_dual is the
+    gauge-aligned albedo residual; compared paired-by-seed between targeted
+    and random_active48 at equal budget
+  secondary: >
+    per-mode breakdown (which tracked mode improves), and the pooled
+    J_A-style prediction-side landscape is NOT re-measured here (P-CERT v1
+    owns it)
+
+statistics:
+  paired_innovation_seed_space: "[20260916, 7777, obj_idx, lv_i, s_i]  # disjoint from frozen (20260910) and random48 (20260912)"
+  bootstrap: object-level paired bootstrap, B=10000, seed 20260916, shared resamples
+  reporting: >
+    Delta(targeted - random_active48) and Delta(scalar_targeted -
+    random_active48) with 95% CI per (regime, budget), all 11 paired
+    differences + sign count, per-mode breakdown, and the distinctive
+    contrast Delta(targeted - scalar_targeted) - reported regardless of
+    direction; no sign-based gate
+
+# -- v1.1 erratum --
+erratum:
+  v1_0_bug: >
+    the random_active48 arm missed the gauge alignment (sg computed but not
+    applied) while the targeted arm had it - asymmetric residual conventions;
+    the gauge direction carries 0.91 energy fraction inside the bottom-5 dual
+    subspace, so the random arm was inflated ~28x and the v1.0 significance
+    claim was an artifact
+  disposition: v1.0 results retracted; this three-arm rerun (shared residual
+    pipeline function) replaces them

@@ -1,0 +1,26 @@
+# P-CONC · 证书集中度（预注册）
+# 问题：认证下界由**估计的** nominal calibration 计算——换噪声实现重拟合后，
+# 认证动态范围移动多少？相对 IQR 散布 = "certified bound 的诚实不确定度"。
+gate: P-CONC
+analysis_status: preregistered_v1
+run_name: certificate_concentration_v1
+
+data_root: D:/data/OpenIllumination
+data_meta: D:/data/OpenIllumination_meta
+cohort: [obj_03_pumpkin, obj_04_dolphin, obj_07_pumpkin2, obj_09_ball, obj_10_pumpkin3, obj_11_pine, obj_13_mushroom, obj_16_friends_cup, obj_17_pumpkin5, obj_18_fabric_hat, obj_19_cylinder]
+n_objects: 11
+noise_fit_convention: corrected
+scene_rng_spec: "default_rng([20260910, obj_idx])"
+
+level: 0.5
+kappa: 10.0
+budget_k: 14
+realizations: 10
+noise_a: 0.0011898987587589964
+noise_b: 0.00392361015138986
+random_seed: 20260916
+
+fw_iters: 30
+
+outcome_independence: >
+  The concentration is measured and reported as-is; no threshold or gate.

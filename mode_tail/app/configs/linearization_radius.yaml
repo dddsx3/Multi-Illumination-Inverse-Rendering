@@ -1,0 +1,31 @@
+# P-RADIUS · 线性化有效半径（预注册）
+# 问题：线性化预测（ΔF 与保留谱）在多大的腐蚀水平 ℓ 上偏离经验二阶矩
+# 达 {2×, 10×}？偏离水平 = 线性化在真实数据上的有效半径。
+# 口径与 ci04 一致（estimator-side corruption、corrected caliber）；
+# level 网格远超预注册范围以覆盖完整的偏离曲线。
+gate: P-RADIUS
+analysis_status: preregistered_v1
+run_name: linearization_radius_v1
+
+data_root: D:/data/OpenIllumination
+data_meta: D:/data/OpenIllumination_meta
+cohort: [obj_03_pumpkin, obj_04_dolphin, obj_07_pumpkin2, obj_09_ball, obj_10_pumpkin3, obj_11_pine, obj_13_mushroom, obj_16_friends_cup, obj_17_pumpkin5, obj_18_fabric_hat, obj_19_cylinder]
+n_objects: 11
+noise_fit_convention: corrected
+scene_rng_spec: "default_rng([20260910, obj_idx])"
+
+levels: [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 8.0]
+reference_level: 0.05
+seeds: 20
+corruption_type: joint
+
+outcome_independence: >
+  Descriptive/measurement protocol: the radius is reported as measured,
+  regardless of whether it is large or small. No sign-based gate.
+
+metric_definition: >
+  For each level: E(level) = mean over seeds of the bottom-5 dual-coordinate
+  energy (gauge-aligned residual projected on W = F_inf^{1/2} V_bottom5).
+  dev(level) = E(level) / E(level_min). The linearized prediction is
+  dev ~ (level/level_min)^2; the radius is the first level where dev
+  crosses 2x / 10x the reference.
